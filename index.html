@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Field Day Mini Golf — physics puzzle prototype</title>
+        <link rel="stylesheet" href="styles.css" />
+    </head>
+    <body>
+        <main class="shell">
+            <header>
+                <div>
+                    <p class="eyebrow">
+                        Daily force-field mini golf · Prototype
+                    </p>
+                    <h1>Field Day Mini Golf</h1>
+                </div>
+                <div class="objective">
+                    <span>Objective</span
+                    ><strong>Keep the ball in the cup for 1 second</strong>
+                </div>
+            </header>
+            <section class="game-layout" aria-label="Field Day game">
+                <aside class="toolbox">
+                    <div class="day-label">Today’s field bag</div>
+                    <h2>Switchback green</h2>
+                    <p class="hint">
+                        Drag a field onto the green, then drag it to tune its
+                        position. Fewer fields is a better solve.
+                    </p>
+                    <div
+                        id="fieldBag"
+                        class="field-bag"
+                        aria-label="Force fields"
+                    ></div>
+                    <div class="controls">
+                        <button id="launchButton" class="primary">
+                            Launch ball</button
+                        ><button id="undoButton">Undo field</button
+                        ><button id="resetButton">Reset ball</button
+                        ><button id="clearButton">Clear course</button>
+                    </div>
+                    <p class="tip">
+                        <kbd>R</kbd> reset · <kbd>Backspace</kbd> undo · drag
+                        placed fields to reposition them
+                    </p>
+                </aside>
+                <div class="arena-wrap">
+                    <canvas
+                        id="arena"
+                        width="960"
+                        height="640"
+                        aria-label="Physics puzzle arena"
+                    ></canvas>
+                    <div id="status" class="status" aria-live="polite">
+                        Place fields, then launch.
+                    </div>
+                    <div
+                        id="winPanel"
+                        class="win-panel hidden"
+                        aria-live="polite"
+                    >
+                        <p class="eyebrow">Hole complete</p>
+                        <h2>Nice putt.</h2>
+                        <p id="resultText"></p>
+                        <button id="playAgainButton" class="primary">
+                            Replay this setup
+                        </button>
+                    </div>
+                </div>
+            </section>
+            <footer>
+                <span
+                    >Fixed daily bag: attractor · bumper · vortex · boost wedge
+                    · brake patch</span
+                ><span
+                    >Physics is deterministic; the dotted line is your predicted
+                    putt.</span
+                >
+            </footer>
+        </main>
+        <script src="game.js"></script>
+    </body>
+</html>
