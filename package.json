@@ -1,0 +1,12 @@
+{
+  "name": "puttential",
+  "private": true,
+  "workspaces": ["apps/web"],
+  "scripts": {
+    "dev": "npm run dev -w @puttential/web",
+    "build": "npm run build -w @puttential/web",
+    "typecheck": "npm run typecheck -w @puttential/web",
+    "test": "npm run test -w @puttential/web",
+    "test:e2e": "npm run test:e2e -w @puttential/web"
+  }
+}
