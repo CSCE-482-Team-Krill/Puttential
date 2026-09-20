@@ -17,7 +17,7 @@ async function read<T>(key: string, fallback: T): Promise<T> {
 }
 async function write<T>(key: string, value: T): Promise<void> {
   memory.set(key, value);
-  try { await dbPromise?.then((db) => db.put("kv", value, key)); } catch { /* Private browsing still works for this tab. */ }
+  try { await dbPromise?.then((db) => db.put("kv", value, key)); } catch {}
 }
 export const storage = {
   async load(): Promise<PersistedState> {
@@ -34,7 +34,7 @@ export const storage = {
   saveAdminDrafts: (value: Record<string, AdminDraft>) => write("adminDrafts", value),
   async clear() {
     memory.clear();
-    try { await dbPromise?.then((db) => db.clear("kv")); } catch { /* In-memory state still resets. */ }
+    try { await dbPromise?.then((db) => db.clear("kv")); } catch {}
   },
 };
 export const defaultPreferences: Preferences = { grid: false, coordinates: false, reducedMotion: false, labels: true };
@@ -44,5 +44,5 @@ export function readPreferences(): Preferences {
   catch { return defaultPreferences; }
 }
 export function savePreferences(value: Preferences) {
-  try { localStorage.setItem("puttential-preferences", JSON.stringify(value)); } catch { /* Optional preference persistence. */ }
+  try { localStorage.setItem("puttential-preferences", JSON.stringify(value)); } catch {}
 }

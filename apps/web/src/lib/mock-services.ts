@@ -41,9 +41,10 @@ export const mockGameData: GameDataPort = {
 const lerp = (a: Point, b: Point, t: number): Point => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
 function scriptedPoint(puzzle: PuzzleDefinition, step: number): Point {
   const t = Math.min(1, step / 780);
+  if (t >= 1) return puzzle.goal;
   const points: Point[] = [puzzle.ball, { x: 265, y: 340 }, { x: 345, y: 455 }, { x: 485, y: 492 }, { x: 630, y: 465 }, { x: 720, y: 370 }, puzzle.goal];
   const scaled = t * (points.length - 1);
-  const index = Math.min(points.length - 2, Math.floor(scaled));
+  const index = Math.floor(scaled);
   const local = scaled - index;
   const smooth = local * local * (3 - 2 * local);
   return lerp(points[index], points[index + 1], smooth);
@@ -66,10 +67,10 @@ export class DemoSimulation implements SimulationPort {
     this.last = performance.now();
     const tick = (now: number) => {
       if (this.stopped) return;
-      const delta = Math.min(100, now - this.last);
+      const delta = now - this.last;
       this.last = now;
       if (!this.paused) {
-        this.step += delta * 0.12 * this.rate;
+        this.step += delta * 0.24 * this.rate;
         const point = this.sample ? scriptedPoint(this.puzzle, this.step) : experimentalPoint(this.puzzle, this.step);
         const trail = Array.from({ length: 12 }, (_, i) => this.sample ? scriptedPoint(this.puzzle, Math.max(0, this.step - (11 - i) * 14)) : experimentalPoint(this.puzzle, Math.max(0, this.step - (11 - i) * 14)));
         onSnapshot({ step: Math.floor(this.step), ball: point, trail });

@@ -19,7 +19,6 @@
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 html[data-reduced-motion="true"] *,html[data-reduced-motion="true"] *:before,html[data-reduced-motion="true"] *:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 
-/* Daily-game shell: keep the puzzle and its one primary action in focus. */
 body{background:#f7f7f2}
 .site-header{height:62px;background:rgba(255,255,252,.94);border-bottom:1px solid #e7e9e2;box-shadow:none}
 .header-inner{width:min(1060px,calc(100% - 40px));gap:18px}
@@ -39,15 +38,16 @@ body{background:#f7f7f2}
 .site-footer .page-width{width:min(960px,calc(100% - 40px));font-size:.72rem}
 
 .game-page{width:min(960px,calc(100% - 40px));margin:0 auto;padding:42px 0 0}
-.game-hero{display:block;text-align:center;max-width:680px;margin:0 auto 28px}
+.game-hero{display:block;text-align:center;max-width:680px;margin:0 auto 16px}
 .daily-meta{display:flex;align-items:center;justify-content:center;gap:7px;color:#718179;font-size:.74rem;font-weight:750;letter-spacing:.05em;text-transform:uppercase}
 .daily-meta span:first-child{color:#267153}
 .game-hero h1{font-size:clamp(2.25rem,5vw,3.45rem);letter-spacing:-.055em;margin:9px 0 5px;color:#153d33}
 .game-hero p{margin:0;color:#68786f;font-size:.98rem}
-.hero-links{padding:0;margin:13px 0 0;justify-content:center;gap:12px;font-size:.72rem;color:#728177}
+.hero-links{padding:0;margin:8px 0 0;justify-content:center;gap:12px;font-size:.72rem;color:#728177}
 .hero-links>span{text-transform:capitalize;background:#eff1ea;border-radius:99px;padding:4px 9px;font-weight:750}
 .hero-links a{display:inline-flex;align-items:center;gap:4px;font-weight:750;color:#426557}
 .hero-links a:hover{text-decoration:underline}
+.archive-date{justify-content:space-between}.archive-date span{display:flex;align-items:center;gap:7px}.archive-card-body .archive-meta{margin-top:16px}
 
 .course-card{border-radius:16px;border:1px solid #dfe4dc;background:#fff;box-shadow:0 12px 35px rgba(25,62,48,.07)}
 .course-toolbar,.course-bottom{min-height:45px;padding:10px 14px}

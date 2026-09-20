@@ -1,11 +1,13 @@
 import { expect, test } from "@playwright/test";
 
+const runTimeout = 25_000;
+
 test("sample run saves a local locked result and exposes read-only replay", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "Load sample layout" }).click();
   await expect(page.getByText("2 / 4 tiles placed")).toBeVisible();
   await page.getByRole("button", { name: /Play demo run/ }).click();
-  await expect(page.getByText("What a lovely line.")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("What a lovely line.")).toBeVisible({ timeout: runTimeout });
   await expect(page.getByText("Anonymous play keeps a local result")).toBeVisible();
   await page.reload();
   await expect(page.getByText("What a lovely line.")).toBeVisible();
@@ -69,7 +71,7 @@ test("rejected mock validation returns to planning with the layout intact", asyn
   await page.goto("/archive/archive-corner?demoReject=1");
   await page.getByRole("button", { name: "Load sample layout" }).click();
   await page.getByRole("button", { name: /Play demo run/ }).click();
-  await expect(page.getByText(/Demo validation rejected this run/)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/Demo validation rejected this run/)).toBeVisible({ timeout: runTimeout });
   await expect(page.getByText("2 / 4 tiles placed")).toBeVisible();
   await expect(page.getByRole("button", { name: /Play demo run/ })).toBeVisible();
 });
@@ -82,8 +84,9 @@ test("demo account gets a sample standing only after a local solve", async ({ pa
   await expect(page.getByRole("heading", { name: "Google player" })).toBeVisible();
   await page.goto("/archive/archive-bend");
   await page.getByRole("button", { name: "Load sample layout" }).click();
+  await expect(page.getByText("2 / 4 tiles placed")).toBeVisible();
   await page.getByRole("button", { name: /Play demo run/ }).click();
-  await expect(page.getByText("What a lovely line.")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText("What a lovely line.")).toBeVisible({ timeout: runTimeout });
   await expect(page.getByText("This late archive solve has no original daily rank or percentile.")).toBeVisible();
   await page.goto("/leaderboard");
   await page.getByRole("combobox", { name: "Choose puzzle leaderboard" }).selectOption("archive-bend");

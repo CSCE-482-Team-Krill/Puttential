@@ -55,7 +55,7 @@ export function CourseCanvas(props: Props) {
         setReady({ app, world, pixi });
       } catch { if (!cancelled) setCanvasError(true); }
     })();
-    return () => { cancelled = true; if (app) { try { app.destroy(true); } catch { /* Initializing canvas was already removed. */ } } };
+    return () => { cancelled = true; if (app) { try { app.destroy(true); } catch {} } };
   }, []);
 
   useEffect(() => {
@@ -190,7 +190,7 @@ export function CourseCanvas(props: Props) {
     const y = ((event.clientY - bounds.top) / bounds.height * 600 - 300) / (props.zoom ?? 1) + 300;
     props.onPlace?.(id, { x, y });
   };
-  return <div className="course-canvas" ref={host} role="img" aria-label={`${props.puzzle.title} course. Use the inventory and position controls to place force tiles.`} onDragOver={(event) => event.preventDefault()} onDrop={dropTile}>
+  return <div className="course-canvas" ref={host} role="img" aria-label="Puzzle course. Use the inventory and position controls to place force tiles." onDragOver={(event) => event.preventDefault()} onDrop={dropTile}>
     {canvasError ? <div className="canvas-loading canvas-error"><div><strong>Course graphics are unavailable in this browser.</strong><p>Try a browser with WebGL support. You can still inspect the puzzle and load the sample layout.</p>{props.selectedTileId && props.onPlace && <button onClick={() => props.onPlace?.(props.selectedTileId!, { x: 500, y: 300 })}>Place selected tile at center</button>}</div></div> : !ready && <div className="canvas-loading">Drawing course…</div>}
   </div>;
 }

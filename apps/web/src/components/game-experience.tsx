@@ -11,6 +11,15 @@ import { dequantize, forceCost, isLegalPlacement, makePlacement, placementPoint,
 import { DemoSimulation, mockGameData } from "@/lib/mock-services";
 import type { Placement, Point, PuzzleDefinition, RunSnapshot, RunState } from "@/lib/types";
 
+const speeds = [0.5, 1, 2] as const;
+const statusLabels: Record<RunState, string> = {
+  planning: "PLANNING",
+  running: "RUNNING",
+  paused: "PAUSED",
+  "validation-pending": "CHECKING RESULT",
+  "solved-locked": "COURSE LOCKED",
+};
+
 export function GameExperience({ puzzle, archive = false }: { puzzle: PuzzleDefinition; archive?: boolean }) {
   const router = useRouter();
   const hydrated = useAppStore((state) => state.hydrated);
@@ -31,7 +40,7 @@ export function GameExperience({ puzzle, archive = false }: { puzzle: PuzzleDefi
   const simulation = useRef<DemoSimulation | null>(null);
   const mounted = useRef(true);
   useEffect(() => { mounted.current = true; return () => { mounted.current = false; simulation.current?.abort(); }; }, []);
-  useEffect(() => { if (hydrated) { setPlacements(result?.placements ?? savedDraft ?? []); setRunState(result ? "solved-locked" : "planning"); } }, [hydrated, puzzle.puzzle_id]); // Restore only when opening a puzzle.
+  useEffect(() => { if (hydrated) { setPlacements(result?.placements ?? savedDraft ?? []); setRunState(result ? "solved-locked" : "planning"); } }, [hydrated, puzzle.puzzle_id]);
   const locked = runState === "solved-locked";
   const planning = runState === "planning";
   const selectedPlacement = placements.find((item) => item.tile_id === selectedPlacementId);
@@ -56,21 +65,21 @@ export function GameExperience({ puzzle, archive = false }: { puzzle: PuzzleDefi
     if (!planning || !selectedPlacementId) return;
     savePlan(placements.filter((item) => item.tile_id !== selectedPlacementId)); setSelectedPlacementId(null); setMessage("");
   };
-  const selectInventory = (tileId: string) => { if (!planning) return; setSelectedTileId(tileId === selectedTileId ? null : tileId); setSelectedPlacementId(null); setMessage("Tap the course or drag this tile onto it."); };
-  const abort = () => { simulation.current?.abort(); simulation.current = null; setSnapshot(null); setRunState("planning"); setMessage("Run aborted. Your layout is ready to edit."); };
+  const selectInventory = (tileId: string) => { if (!planning) return; setSelectedTileId(tileId === selectedTileId ? null : tileId); setSelectedPlacementId(null); setMessage("Tap or drag to place."); };
+  const abort = () => { simulation.current?.abort(); simulation.current = null; setSnapshot(null); setRunState("planning"); setMessage("Run stopped."); };
   const play = () => {
     if (!planning) return;
     simulation.current?.abort();
     const run = new DemoSimulation(puzzle, [...placements]);
-    simulation.current = run; run.setRate(rate); setSnapshot(null); setRunState("running"); setAttempts((value) => value + 1); setMessage("Demo run in progress. You can pause or abort at any time.");
+    simulation.current = run; run.setRate(rate); setSnapshot(null); setRunState("running"); setAttempts((value) => value + 1); setMessage("Run in progress.");
     run.start((next) => { if (mounted.current) setSnapshot(next); }, async () => {
       if (!mounted.current) return;
-      setRunState("validation-pending"); setMessage("Checking the sample result locally…");
+      setRunState("validation-pending"); setMessage("Checking result…");
       const rejected = new URLSearchParams(window.location.search).get("demoReject") === "1";
       const response = await mockGameData.validate(puzzle, placements, rejected);
       if (!mounted.current) return;
       if (response.status === "rejected") { setSnapshot(null); setRunState("planning"); setMessage(response.reason); }
-      else { await setResult(response.result); setRunState("solved-locked"); setMessage("Demo result saved on this device."); router.push(`/result/${puzzle.puzzle_id}`); }
+      else { await setResult(response.result); setRunState("solved-locked"); router.push(`/result/${puzzle.puzzle_id}`); }
     });
   };
   const pauseOrResume = () => {
@@ -78,6 +87,7 @@ export function GameExperience({ puzzle, archive = false }: { puzzle: PuzzleDefi
     else if (runState === "paused") { simulation.current?.resume(); setRunState("running"); }
   };
   const changeRate = (value: 0.5 | 1 | 2) => { setRate(value); simulation.current?.setRate(value); };
+  const changeZoom = (amount: number) => setZoom((value) => Math.min(1.5, Math.max(0.75, Number((value + amount).toFixed(2)))));
   const nudge = (dx: number, dy: number) => { if (selectedPlacement) { const p = placementPoint(selectedPlacement); move(selectedPlacement.tile_id, { x: p.x + dx, y: p.y + dy }); } };
   useEffect(() => {
     if (!planning || !selectedPlacement) return;
@@ -98,32 +108,29 @@ export function GameExperience({ puzzle, archive = false }: { puzzle: PuzzleDefi
     if (!Number.isFinite(number)) return;
     move(selectedPlacement.tile_id, { ...placementPoint(selectedPlacement), [axis]: number });
   };
-  const status = locked ? "COURSE LOCKED" : runState === "running" ? "RUNNING" : runState === "paused" ? "PAUSED" : runState === "validation-pending" ? "CHECKING RESULT" : "PLANNING";
   return <div className="game-page">
     <header className="game-hero">
       <div className="daily-meta"><span>{archive ? "Archive" : "Daily puzzle"}</span><span aria-hidden="true">·</span><time>{prettyDate(puzzle.active_date)}</time></div>
-      <h1>{puzzle.title}</h1>
-      <p>{puzzle.subtitle}</p>
       <div className="hero-links"><span>{puzzle.difficulty}</span><Link href={archive ? "/archive" : "/leaderboard"}>{archive ? "Archive" : "Leaderboard"} <ArrowRight size={14} /></Link></div>
     </header>
 
     <section className="course-card" aria-label="Puzzle course">
       <div className="course-toolbar">
-        <div className="toolbar-title"><span className="live-dot" /> {status}</div>
+        <div className="toolbar-title"><span className="live-dot" /> {statusLabels[runState]}</div>
         <div className="course-progress">{snapshot ? `Step ${snapshot.step} · ${secondsForStep(snapshot.step)}s` : `${placements.length} / ${puzzle.force_tiles.length} tiles placed`}</div>
       </div>
       <CourseCanvas puzzle={puzzle} placements={placements} snapshot={snapshot} selectedTileId={selectedTileId} selectedPlacementId={selectedPlacementId} onPlace={place} onMove={move} onSelect={setSelectedPlacementId} canEdit={planning} zoom={zoom} grid={preferences.grid} coordinates={preferences.coordinates} labels={preferences.labels} />
       <div className="course-bottom">
         <span><Move size={15} /> {planning ? "Choose a force, then tap the course" : "Layout fixed for this run"}</span>
-        <div className="zoom-controls"><button onClick={() => setZoom((z) => Math.max(0.75, Number((z - 0.25).toFixed(2))))} aria-label="Zoom out"><ZoomOut size={16} /></button><span>{Math.round(zoom * 100)}%</span><button onClick={() => setZoom((z) => Math.min(1.5, Number((z + 0.25).toFixed(2))))} aria-label="Zoom in"><ZoomIn size={16} /></button></div>
+        <div className="zoom-controls"><button onClick={() => changeZoom(-0.25)} aria-label="Zoom out"><ZoomOut size={16} /></button><span>{Math.round(zoom * 100)}%</span><button onClick={() => changeZoom(0.25)} aria-label="Zoom in"><ZoomIn size={16} /></button></div>
       </div>
     </section>
 
     <section className="game-controls" aria-label="Game controls">
-      <div className="force-heading"><div><h2>Choose a force</h2><p>Place only what you need.</p></div><span>{unused.length} left</span></div>
+      <div className="force-heading"><h2>Choose a force</h2><span>{unused.length} left</span></div>
       <div className="tile-list">{puzzle.force_tiles.map((tile) => { const placed = placements.some((item) => item.tile_id === tile.tile_id); return <button key={tile.tile_id} className={`tile-row ${selectedTileId === tile.tile_id ? "active" : ""} ${placed ? "placed" : ""}`} disabled={!planning || placed} draggable={planning && !placed} onDragStart={(event) => event.dataTransfer.setData("text/puttential-tile", tile.tile_id)} onClick={() => selectInventory(tile.tile_id)}><span className="tile-symbol" style={{ background: tile.color }}><ArrowRight size={19} style={{ transform: `rotate(${Math.atan2(tile.direction.y, tile.direction.x)}rad)` }} /></span><span className="tile-info"><strong>{tile.name}</strong><small>{placed ? "Placed" : `${tile.magnitude_mn / 1000} N`}</small></span></button>; })}</div>
 
-      <div className="layout-tools"><button className="sample-button" disabled={!planning} onClick={() => { savePlan([...puzzle.sample_placements]); setSelectedTileId(null); setSelectedPlacementId(null); setMessage("Sample layout loaded. Press Play to watch a scripted success."); }}><Check size={15} /> Load sample layout</button><button className="subtle-button" disabled={!planning || placements.length === 0} onClick={() => { savePlan([]); setSelectedPlacementId(null); setMessage("Layout cleared. Start with a fresh idea."); }}><Trash2 size={15} /> Clear</button></div>
+      <div className="layout-tools"><button className="sample-button" aria-label="Load sample layout" disabled={!planning} onClick={() => { savePlan([...puzzle.sample_placements]); setSelectedTileId(null); setSelectedPlacementId(null); setMessage("Sample loaded. Press Play."); }}><Check size={15} /> Load sample</button><button className="subtle-button" disabled={!planning || placements.length === 0} onClick={() => { savePlan([]); setSelectedPlacementId(null); setMessage("Layout cleared."); }}><Trash2 size={15} /> Clear</button></div>
 
       {selectedPlacement && selectedTile && <div className="precision-card">
         <div className="precision-title"><span><i style={{ background: selectedTile.color }} />{selectedTile.name} position</span><button className="remove-tile" disabled={!planning} onClick={remove}><Trash2 size={14} /> Remove</button></div>
@@ -132,11 +139,11 @@ export function GameExperience({ puzzle, archive = false }: { puzzle: PuzzleDefi
 
       <div className="run-bar">
         <div className="run-metrics"><span><strong>{(forceCost(puzzle, placements) / 1000).toFixed(0)} N</strong> force</span><span><strong>{placements.length}</strong> tiles</span><span><strong>{attempts}</strong> tries</span></div>
-        <div className="run-controls">{planning ? <button className="play-button" aria-label="Play demo run" onClick={play}><Play size={18} fill="currentColor" /> Play</button> : locked ? <Link className="play-button" aria-label="View demo result" href={`/result/${puzzle.puzzle_id}`}>View result <ArrowRight size={17} /></Link> : runState === "validation-pending" ? <button className="play-button" disabled>Checking…</button> : <><button className="secondary-button" onClick={pauseOrResume}>{runState === "paused" ? <Play size={16} /> : <Pause size={16} />}{runState === "paused" ? "Resume" : "Pause"}</button><button className="secondary-button" onClick={abort}><RotateCcw size={16} /> Abort</button><div className="speed-row"><span>Speed</span>{([0.5, 1, 2] as const).map((value) => <button key={value} className={rate === value ? "active" : ""} onClick={() => changeRate(value)}>{value}×</button>)}</div></>}</div>
+        <div className="run-controls">{planning ? <button className="play-button" aria-label="Play demo run" onClick={play}><Play size={18} fill="currentColor" /> Play</button> : locked ? <Link className="play-button" aria-label="View demo result" href={`/result/${puzzle.puzzle_id}`}>View result <ArrowRight size={17} /></Link> : runState === "validation-pending" ? <button className="play-button" disabled>Checking…</button> : <><button className="secondary-button" onClick={pauseOrResume}>{runState === "paused" ? <Play size={16} /> : <Pause size={16} />}{runState === "paused" ? "Resume" : "Pause"}</button><button className="secondary-button" onClick={abort}><RotateCcw size={16} /> Abort</button><div className="speed-row"><span>Speed</span>{speeds.map((value) => <button key={value} className={rate === value ? "active" : ""} onClick={() => changeRate(value)}>{value}×</button>)}</div></>}</div>
       </div>
       {message && <p className="game-message" role="status">{message}</p>}
     </section>
 
-    <details className="how-to"><summary>How to play <ChevronDown size={17} /></summary><div><p><strong>1.</strong> Choose a force and place it where the ball will pass.</p><p><strong>2.</strong> Use fewer, weaker forces for a better score.</p><p><strong>3.</strong> Press Play and guide the ball home.</p><small>This prototype uses a scripted simulation. Results are saved only on this device.</small></div></details>
+    <details className="how-to"><summary>How to play <ChevronDown size={17} /></summary><div><p><strong>1.</strong> Place a force on the ball's path.</p><p><strong>2.</strong> Use less force for a better score.</p><p><strong>3.</strong> Press Play.</p><small>Scripted demo. Results stay on this device.</small></div></details>
   </div>;
 }
