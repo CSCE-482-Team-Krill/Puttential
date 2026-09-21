@@ -4,6 +4,7 @@ import type {
   GameEvent,
   GameSnapshot,
   Prediction,
+  PredictionOptions,
   PredictionSample,
   RenderState,
 } from './types';
@@ -19,10 +20,25 @@ function sample(state: RenderState): PredictionSample {
   };
 }
 
-export function predictFromSimulation(simulation: Simulation, command: GameCommand): Prediction {
+function positiveInteger(value: number, label: string): number {
+  if (!Number.isSafeInteger(value) || value < 1) throw new Error(`${label} must be a positive integer`);
+  return value;
+}
+
+export function predictFromSimulation(
+  simulation: Simulation,
+  command: GameCommand,
+  options?: PredictionOptions,
+): Prediction {
+  const maxTicks = positiveInteger(
+    options?.maxTicks ?? simulation.level.prediction?.maxTicks ?? 1200,
+    'prediction maxTicks',
+  );
+  const sampleEveryTicks = positiveInteger(
+    options?.sampleEveryTicks ?? simulation.level.prediction?.sampleEveryTicks ?? 8,
+    'prediction sampleEveryTicks',
+  );
   const prediction = simulation.cloneFromSnapshot();
-  const maxTicks = simulation.level.prediction?.maxTicks ?? 1200;
-  const sampleEveryTicks = simulation.level.prediction?.sampleEveryTicks ?? 8;
   const samples: PredictionSample[] = [sample(prediction.getRenderState())];
   const events: GameEvent[] = [];
   let ticksSimulated = 0;

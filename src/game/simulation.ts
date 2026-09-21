@@ -1,7 +1,6 @@
 import RAPIER from '@dimforge/rapier2d-compat';
 import {
   compareCommands,
-  dequantizeAngle,
   dequantizePosition,
   validateCommand,
 } from './commands';
@@ -19,6 +18,7 @@ import type {
   GameEvent,
   GameSnapshot,
   Prediction,
+  PredictionOptions,
   RenderState,
 } from './types';
 
@@ -216,9 +216,9 @@ export class Simulation implements Game {
     this.renderState = this.buildRenderState();
   }
 
-  predict(command: GameCommand): Prediction {
+  predict(command: GameCommand, options?: PredictionOptions): Prediction {
     this.assertAlive();
-    return predictFromSimulation(this, command);
+    return predictFromSimulation(this, command, options);
   }
 
   cloneFromSnapshot(snapshot = this.snapshot()): Simulation {
@@ -245,8 +245,6 @@ export class Simulation implements Game {
       if (command.type === 'move-field') {
         field.position.x = dequantizePosition(command.xQ);
         field.position.y = dequantizePosition(command.yQ);
-      } else if (command.type === 'rotate-field') {
-        field.angle = dequantizeAngle(command.angleQ);
       } else {
         field.enabled = command.enabled;
       }
@@ -321,7 +319,12 @@ export class Simulation implements Game {
     if (this.fields.length !== this.fieldDefinitions.length) {
       throw new Error('snapshot field count does not match level');
     }
-    for (const definition of this.fieldDefinitions) this.requiredField(definition.id);
+    for (const definition of this.fieldDefinitions) {
+      const state = this.requiredField(definition.id);
+      if (state.angle !== definition.angle) {
+        throw new Error(`snapshot changed fixed angle for field ${definition.id}`);
+      }
+    }
     for (const body of this.dynamicBodies) this.rigidBody(body.id);
     for (const command of this.queuedCommands) {
       validateCommand(command);
@@ -340,6 +343,24 @@ export class Simulation implements Game {
     }
     if (!Number.isSafeInteger(snapshot.tick) || snapshot.tick < 0) {
       throw new Error('snapshot tick must be a non-negative integer');
+    }
+    if (snapshot.fields.length !== this.fieldDefinitions.length) {
+      throw new Error('snapshot field count does not match level');
+    }
+    const fieldsById = new Map(snapshot.fields.map((field) => [field.id, field]));
+    if (fieldsById.size !== snapshot.fields.length) throw new Error('snapshot has duplicate field IDs');
+    for (const definition of this.fieldDefinitions) {
+      const state = fieldsById.get(definition.id);
+      if (state === undefined) throw new Error(`snapshot is missing field ${definition.id}`);
+      if (state.angle !== definition.angle) {
+        throw new Error(`snapshot changed fixed angle for field ${definition.id}`);
+      }
+    }
+    for (const command of snapshot.queuedCommands) {
+      validateCommand(command);
+      if (!this.fieldDefinitionById.has(command.fieldId)) {
+        throw new Error(`snapshot command references unknown field ${command.fieldId}`);
+      }
     }
   }
 

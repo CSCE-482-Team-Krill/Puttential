@@ -11,12 +11,6 @@ export type GameCommand =
       sequence: number;
     }>
   | Readonly<{
-      type: 'rotate-field';
-      fieldId: string;
-      angleQ: number;
-      sequence: number;
-    }>
-  | Readonly<{
       type: 'set-field-enabled';
       fieldId: string;
       enabled: boolean;
@@ -99,13 +93,18 @@ export type Prediction = Readonly<{
   finalSnapshot: GameSnapshot;
 }>;
 
+export type PredictionOptions = Readonly<{
+  maxTicks?: number;
+  sampleEveryTicks?: number;
+}>;
+
 export type Game = {
   queueCommand(command: GameCommand): void;
   step(): void;
   getRenderState(): RenderState;
   snapshot(): GameSnapshot;
   restore(snapshot: GameSnapshot): void;
-  predict(command: GameCommand): Prediction;
+  predict(command: GameCommand, options?: PredictionOptions): Prediction;
   destroy(): void;
 };
 

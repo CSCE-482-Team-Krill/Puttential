@@ -7,7 +7,6 @@ export type ConvexPieceDefinition = Readonly<{
 }>;
 
 export type SurfaceMaterial = Readonly<{
-  friction: number;
   restitution: number;
 }>;
 
@@ -19,8 +18,6 @@ export type DynamicBodyDefinition = Readonly<{
   angularVelocity?: number;
   density: number;
   material: SurfaceMaterial;
-  linearDamping?: number;
-  angularDamping?: number;
   ccd: boolean;
   canSleep?: boolean;
   pieces: readonly ConvexPieceDefinition[];
