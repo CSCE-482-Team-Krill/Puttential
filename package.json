@@ -1,0 +1,24 @@
+{
+  "name": "puttential",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./game": "./src/game/index.ts"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:game": "vitest run src/game/tests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dimforge/rapier2d-compat": "0.20.0"
+  },
+  "devDependencies": {
+    "typescript": "5.7.3",
+    "vitest": "2.1.9"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
