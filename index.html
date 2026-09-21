@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Puttential force-field puzzle proof of concept." />
+    <title>Puttential</title>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="masthead">
+        <a class="brand" href="/" aria-label="Puttential home">
+          <span class="brand-mark" aria-hidden="true">P</span>
+          <span>Puttential</span>
+        </a>
+
+        <nav class="game-controls" aria-label="Game controls">
+          <div class="field-chip">
+            <span class="field-icon" aria-hidden="true">→</span>
+            <span>Lift field</span>
+          </div>
+          <button class="icon-button" id="resetRunButton" type="button" disabled title="Reset run" aria-label="Reset run">↶</button>
+          <button class="icon-button" id="resetLayoutButton" type="button" disabled title="Reset field" aria-label="Reset field">⌂</button>
+          <button class="run-button" id="runButton" type="button" disabled>
+            <span id="runButtonIcon">▶</span>
+            <span id="runButtonText">Run</span>
+          </button>
+        </nav>
+      </header>
+
+      <section class="arena-panel" aria-label="Bar through gate puzzle">
+        <canvas id="arena" aria-label="Interactive physics arena"></canvas>
+
+        <div class="arena-heading">
+          <div>
+            <span class="level-number">01</span>
+            <h1>Thread the gap</h1>
+          </div>
+          <div class="run-state">
+            <span class="run-light" id="runLight"></span>
+            <span id="runState">Setting up</span>
+          </div>
+        </div>
+
+        <div class="readout" aria-live="polite">
+          <div><span>Tick</span><strong id="tickValue">0</strong></div>
+          <div><span>Angle</span><strong id="barAngleValue">0.0°</strong></div>
+          <div><span>Speed</span><strong id="speedValue">0.00</strong></div>
+        </div>
+
+        <div class="drag-hint" id="dragHint"><span>↕</span> Drag the field</div>
+
+        <div class="success-message" id="successMessage" role="status">
+          <span>Gate cleared</span>
+          <strong>Putt-ential realized.</strong>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="/src/frontend/main.ts"></script>
+  </body>
+</html>

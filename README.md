@@ -1,5 +1,14 @@
 # Puttential
 
+## Run the example
+
+```bash
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite. Drag the fixed lift field into position and press **Run**. The dotted line shows the core's deterministic prediction for the current setup.
+
 ## Frontend integration note
 
 The game core lives at `src/game/` and is intentionally independent of any UI framework, so a future `src/frontend/` can be added alongside it without changing the core.

@@ -1,0 +1,444 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@500;600;700;800&display=swap');
+
+:root {
+  color-scheme: dark;
+  font-family: 'Manrope', system-ui, sans-serif;
+  color: #edf5df;
+  background: #07191a;
+  font-synthesis: none;
+  --ink: #edf5df;
+  --muted: #8fa69d;
+  --line: rgba(191, 225, 202, 0.16);
+  --lime: #c7f36e;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 15% -15%, rgba(84, 135, 101, 0.2), transparent 35rem),
+    #07191a;
+}
+
+button {
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: rgba(237, 245, 223, 0.055);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+}
+
+button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(199, 243, 110, 0.42);
+  background: rgba(237, 245, 223, 0.11);
+}
+
+button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.app-shell {
+  width: min(1500px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 16px 0 24px;
+}
+
+.masthead {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 12px 10px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(17, 42, 40, 0.92);
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.18);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  color: var(--ink);
+  font-size: 1.04rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  text-decoration: none;
+}
+
+.brand-mark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 11px 5px 11px 5px;
+  color: #102319;
+  background: var(--lime);
+  box-shadow: 0 0 26px rgba(199, 243, 110, 0.16);
+}
+
+.game-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-chip {
+  display: flex;
+  height: 44px;
+  align-items: center;
+  gap: 9px;
+  margin-right: 4px;
+  padding: 0 13px 0 7px;
+  border: 1px solid rgba(199, 243, 110, 0.2);
+  border-radius: 10px;
+  color: #dff8af;
+  background: rgba(199, 243, 110, 0.06);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.field-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  color: #102319;
+  background: var(--lime);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.icon-button,
+.run-button {
+  height: 44px;
+  border-radius: 10px;
+}
+
+.icon-button {
+  width: 44px;
+  padding: 0;
+  font-size: 1.15rem;
+}
+
+.run-button {
+  display: flex;
+  min-width: 105px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-color: #dcffa0;
+  color: #162615;
+  background: var(--lime);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.run-button:hover:not(:disabled) {
+  border-color: #efffc9;
+  background: #d7fa8d;
+}
+
+.arena-panel {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1.42 / 1;
+  min-height: 500px;
+  margin-top: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #0c2928;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.24);
+}
+
+#arena {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+
+#arena.dragging {
+  cursor: grabbing;
+}
+
+.arena-heading {
+  position: absolute;
+  top: 20px;
+  right: 22px;
+  left: 22px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.arena-heading > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.level-number {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(237, 245, 223, 0.18);
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(7, 25, 26, 0.58);
+  font: 500 0.62rem 'DM Mono', monospace;
+}
+
+h1 {
+  margin: 0;
+  color: rgba(237, 245, 223, 0.86);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.run-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(237, 245, 223, 0.12);
+  border-radius: 8px;
+  color: var(--muted);
+  background: rgba(7, 25, 26, 0.64);
+  font: 500 0.6rem 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.run-light {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #71837c;
+}
+
+.run-light.active {
+  background: var(--lime);
+  box-shadow: 0 0 10px var(--lime);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.run-light.complete {
+  background: #ffb16f;
+  box-shadow: 0 0 10px #ffb16f;
+}
+
+.readout {
+  position: absolute;
+  bottom: 18px;
+  left: 18px;
+  display: flex;
+  overflow: hidden;
+  border: 1px solid rgba(237, 245, 223, 0.12);
+  border-radius: 9px;
+  background: rgba(7, 25, 26, 0.72);
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+}
+
+.readout div {
+  min-width: 76px;
+  padding: 9px 12px;
+  border-right: 1px solid rgba(237, 245, 223, 0.1);
+}
+
+.readout div:last-child {
+  border: 0;
+}
+
+.readout span,
+.readout strong {
+  display: block;
+}
+
+.readout span {
+  margin-bottom: 3px;
+  color: #748b82;
+  font: 500 0.52rem 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.readout strong {
+  font: 500 0.68rem 'DM Mono', monospace;
+}
+
+.drag-hint {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  padding: 8px 10px;
+  border: 1px solid rgba(199, 243, 110, 0.17);
+  border-radius: 8px;
+  color: #aecf82;
+  background: rgba(7, 25, 26, 0.66);
+  font: 500 0.58rem 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 160ms ease;
+}
+
+.drag-hint span {
+  margin-right: 5px;
+}
+
+.drag-hint.hidden {
+  opacity: 0;
+}
+
+.success-message {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max-content;
+  padding: 18px 24px;
+  border: 1px solid rgba(255, 220, 173, 0.46);
+  border-radius: 14px;
+  background: rgba(24, 45, 38, 0.9);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -42%) scale(0.96);
+  transition: opacity 220ms ease, transform 220ms ease;
+  backdrop-filter: blur(12px);
+}
+
+.success-message.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.success-message span,
+.success-message strong {
+  display: block;
+  text-align: center;
+}
+
+.success-message span {
+  margin-bottom: 4px;
+  color: #ffc586;
+  font: 500 0.61rem 'DM Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+}
+
+.success-message strong {
+  font-size: 1.08rem;
+}
+
+@keyframes pulse {
+  50% { opacity: 0.45; }
+}
+
+@media (max-width: 720px) {
+  .app-shell {
+    width: 100%;
+    padding: 0;
+  }
+
+  .masthead {
+    min-height: 64px;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+
+  .field-chip span:last-child {
+    display: none;
+  }
+
+  .field-chip {
+    padding-right: 7px;
+  }
+
+  .run-button {
+    min-width: 76px;
+    padding: 0 12px;
+  }
+
+  .arena-panel {
+    min-height: 440px;
+    margin-top: 0;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand > span:last-child,
+  .readout div:nth-child(2) {
+    display: none;
+  }
+
+  .game-controls {
+    gap: 5px;
+  }
+
+  .icon-button,
+  .run-button,
+  .field-chip {
+    height: 40px;
+  }
+
+  .icon-button {
+    width: 40px;
+  }
+
+  .arena-panel {
+    aspect-ratio: 1 / 1.05;
+  }
+
+  .arena-heading {
+    top: 13px;
+    right: 13px;
+    left: 13px;
+  }
+
+  .readout {
+    bottom: 12px;
+    left: 12px;
+  }
+
+  .drag-hint {
+    right: 12px;
+    bottom: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
