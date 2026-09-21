@@ -16,9 +16,7 @@ const level: Level = {
       position: { x: 0, y: 0 },
       angle: 0,
       density: 1,
-      material: { friction: 0.4, restitution: 0.1 },
-      linearDamping: 0.2,
-      angularDamping: 0.2,
+      material: { restitution: 0.1 },
       ccd: true,
       pieces: [{ id: 'bar-piece', localPolygon: rectangle(3, 0.5) }],
     },
@@ -108,6 +106,17 @@ describe('snapshots, replay, and prediction', () => {
     expect(target.snapshot().queuedCommands).toEqual(withQueue.queuedCommands);
   });
 
+  it('rejects snapshots that alter a field fixed angle', async () => {
+    const target = await game();
+    const snapshot = target.snapshot();
+    expect(() =>
+      target.restore({
+        ...snapshot,
+        fields: snapshot.fields.map((field) => ({ ...field, angle: field.angle + 0.1 })),
+      }),
+    ).toThrow(/fixed angle/);
+  });
+
   it('predicts with an isolated real simulation and matches live execution', async () => {
     const target = await game();
     const command: GameCommand = {
@@ -124,5 +133,20 @@ describe('snapshots, replay, and prediction', () => {
     for (let tick = 0; tick < prediction.ticksSimulated; tick += 1) target.step();
     expect(hashSnapshot(target.snapshot())).toBe(hashSnapshot(prediction.finalSnapshot));
     expect(target.getRenderState()).toEqual(prediction.finalState);
+  });
+
+  it('accepts caller-specific prediction length and sampling', async () => {
+    const target = await game();
+    const prediction = target.predict(
+      {
+        type: 'set-field-enabled',
+        fieldId: 'push',
+        enabled: true,
+        sequence: 1,
+      },
+      { maxTicks: 6, sampleEveryTicks: 2 },
+    );
+    expect(prediction.ticksSimulated).toBe(6);
+    expect(prediction.samples.map((sample) => sample.tick)).toEqual([0, 2, 4, 6]);
   });
 });

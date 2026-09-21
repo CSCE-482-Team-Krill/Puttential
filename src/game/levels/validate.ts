@@ -12,9 +12,7 @@ function assertVec2(vector: Vec2, label: string): void {
 }
 
 function assertMaterial(material: SurfaceMaterial, label: string): void {
-  assertFinite(material.friction, `${label}.friction`);
   assertFinite(material.restitution, `${label}.restitution`);
-  if (material.friction < 0) throw new Error(`${label}.friction must be non-negative`);
   if (material.restitution < 0 || material.restitution > 1) {
     throw new Error(`${label}.restitution must be between 0 and 1`);
   }
@@ -52,12 +50,6 @@ export function validateLevel(level: Level): void {
     }
     assertFinite(body.density, `body ${body.id}.density`);
     if (body.density <= 0) throw new Error(`body ${body.id}.density must be positive`);
-    if (body.linearDamping !== undefined && body.linearDamping < 0) {
-      throw new Error(`body ${body.id}.linearDamping must be non-negative`);
-    }
-    if (body.angularDamping !== undefined && body.angularDamping < 0) {
-      throw new Error(`body ${body.id}.angularDamping must be non-negative`);
-    }
     assertMaterial(body.material, `body ${body.id}.material`);
     if (body.pieces.length === 0) throw new Error(`body ${body.id} must have at least one piece`);
     assertUniqueIds(body.pieces.map((piece) => piece.id), `piece on body ${body.id}`);
