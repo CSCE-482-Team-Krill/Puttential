@@ -1,4 +1,4 @@
-export { ANGLE_QUANTUM, POSITION_QUANTUM, quantizeAngle, quantizePosition } from './commands';
+export { POSITION_QUANTUM, quantizePosition } from './commands';
 export { exampleBarPuzzle } from './levels/example-bar-puzzle';
 export type {
   ConvexPieceDefinition,
@@ -18,6 +18,7 @@ export type {
   GameEvent,
   GameSnapshot,
   Prediction,
+  PredictionOptions,
   PredictionSample,
   RenderBody,
   RenderField,

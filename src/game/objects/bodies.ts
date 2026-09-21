@@ -18,9 +18,11 @@ function colliderForPolygon(
 
 function configureCollider(
   descriptor: RAPIER.ColliderDesc,
-  material: Readonly<{ friction: number; restitution: number }>,
+  material: Readonly<{ restitution: number }>,
 ): RAPIER.ColliderDesc {
-  return descriptor.setFriction(material.friction).setRestitution(material.restitution);
+  // Ordinary surfaces are frictionless. A future friction field should apply
+  // overlap-based drag explicitly instead of relying on contact friction.
+  return descriptor.setFriction(0).setRestitution(material.restitution);
 }
 
 function createDynamicBody(world: RAPIER.World, definition: DynamicBodyDefinition): number {
@@ -30,8 +32,8 @@ function createDynamicBody(world: RAPIER.World, definition: DynamicBodyDefinitio
     .setRotation(definition.angle)
     .setLinvel(velocity.x, velocity.y)
     .setAngvel(definition.angularVelocity ?? 0)
-    .setLinearDamping(definition.linearDamping ?? 0)
-    .setAngularDamping(definition.angularDamping ?? 0)
+    .setLinearDamping(0)
+    .setAngularDamping(0)
     .setCanSleep(definition.canSleep ?? true)
     .setCcdEnabled(definition.ccd)
     .setUserData({ gameBodyId: definition.id });

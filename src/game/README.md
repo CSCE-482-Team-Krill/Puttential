@@ -8,7 +8,6 @@ This folder contains the deterministic, framework-independent TypeScript simulat
 import {
   createGame,
   exampleBarPuzzle,
-  quantizeAngle,
   quantizePosition,
 } from 'puttential/game';
 
@@ -16,8 +15,8 @@ const game = await createGame(exampleBarPuzzle);
 game.queueCommand({
   type: 'move-field',
   fieldId: 'lift-field',
-  xQ: quantizePosition(1.1),
-  yQ: quantizePosition(-2.3),
+  xQ: quantizePosition(-3.3),
+  yQ: quantizePosition(1.0),
   sequence: 1,
 });
 game.queueCommand({
@@ -31,11 +30,13 @@ const frame = game.getRenderState();
 game.destroy();
 ```
 
-`step()` advances exactly `1 / 120` second. Commands queued between steps are applied at the next tick in ascending `sequence` order. Position values use a `1 / 1024` world-unit grid; angles use 4096 increments per turn. Use `quantizePosition` and `quantizeAngle` at the input boundary.
+`step()` advances exactly `1 / 120` second. Commands queued between steps are applied at the next tick in ascending `sequence` order. Position values use a `1 / 1024` world-unit grid; use `quantizePosition` at the input boundary. A field's shape, angle, force direction, and strength come from the level and cannot be changed by player commands.
 
 `getRenderState()` returns plain data with world-space polygons and no Rapier handles. `snapshot()` includes both Rapier state and all authoritative TypeScript state. `restore()` requires the same level ID, level version, and simulation version.
 
-`predict(command)` restores the live snapshot into a separate Rapier world, applies the exact command, and runs fixed ticks until every moving body sleeps or the level's prediction limit is reached. It never changes the live game.
+`predict(command, options?)` restores the live snapshot into a separate Rapier world, applies the exact command, and runs fixed ticks until every moving body sleeps or the prediction limit is reached. A caller can override the level defaults with `{ maxTicks, sampleEveryTicks }`; it never changes the live game.
+
+Ordinary motion and collisions are frictionless: colliders use zero contact friction and dynamic bodies use zero linear and angular damping. A future friction field should apply velocity-opposing force from polygon overlap so drag exists only inside that field.
 
 ## Determinism contract
 
