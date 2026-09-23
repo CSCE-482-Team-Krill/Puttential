@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =========================
+// User
+// =========================
+
+model User {
+  id        String   @id @default(uuid()) @map("user_id")
+  username  String   @unique
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+
+  attempts  Attempt[]
+  solutions Solution[]
+  stats     UserStats?
+
+  @@map("users")
+}
+
+// =========================
+// Puzzle
+// =========================
+
+model Puzzle {
+  id             String   @id @default(uuid()) @map("puzzle_id")
+  date           DateTime @unique @db.Date
+  seed           String
+  configuration  Json
+  difficulty     Int
+  authorSolution Json?    @map("author_solution")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  attempts  Attempt[]
+  solutions Solution[]
+
+  @@map("puzzles")
+}
+
+// =========================
+// Attempt
+// =========================
+
+model Attempt {
+  id             String   @id @default(uuid()) @map("attempt_id")
+  userId         String   @map("user_id")
+  puzzleId       String   @map("puzzle_id")
+  submittedAt    DateTime @default(now()) @map("submitted_at")
+  success        Boolean  @default(false)
+  simulationTime Float?   @map("simulation_time")
+  forceCost      Int?     @map("force_cost")
+  tileCount      Int?     @map("tile_count")
+  pathLength     Float?   @map("path_length")
+
+  user     User      @relation(fields: [userId], references: [id])
+  puzzle   Puzzle    @relation(fields: [puzzleId], references: [id])
+  solution Solution?
+
+  @@index([userId])
+  @@index([puzzleId])
+  @@map("attempts")
+}
+
+// =========================
+// Solution
+// =========================
+
+model Solution {
+  id              String   @id @default(uuid()) @map("solution_id")
+  userId          String   @map("user_id")
+  puzzleId        String   @map("puzzle_id")
+  attemptId       String   @unique @map("attempt_id")
+  placementData   Json     @map("placement_data")
+  dailyRank       Int?     @map("daily_rank")
+  dailyPercentile Float?   @map("daily_percentile")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  puzzle  Puzzle  @relation(fields: [puzzleId], references: [id])
+  attempt Attempt @relation(fields: [attemptId], references: [id])
+
+  @@index([userId])
+  @@index([puzzleId])
+  @@map("solutions")
+}
+
+// =========================
+// User Stats
+// =========================
+
+model UserStats {
+  userId            String @id @map("user_id")
+  gamesPlayed       Int    @default(0) @map("games_played")
+  gamesSolved       Int    @default(0) @map("games_solved")
+  currentStreak     Int    @default(0) @map("current_streak")
+  bestStreak        Int    @default(0) @map("best_streak")
+  averagePercentile Float  @default(0) @map("average_percentile")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("user_stats")
+}
