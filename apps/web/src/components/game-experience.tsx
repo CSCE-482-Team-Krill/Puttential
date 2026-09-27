@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Check, ChevronDown, Move, Pause, Play, RotateCcw, Trash2, ZoomIn, ZoomOut } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, CalendarDays, Check, Flame, HelpCircle, Lightbulb, Pause, Play, RotateCcw, Trash2, Trophy } from "lucide-react";
 import { CourseCanvas } from "./course-canvas";
 import { useAppStore } from "@/lib/app-store";
 import { prettyDate } from "@/lib/fixtures";
-import { dequantize, forceCost, isLegalPlacement, makePlacement, placementPoint, secondsForStep } from "@/lib/geometry";
+import { dequantize, isLegalPlacement, makePlacement, placementPoint, secondsForStep } from "@/lib/geometry";
 import { DemoSimulation, mockGameData } from "@/lib/mock-services";
 import type { Placement, Point, PuzzleDefinition, RunSnapshot, RunState } from "@/lib/types";
 
@@ -34,7 +34,6 @@ export function GameExperience({ puzzle, archive = false }: { puzzle: PuzzleDefi
   const [runState, setRunState] = useState<RunState>("planning");
   const [snapshot, setSnapshot] = useState<RunSnapshot | null>(null);
   const [rate, setRate] = useState<0.5 | 1 | 2>(1);
-  const [zoom, setZoom] = useState(1);
   const [attempts, setAttempts] = useState(0);
   const [message, setMessage] = useState("");
   const simulation = useRef<DemoSimulation | null>(null);
@@ -87,7 +86,6 @@ export function GameExperience({ puzzle, archive = false }: { puzzle: PuzzleDefi
     else if (runState === "paused") { simulation.current?.resume(); setRunState("running"); }
   };
   const changeRate = (value: 0.5 | 1 | 2) => { setRate(value); simulation.current?.setRate(value); };
-  const changeZoom = (amount: number) => setZoom((value) => Math.min(1.5, Math.max(0.75, Number((value + amount).toFixed(2)))));
   const nudge = (dx: number, dy: number) => { if (selectedPlacement) { const p = placementPoint(selectedPlacement); move(selectedPlacement.tile_id, { x: p.x + dx, y: p.y + dy }); } };
   useEffect(() => {
     if (!planning || !selectedPlacement) return;
@@ -108,42 +106,59 @@ export function GameExperience({ puzzle, archive = false }: { puzzle: PuzzleDefi
     if (!Number.isFinite(number)) return;
     move(selectedPlacement.tile_id, { ...placementPoint(selectedPlacement), [axis]: number });
   };
+  const displayDate = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${puzzle.active_date}T12:00:00Z`));
   return <div className="game-page">
     <header className="game-hero">
-      <div className="daily-meta"><span>{archive ? "Archive" : "Daily puzzle"}</span><span aria-hidden="true">·</span><time>{prettyDate(puzzle.active_date)}</time></div>
-      <div className="hero-links"><span>{puzzle.difficulty}</span><Link href={archive ? "/archive" : "/leaderboard"}>{archive ? "Archive" : "Leaderboard"} <ArrowRight size={14} /></Link></div>
+      <div>
+        <div className="daily-meta"><span>{archive ? "Archive puzzle" : "Daily puzzle"}</span><span aria-hidden="true">·</span><time>{displayDate}</time></div>
+        <h1>{archive ? puzzle.title : <>Daily challenge <span>#126</span></>}</h1>
+        <p>{archive ? prettyDate(puzzle.active_date) : "One course. Your own way to the cup."}</p>
+      </div>
+      <details className="help-menu">
+        <summary><HelpCircle size={16} /> How to play</summary>
+        <div><p><strong>1.</strong> Choose a force tile.</p><p><strong>2.</strong> Place it on the course.</p><p><strong>3.</strong> Preview your line.</p><small>This is a scripted frontend preview. The physics engine connects later.</small></div>
+      </details>
     </header>
 
-    <section className="course-card" aria-label="Puzzle course">
-      <div className="course-toolbar">
-        <div className="toolbar-title"><span className="live-dot" /> {statusLabels[runState]}</div>
-        <div className="course-progress">{snapshot ? `Step ${snapshot.step} · ${secondsForStep(snapshot.step)}s` : `${placements.length} / ${puzzle.force_tiles.length} tiles placed`}</div>
-      </div>
-      <CourseCanvas puzzle={puzzle} placements={placements} snapshot={snapshot} selectedTileId={selectedTileId} selectedPlacementId={selectedPlacementId} onPlace={place} onMove={move} onSelect={setSelectedPlacementId} canEdit={planning} zoom={zoom} grid={preferences.grid} coordinates={preferences.coordinates} labels={preferences.labels} />
-      <div className="course-bottom">
-        <span><Move size={15} /> {planning ? "Choose a force, then tap the course" : "Layout fixed for this run"}</span>
-        <div className="zoom-controls"><button onClick={() => changeZoom(-0.25)} aria-label="Zoom out"><ZoomOut size={16} /></button><span>{Math.round(zoom * 100)}%</span><button onClick={() => changeZoom(0.25)} aria-label="Zoom in"><ZoomIn size={16} /></button></div>
-      </div>
+    <div className="game-layout">
+      <section className="course-card" aria-label="Puzzle course">
+        <div className="course-toolbar">
+          <div><span className="course-kicker">{archive ? "Archive course" : "Today's course"}</span><h2>{puzzle.title}</h2></div>
+          <div className="course-status"><span className="difficulty-badge">{puzzle.difficulty}</span><small>{statusLabels[runState]}</small></div>
+        </div>
+        <CourseCanvas puzzle={puzzle} placements={placements} snapshot={snapshot} selectedTileId={selectedTileId} selectedPlacementId={selectedPlacementId} onPlace={place} onMove={move} onSelect={setSelectedPlacementId} canEdit={planning} zoom={1} grid={preferences.grid} coordinates={preferences.coordinates} labels={preferences.labels} />
+        <div className="course-bottom">
+          <div className="course-legend"><span><i className="legend-ball" /> Ball</span><span><i className="legend-sand" /> Sand</span><span><i className="legend-water" /> Water</span></div>
+          <span className="course-progress">{snapshot ? `Step ${snapshot.step} · ${secondsForStep(snapshot.step)}s` : `${placements.length} / ${puzzle.force_tiles.length} tiles placed`}</span>
+          <span className="preview-note">Illustrative course preview</span>
+        </div>
+      </section>
+
+      <aside className="game-sidebar">
+        <section className="game-controls" aria-label="Game controls">
+          <span className="course-kicker">Your toolkit</span>
+          <div className="force-heading"><div><h2>Force tiles</h2><span>{unused.length} left</span></div><p>Choose a tile to preview its strength.</p></div>
+          <div className="tile-list">{puzzle.force_tiles.map((tile) => { const placed = placements.some((item) => item.tile_id === tile.tile_id); const strength = tile.magnitude_mn <= 1000 ? "Weak" : tile.magnitude_mn <= 2000 ? "Medium" : "Strong"; return <button key={tile.tile_id} className={`tile-row ${selectedTileId === tile.tile_id ? "active" : ""} ${placed ? "placed" : ""}`} disabled={!planning || placed} draggable={planning && !placed} onDragStart={(event) => event.dataTransfer.setData("text/puttential-tile", tile.tile_id)} onClick={() => selectInventory(tile.tile_id)}><span className="tile-symbol" style={{ background: tile.color }}><ArrowRight size={17} style={{ transform: `rotate(${Math.atan2(tile.direction.y, tile.direction.x)}rad)` }} /></span><span className="tile-info"><strong>{tile.name}</strong><small>{placed ? "Placed" : strength}</small></span><span className="tile-cost">{tile.magnitude_mn / 1000} pt</span></button>; })}</div>
+
+          {selectedPlacement && selectedTile && <div className="precision-card">
+            <div className="precision-title"><span><i style={{ background: selectedTile.color }} />{selectedTile.name} position</span><button className="remove-tile" disabled={!planning} onClick={remove}><Trash2 size={13} /> Remove</button></div>
+            <div className="precision-controls"><div className="coordinate-fields"><label>X<input aria-label="X position" type="number" step="0.001" value={dequantize(selectedPlacement.x_q)} disabled={!planning} onChange={(event) => changeCoord("x", event.target.value)} /></label><label>Y<input aria-label="Y position" type="number" step="0.001" value={dequantize(selectedPlacement.y_q)} disabled={!planning} onChange={(event) => changeCoord("y", event.target.value)} /></label></div><div className="nudge-buttons"><button disabled={!planning} onClick={() => nudge(-1, 0)} aria-label="Nudge tile left"><ArrowLeft size={14} /></button><button disabled={!planning} onClick={() => nudge(0, -1)} aria-label="Nudge tile up"><ArrowUp size={14} /></button><button disabled={!planning} onClick={() => nudge(0, 1)} aria-label="Nudge tile down"><ArrowDown size={14} /></button><button disabled={!planning} onClick={() => nudge(1, 0)} aria-label="Nudge tile right"><ArrowRight size={14} /></button></div></div>
+          </div>}
+
+          <div className="toolkit-meta"><span>Attempts today</span><strong>{attempts}</strong></div>
+          <div className="run-controls">{planning ? <button className="play-button" aria-label="Play demo run" onClick={play}><Play size={16} fill="currentColor" /> Play preview <ArrowRight size={16} /></button> : locked ? <Link className="play-button" aria-label="View demo result" href={`/result/${puzzle.puzzle_id}`}>View result <ArrowRight size={16} /></Link> : runState === "validation-pending" ? <button className="play-button" disabled>Checking…</button> : <><div className="run-action-row"><button className="secondary-button" onClick={pauseOrResume}>{runState === "paused" ? <Play size={15} /> : <Pause size={15} />}{runState === "paused" ? "Resume" : "Pause"}</button><button className="secondary-button" onClick={abort}><RotateCcw size={15} /> Abort</button></div><div className="speed-row"><span>Preview speed</span><div>{speeds.map((value) => <button key={value} className={rate === value ? "active" : ""} onClick={() => changeRate(value)}>{value}×</button>)}</div></div></>}</div>
+          <div className="layout-tools"><button className="sample-button" aria-label="Load sample layout" disabled={!planning} onClick={() => { savePlan([...puzzle.sample_placements]); setSelectedTileId(null); setSelectedPlacementId(null); setMessage("Sample loaded. Press Play preview."); }}><Check size={14} /> Load sample layout</button><button className="subtle-button" disabled={!planning || placements.length === 0} onClick={() => { savePlan([]); setSelectedPlacementId(null); setMessage("Layout cleared."); }}><RotateCcw size={13} /> Reset preview</button></div>
+          {message && <p className="game-message" role="status">{message}</p>}
+        </section>
+
+        <section className="daily-tip"><span><Lightbulb size={16} fill="currentColor" /></span><div><strong>Today's tip</strong><p>Sand slows the ball down. Use it to your advantage near the cup.</p></div></section>
+      </aside>
+    </div>
+
+    <section className="feature-strip" aria-label="Daily challenge features">
+      <div><span className="feature-icon green"><CalendarDays size={18} /></span><p><strong>One puzzle each day</strong><small>Come back tomorrow for a new course.</small></p></div>
+      <div><span className="feature-icon gold"><Trophy size={18} /></span><p><strong>Find your best solution</strong><small>Use less force to climb the leaderboard.</small></p></div>
+      <div><span className="feature-icon coral"><Flame size={18} /></span><p><strong>Keep the streak alive</strong><small>You're on a 14 day run.</small></p></div>
     </section>
-
-    <section className="game-controls" aria-label="Game controls">
-      <div className="force-heading"><h2>Choose a force</h2><span>{unused.length} left</span></div>
-      <div className="tile-list">{puzzle.force_tiles.map((tile) => { const placed = placements.some((item) => item.tile_id === tile.tile_id); return <button key={tile.tile_id} className={`tile-row ${selectedTileId === tile.tile_id ? "active" : ""} ${placed ? "placed" : ""}`} disabled={!planning || placed} draggable={planning && !placed} onDragStart={(event) => event.dataTransfer.setData("text/puttential-tile", tile.tile_id)} onClick={() => selectInventory(tile.tile_id)}><span className="tile-symbol" style={{ background: tile.color }}><ArrowRight size={19} style={{ transform: `rotate(${Math.atan2(tile.direction.y, tile.direction.x)}rad)` }} /></span><span className="tile-info"><strong>{tile.name}</strong><small>{placed ? "Placed" : `${tile.magnitude_mn / 1000} N`}</small></span></button>; })}</div>
-
-      <div className="layout-tools"><button className="sample-button" aria-label="Load sample layout" disabled={!planning} onClick={() => { savePlan([...puzzle.sample_placements]); setSelectedTileId(null); setSelectedPlacementId(null); setMessage("Sample loaded. Press Play."); }}><Check size={15} /> Load sample</button><button className="subtle-button" disabled={!planning || placements.length === 0} onClick={() => { savePlan([]); setSelectedPlacementId(null); setMessage("Layout cleared."); }}><Trash2 size={15} /> Clear</button></div>
-
-      {selectedPlacement && selectedTile && <div className="precision-card">
-        <div className="precision-title"><span><i style={{ background: selectedTile.color }} />{selectedTile.name} position</span><button className="remove-tile" disabled={!planning} onClick={remove}><Trash2 size={14} /> Remove</button></div>
-        <div className="precision-controls"><div className="coordinate-fields"><label>X<input aria-label="X position" type="number" step="0.001" value={dequantize(selectedPlacement.x_q)} disabled={!planning} onChange={(event) => changeCoord("x", event.target.value)} /></label><label>Y<input aria-label="Y position" type="number" step="0.001" value={dequantize(selectedPlacement.y_q)} disabled={!planning} onChange={(event) => changeCoord("y", event.target.value)} /></label></div><div className="nudge-buttons"><button disabled={!planning} onClick={() => nudge(-1, 0)} aria-label="Nudge tile left"><ArrowLeft size={16} /></button><button disabled={!planning} onClick={() => nudge(0, -1)} aria-label="Nudge tile up"><ArrowUp size={16} /></button><button disabled={!planning} onClick={() => nudge(0, 1)} aria-label="Nudge tile down"><ArrowDown size={16} /></button><button disabled={!planning} onClick={() => nudge(1, 0)} aria-label="Nudge tile right"><ArrowRight size={16} /></button></div><span className="keyboard-hint">Arrow keys · Shift for ¼</span></div>
-      </div>}
-
-      <div className="run-bar">
-        <div className="run-metrics"><span><strong>{(forceCost(puzzle, placements) / 1000).toFixed(0)} N</strong> force</span><span><strong>{placements.length}</strong> tiles</span><span><strong>{attempts}</strong> tries</span></div>
-        <div className="run-controls">{planning ? <button className="play-button" aria-label="Play demo run" onClick={play}><Play size={18} fill="currentColor" /> Play</button> : locked ? <Link className="play-button" aria-label="View demo result" href={`/result/${puzzle.puzzle_id}`}>View result <ArrowRight size={17} /></Link> : runState === "validation-pending" ? <button className="play-button" disabled>Checking…</button> : <><button className="secondary-button" onClick={pauseOrResume}>{runState === "paused" ? <Play size={16} /> : <Pause size={16} />}{runState === "paused" ? "Resume" : "Pause"}</button><button className="secondary-button" onClick={abort}><RotateCcw size={16} /> Abort</button><div className="speed-row"><span>Speed</span>{speeds.map((value) => <button key={value} className={rate === value ? "active" : ""} onClick={() => changeRate(value)}>{value}×</button>)}</div></>}</div>
-      </div>
-      {message && <p className="game-message" role="status">{message}</p>}
-    </section>
-
-    <details className="how-to"><summary>How to play <ChevronDown size={17} /></summary><div><p><strong>1.</strong> Place a force on the ball's path.</p><p><strong>2.</strong> Use less force for a better score.</p><p><strong>3.</strong> Press Play.</p><small>Scripted demo. Results stay on this device.</small></div></details>
   </div>;
 }
