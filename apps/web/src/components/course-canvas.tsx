@@ -25,7 +25,7 @@ type Props = {
 type PixiModule = typeof import("pixi.js");
 type Ready = { app: PIXI.Application; world: PIXI.Container; pixi: PixiModule };
 const flat = (points: Point[]) => points.flatMap((p) => [p.x, p.y]);
-const terrainColors: Record<string, number> = { grass: 0x79bd88, sand: 0xe9cc83, ice: 0x9cdeec, gravel: 0xb8b7a1, mud: 0x937351, water: 0x64b9d5 };
+const terrainColors: Record<string, number> = { grass: 0x9ed69c, sand: 0xe9ca83, ice: 0x89d2dc, gravel: 0xb8b7a1, mud: 0x71b97a, water: 0x72c8d3 };
 
 export function CourseCanvas(props: Props) {
   const host = useRef<HTMLDivElement>(null);
@@ -67,7 +67,10 @@ export function CourseCanvas(props: Props) {
     world.position.set(500, 300);
     world.scale.set(zoom);
 
-    const backdrop = new pixi.Graphics().roundRect(8, 8, 984, 584, 46).fill(0x426958).roundRect(24, 24, 952, 552, 36).fill(0xd9b486).roundRect(32, 32, 936, 536, 30).fill(0x79bd88);
+    const backdrop = new pixi.Graphics()
+      .roundRect(8, 8, 984, 584, 30).fill(0x9ed69c)
+      .ellipse(135, 135, 335, 150).fill({ color: 0x7fc486, alpha: 0.72 })
+      .ellipse(880, 600, 350, 185).fill({ color: 0x58ae6c, alpha: 0.72 });
     world.addChild(backdrop);
     for (const region of puzzle.terrain) {
       if (region.kind === "grass") continue;
@@ -98,9 +101,9 @@ export function CourseCanvas(props: Props) {
     }
     for (const object of puzzle.objects) {
       const g = new pixi.Graphics();
-      if (object.kind === "wall") g.roundRect(-object.width / 2, -object.height / 2, object.width, object.height, 8).fill(0xe9e6cc).roundRect(-object.width / 2, -object.height / 2, object.width, object.height, 8).stroke({ color: 0x648172, width: 5 });
-      else if (object.kind === "bumper") g.circle(0, 0, object.width / 2).fill(0xf9aa84).circle(0, 0, object.width / 2 - 7).stroke({ color: 0xffefd8, width: 5 });
-      else g.roundRect(-object.width / 2, -object.height / 2, object.width, object.height, 12).fill(0x536b8e).roundRect(-object.width / 2 + 6, -object.height / 2 + 6, object.width - 12, object.height - 12, 8).stroke({ color: 0xd5edff, width: 3 });
+      if (object.kind === "wall") g.roundRect(-object.width / 2, -object.height / 2, object.width, object.height, 10).fill(0x2f7454).roundRect(-object.width / 2 + 4, -object.height / 2 + 4, object.width - 8, object.height - 8, 7).fill({ color: 0x4b9468, alpha: 0.55 });
+      else if (object.kind === "bumper") g.circle(0, 0, object.width / 2).fill(0xffa28e).circle(0, 0, object.width / 2 - 8).stroke({ color: 0xffe8d8, width: 5 });
+      else g.roundRect(-object.width / 2, -object.height / 2, object.width, object.height, 12).fill(0x387c59).roundRect(-object.width / 2 + 6, -object.height / 2 + 6, object.width - 12, object.height - 12, 8).stroke({ color: 0xdaf4d5, width: 3 });
       g.position.set(object.x, object.y); g.rotation = object.rotation ?? 0; world.addChild(g);
       if (labels && object.kind === "fan") { const t = new pixi.Text({ text: "FAN", style: { fill: 0xffffff, fontSize: 14, fontWeight: "bold", fontFamily: "Arial" } }); t.anchor.set(0.5); t.position.set(object.x, object.y); world.addChild(t); }
     }
