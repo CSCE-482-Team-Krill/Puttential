@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Archive, ChartNoAxesColumn, CircleUserRound, Home, Settings2 } from "lucide-react";
+import { Archive, CalendarDays, ChartNoAxesColumn, Flame, Settings2, Trophy } from "lucide-react";
 import { useAppStore } from "@/lib/app-store";
 
 const links = [
-  { href: "/", label: "Today", icon: Home },
+  { href: "/", label: "Daily", icon: CalendarDays },
   { href: "/archive", label: "Archive", icon: Archive },
-  { href: "/leaderboard", label: "Leaderboard", icon: ChartNoAxesColumn },
+  { href: "/profile", label: "Stats", icon: ChartNoAxesColumn },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/settings", label: "Settings", icon: Settings2 },
 ];
 
 const linkClass = (path: string, href: string, base: string) =>
@@ -21,11 +23,9 @@ export function SiteHeader() {
     <div className="header-inner">
       <Link className="brand" href="/" aria-label="Puttential home"><span className="brand-mark"><span className="brand-ball" /></span><span>puttential<span className="brand-period">.</span></span></Link>
       <nav className="desktop-nav" aria-label="Main navigation">{links.map(({ href, label, icon: Icon }) => <Link key={href} href={href} title={label} aria-label={label} className={linkClass(path, href, "nav-link")}><Icon size={19} /><span>{label}</span></Link>)}</nav>
-      <div className="header-actions"><Link href="/settings" className="icon-button" aria-label="Settings"><Settings2 size={19} /></Link><Link href={user ? "/profile" : "/sign-in"} className="avatar-button" aria-label={user ? "Your profile" : "Sign in"}>{user ? user.name.slice(0, 1).toUpperCase() : <CircleUserRound size={20} />}</Link></div>
+      <div className="header-actions"><Link href={user ? "/profile" : "/sign-in"} className="streak-pill" aria-label={user ? "View your 14 day streak" : "Sign in to start a streak"}><Flame size={15} fill="currentColor" /><span>{user ? "14 day streak" : "Start a streak"}</span></Link></div>
       <nav className="mobile-nav" aria-label="Mobile navigation">
-        {links.slice(1).map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} className={linkClass(path, href, "mobile-nav-link")}><Icon size={19} /></Link>)}
-        <Link href={user ? "/profile" : "/sign-in"} aria-label={user ? "Your profile" : "Sign in"} className={linkClass(path, user ? "/profile" : "/sign-in", "mobile-nav-link")}><CircleUserRound size={19} /></Link>
-        <Link href="/settings" aria-label="Settings" className={linkClass(path, "/settings", "mobile-nav-link")}><Settings2 size={19} /></Link>
+        {links.slice(1).map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} className={linkClass(path, href, "mobile-nav-link")}><Icon size={18} /></Link>)}
       </nav>
     </div>
   </header>;
