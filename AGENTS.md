@@ -2,7 +2,7 @@
 
 ## Project Structure & Assets
 
-UI reference images live in `mock ui/`; research, a basic HTML sketch, and two Next.js/TypeScript mockups live in `ui_ux_research/`. `design_a/` uses the green palette and `design_b/` uses blue glass styling. Each has its page in `app/page.tsx` and styles in `app/globals.css`. Both use sample data and have no backend or physics engine yet.
+UI reference images live in `mock ui/`; research, a basic HTML sketch, and three Next.js/TypeScript mockups live in `ui_ux_research/`. `design_a/` uses the green palette and `design_b/` uses blue glass styling, and `design_c/` combines that glass styling with A’s green palette. Each has its page in `app/page.tsx` and styles in `app/globals.css`. All use sample data and have no backend or physics engine yet.
 
 ## Game Design Principles
 
@@ -10,7 +10,7 @@ Puttential is a web-first daily physics puzzle. Every player must receive the sa
 
 ## Development and Verification
 
-From either `ui_ux_research/design_a/` or `ui_ux_research/design_b/`, run `npm install` to install dependencies, `npm run dev` to preview locally, and `npm run build` to compile and type-check. No automated test command is configured. Inspect image changes at native size and use `git diff --stat` and `git status --short` to review changes.
+From `ui_ux_research/design_a/`, `design_b/`, or `design_c/`, run `npm install` to install dependencies, `npm run dev` to preview locally, and `npm run build` to compile and type-check. No automated test command is configured. Inspect image changes at native size and use `git diff --stat` and `git status --short` to review changes.
 
 ## Naming and Editing Conventions
 
