@@ -1,5 +1,6 @@
 export { POSITION_QUANTUM, quantizePosition } from './commands';
 export { exampleBarPuzzle, exampleGoal } from './levels/example-bar-puzzle';
+export { radialRelay, radialRelayGoal } from './levels/radial-relay';
 export type {
   ConvexPieceDefinition,
   DynamicBodyDefinition,

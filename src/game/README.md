@@ -52,6 +52,10 @@ Fields accept any simple polygon with either winding, including concave outlines
 
 `strength` is force per unit of body area. The force points toward the source for an attractor and away for a repulsor, with a 0.05 world-unit softening radius near the source. Uniform fields continue to use `forceDensityLocal` and may omit `kind`. A simple polygon cannot contain holes or crossing edges.
 
+## Alternative level: Radial Relay
+
+`radialRelay` and `radialRelayGoal` are exported from `puttential/game`. A puck starts in the lower-left chamber. The concave `launch` repulsor sends it through the upper passage above the divider; the `catch` attractor guides it into the upper-right goal. The goal requires the puck center to remain inside its bounds for 0.5 seconds. Both fields start disabled, so enable them with `set-field-enabled` commands to play the preset route. They can also be moved with `move-field` commands for alternate trajectories.
+
 `getRenderState()` returns plain data with world-space polygons and no Rapier handles. `snapshot()` includes both Rapier state and all authoritative TypeScript state. `restore()` requires the same level ID, level version, and simulation version.
 
 `predict(commands, options?)` restores the live snapshot into a separate Rapier world, applies one command or an array of commands, and runs fixed ticks until every moving body sleeps or the prediction limit is reached. A caller can override the level defaults with `{ maxTicks, sampleEveryTicks }`; it never changes the live game.
