@@ -1,7 +1,7 @@
 {
   "name": "puttential",
   "private": true,
-  "workspaces": ["apps/web"],
+  "workspaces": ["Frontend"],
   "scripts": {
     "dev": "npm run dev -w @puttential/web",
     "build": "npm run build -w @puttential/web",

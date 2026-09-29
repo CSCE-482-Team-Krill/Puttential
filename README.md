@@ -34,4 +34,4 @@ npm run test:e2e
 npm run build
 ```
 
-The Next.js application is in `apps/web`. The typed service and simulation interfaces are in `src/lib/ports.ts`, with browser-only implementations in `src/lib/mock-services.ts`. Future backend and WASM integrations should replace those implementations while preserving the canonical puzzle and placement models.
+The Next.js application is in `Frontend`. The typed service and simulation interfaces are in `Frontend/src/lib/ports.ts`, with browser-only implementations in `Frontend/src/lib/mock-services.ts`. Future backend and WASM integrations should replace those implementations while preserving the canonical puzzle and placement models.

@@ -1,11 +1,19 @@
-node_modules/
-.next/
-.npm-cache/
+# Workspace dependencies and npm cache
+/node_modules/
+/Frontend/node_modules/
+/.npm-cache/
+
+# Frontend build and generated type output
+/Frontend/.next/
+/Frontend/next-env.d.ts
+/Frontend/*.tsbuildinfo
+
+# Frontend test output
+/Frontend/coverage/
+/Frontend/playwright-report/
+/Frontend/test-results/
+
+# Local tooling output, environment overrides, and logs
 .playwright-mcp/
-coverage/
-playwright-report/
-test-results/
-*.tsbuildinfo
-next-env.d.ts
 .env*.local
 *.log
