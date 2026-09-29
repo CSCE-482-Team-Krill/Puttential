@@ -4,15 +4,23 @@
 !.env.example
 *.local
 
-# Dependencies, generated output, and caches
+# Dependencies and package-manager caches
 node_modules/
+.npm-cache/
+
+# Generated build, type, and test output
 dist/
 build/
 coverage/
 .cache/
 .next/
+playwright-report/
+test-results/
+*.tsbuildinfo
+next-env.d.ts
 
-# Logs and editor/OS files
+# Local tooling output, logs, and editor/OS files
+.playwright-mcp/
 *.log
 .DS_Store
 Thumbs.db
