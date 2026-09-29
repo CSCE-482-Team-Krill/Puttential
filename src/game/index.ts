@@ -1,5 +1,5 @@
 export { POSITION_QUANTUM, quantizePosition } from './commands';
-export { exampleBarPuzzle } from './levels/example-bar-puzzle';
+export { exampleBarPuzzle, exampleGoal } from './levels/example-bar-puzzle';
 export type {
   ConvexPieceDefinition,
   DynamicBodyDefinition,

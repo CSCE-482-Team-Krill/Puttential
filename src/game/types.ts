@@ -104,7 +104,7 @@ export type Game = {
   getRenderState(): RenderState;
   snapshot(): GameSnapshot;
   restore(snapshot: GameSnapshot): void;
-  predict(command: GameCommand, options?: PredictionOptions): Prediction;
+  predict(commands: GameCommand | readonly GameCommand[], options?: PredictionOptions): Prediction;
   destroy(): void;
 };
 

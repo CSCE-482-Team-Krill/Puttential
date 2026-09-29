@@ -34,7 +34,7 @@ game.destroy();
 
 `getRenderState()` returns plain data with world-space polygons and no Rapier handles. `snapshot()` includes both Rapier state and all authoritative TypeScript state. `restore()` requires the same level ID, level version, and simulation version.
 
-`predict(command, options?)` restores the live snapshot into a separate Rapier world, applies the exact command, and runs fixed ticks until every moving body sleeps or the prediction limit is reached. A caller can override the level defaults with `{ maxTicks, sampleEveryTicks }`; it never changes the live game.
+`predict(commands, options?)` restores the live snapshot into a separate Rapier world, applies one command or an array of commands, and runs fixed ticks until every moving body sleeps or the prediction limit is reached. A caller can override the level defaults with `{ maxTicks, sampleEveryTicks }`; it never changes the live game.
 
 Ordinary motion and collisions are frictionless: colliders use zero contact friction and dynamic bodies use zero linear and angular damping. A future friction field should apply velocity-opposing force from polygon overlap so drag exists only inside that field.
 

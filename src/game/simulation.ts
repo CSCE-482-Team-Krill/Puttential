@@ -216,9 +216,9 @@ export class Simulation implements Game {
     this.renderState = this.buildRenderState();
   }
 
-  predict(command: GameCommand, options?: PredictionOptions): Prediction {
+  predict(commands: GameCommand | readonly GameCommand[], options?: PredictionOptions): Prediction {
     this.assertAlive();
-    return predictFromSimulation(this, command, options);
+    return predictFromSimulation(this, commands, options);
   }
 
   cloneFromSnapshot(snapshot = this.snapshot()): Simulation {

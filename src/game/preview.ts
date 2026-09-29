@@ -27,7 +27,7 @@ function positiveInteger(value: number, label: string): number {
 
 export function predictFromSimulation(
   simulation: Simulation,
-  command: GameCommand,
+  commands: GameCommand | readonly GameCommand[],
   options?: PredictionOptions,
 ): Prediction {
   const maxTicks = positiveInteger(
@@ -45,7 +45,9 @@ export function predictFromSimulation(
   let settled = false;
 
   try {
-    prediction.queueCommand(command);
+    for (const command of Array.isArray(commands) ? commands : [commands]) {
+      prediction.queueCommand(command);
+    }
     while (ticksSimulated < maxTicks) {
       prediction.step();
       ticksSimulated += 1;
