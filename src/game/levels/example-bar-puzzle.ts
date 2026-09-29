@@ -1,7 +1,7 @@
 import { rectangle } from '../geometry/polygon';
 import type { Level, StaticBodyDefinition } from './types';
 
-const railMaterial = { restitution: 0.05 } as const;
+const railMaterial = { restitution: 0.01 } as const;
 
 function rail(id: string, x: number, y: number, width: number, height: number): StaticBodyDefinition {
   return {
@@ -24,7 +24,7 @@ export const exampleGoal = {
 
 export const exampleBarPuzzle: Level = {
   id: 'bar-around-corner',
-  version: 2,
+  version: 3,
   gravity: { x: 0, y: 0 },
   dynamicBodies: [
     {
@@ -34,7 +34,7 @@ export const exampleBarPuzzle: Level = {
       linearVelocity: { x: 0, y: 0 },
       angularVelocity: 0,
       density: 1,
-      material: { restitution: 0.08 },
+      material: { restitution: 0.01 },
       ccd: true,
       pieces: [{ id: 'bar-material', localPolygon: rectangle(2.4, 0.55) }],
     },

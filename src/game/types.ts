@@ -50,7 +50,10 @@ export type RenderField = Readonly<{
   worldPolygon: readonly Vec2[];
   position: Vec2;
   angle: number;
-  forceDensityWorld: Vec2;
+  kind: 'uniform' | 'attractor' | 'repulsor';
+  forceDensityWorld: Vec2 | null;
+  sourceWorld: Vec2 | null;
+  strength: number | null;
   enabled: boolean;
 }>;
 

@@ -116,6 +116,92 @@ export function assertValidConvexPolygon(
   if (error !== null) throw new Error(`${label} ${error}`);
 }
 
+/** Accepts either winding, including concave polygons, but rejects holes and crossings. */
+export function simplePolygonValidationError(polygon: readonly Vec2[]): string | null {
+  if (polygon.length < 3) return 'must have at least three vertices';
+  if (polygon.some((point) => !Number.isFinite(point.x) || !Number.isFinite(point.y))) {
+    return 'contains a non-finite coordinate';
+  }
+  for (let i = 0; i < polygon.length; i += 1) {
+    const a = polygon[i]!;
+    const b = polygon[(i + 1) % polygon.length]!;
+    if (Math.hypot(a.x - b.x, a.y - b.y) <= GEOMETRY_EPSILON) {
+      return 'contains a zero-length edge';
+    }
+    for (let j = i + 1; j < polygon.length; j += 1) {
+      if (j === i + 1 || (i === 0 && j === polygon.length - 1)) continue;
+      if (segmentsIntersect(a, b, polygon[j]!, polygon[(j + 1) % polygon.length]!)) {
+        return 'is self-intersecting';
+      }
+    }
+  }
+  if (Math.abs(signedPolygonArea(polygon)) <= GEOMETRY_EPSILON) return 'has zero area';
+  return null;
+}
+
+export function assertValidSimplePolygon(polygon: readonly Vec2[], label = 'polygon'): void {
+  const error = simplePolygonValidationError(polygon);
+  if (error !== null) throw new Error(`${label} ${error}`);
+}
+
+/** A boundary point counts as inside. The polygon must be simple. */
+export function pointInPolygon(point: Vec2, polygon: readonly Vec2[]): boolean {
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const a = polygon[j]!;
+    const b = polygon[i]!;
+    if (Math.abs(orientation(a, b, point)) <= GEOMETRY_EPSILON && onSegment(a, b, point)) {
+      return true;
+    }
+    if ((a.y > point.y) !== (b.y > point.y) &&
+      point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
+function pointInTriangle(point: Vec2, a: Vec2, b: Vec2, c: Vec2): boolean {
+  return orientation(a, b, point) >= -GEOMETRY_EPSILON &&
+    orientation(b, c, point) >= -GEOMETRY_EPSILON &&
+    orientation(c, a, point) >= -GEOMETRY_EPSILON;
+}
+
+/** Deterministic ear clipping. Output triangles are counter-clockwise. */
+export function triangulateSimplePolygon(polygon: readonly Vec2[]): Vec2[][] {
+  assertValidSimplePolygon(polygon);
+  const points = signedPolygonArea(polygon) > 0 ? [...polygon] : [...polygon].reverse();
+  const indices = points.map((_, index) => index);
+  const triangles: Vec2[][] = [];
+  while (indices.length > 3) {
+    let earFound = false;
+    for (let i = 0; i < indices.length; i += 1) {
+      const previous = points[indices[(i + indices.length - 1) % indices.length]!]!;
+      const current = points[indices[i]!]!;
+      const next = points[indices[(i + 1) % indices.length]!]!;
+      const turn = orientation(previous, current, next);
+      if (Math.abs(turn) <= GEOMETRY_EPSILON) {
+        indices.splice(i, 1);
+        earFound = true;
+        break;
+      }
+      if (turn < 0) continue;
+      if (indices.some((index) => {
+        const point = points[index]!;
+        return point !== previous && point !== current && point !== next &&
+          pointInTriangle(point, previous, current, next);
+      })) continue;
+      triangles.push([previous, current, next]);
+      indices.splice(i, 1);
+      earFound = true;
+      break;
+    }
+    if (!earFound) throw new Error('polygon could not be triangulated');
+  }
+  triangles.push(indices.map((index) => points[index]!));
+  return triangles;
+}
+
 export function rectangle(width: number, height: number): Vec2[] {
   if (!(width > 0) || !(height > 0)) throw new Error('rectangle dimensions must be positive');
   const halfWidth = width * 0.5;

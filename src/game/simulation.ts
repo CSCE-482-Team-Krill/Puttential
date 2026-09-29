@@ -5,11 +5,12 @@ import {
   validateCommand,
 } from './commands';
 import { GEOMETRY_EPSILON } from './geometry/mass';
-import { rotateVector, transformPolygon } from './geometry/polygon';
+import { rotateVector, transformPoint, transformPolygon, triangulateSimplePolygon } from './geometry/polygon';
 import type { FieldZoneDefinition, Level } from './levels/types';
 import { validateLevel } from './levels/validate';
 import { buildPhysicsWorld, staticRenderBodies } from './objects/bodies';
-import { calculateFieldLoad, fieldWorldPolygon } from './objects/fields';
+import { calculateFieldLoad, fieldWorldPolygon, prepareFields } from './objects/fields';
+import type { PreparedField } from './objects/fields';
 import { predictFromSimulation } from './preview';
 import type {
   FieldState,
@@ -23,7 +24,7 @@ import type {
 } from './types';
 
 export const FIXED_DT = 1 / 120;
-export const SIMULATION_VERSION = 'puttential-core-1|rapier-0.20.0|dt-1/120';
+export const SIMULATION_VERSION = 'puttential-core-2|rapier-0.20.0|dt-1/120';
 
 type MutableFieldState = {
   id: string;
@@ -52,7 +53,10 @@ export class Simulation implements Game {
   private readonly dynamicBodies;
   private readonly fieldDefinitions;
   private readonly fieldDefinitionById: ReadonlyMap<string, FieldZoneDefinition>;
+  private readonly fieldTriangles: ReadonlyMap<string, readonly (readonly { x: number; y: number }[])[]>;
+  private readonly staticBodies;
   private fields: MutableFieldState[];
+  private preparedFields: readonly PreparedField[] | undefined;
   private readonly fieldById = new Map<string, MutableFieldState>();
   private queuedCommands: GameCommand[] = [];
   private sleepingByBody: Record<string, boolean> = {};
@@ -68,6 +72,10 @@ export class Simulation implements Game {
     this.dynamicBodies = [...level.dynamicBodies].sort((a, b) => a.id.localeCompare(b.id));
     this.fieldDefinitions = [...level.fields].sort((a, b) => a.id.localeCompare(b.id));
     this.fieldDefinitionById = new Map(this.fieldDefinitions.map((field) => [field.id, field]));
+    this.fieldTriangles = new Map(this.fieldDefinitions.map((field) => [
+      field.id, triangulateSimplePolygon(field.localPolygon),
+    ]));
+    this.staticBodies = staticRenderBodies(level);
 
     if (snapshot === undefined) {
       const built = buildPhysicsWorld(level, FIXED_DT);
@@ -127,30 +135,32 @@ export class Simulation implements Game {
       body.resetTorques(false);
     }
 
-    const fields = this.fieldDefinitions.map((definition) => ({
+    const fields = this.preparedFields ??= prepareFields(this.fieldDefinitions.map((definition) => ({
       definition,
       state: this.requiredField(definition.id),
-    }));
-    for (const definition of this.dynamicBodies) {
-      const body = this.rigidBody(definition.id);
-      const translation = body.translation();
-      const centerOfMass = body.worldCom();
-      const load = calculateFieldLoad(
-        {
-          position: { x: translation.x, y: translation.y },
-          angle: body.rotation(),
-          centerOfMass: { x: centerOfMass.x, y: centerOfMass.y },
-          pieces: definition.pieces,
-        },
-        fields,
-      );
-      const active =
-        Math.abs(load.force.x) > GEOMETRY_EPSILON ||
-        Math.abs(load.force.y) > GEOMETRY_EPSILON ||
-        Math.abs(load.torque) > GEOMETRY_EPSILON;
-      if (active) {
-        body.addForce({ x: load.force.x, y: load.force.y }, true);
-        body.addTorque(load.torque, true);
+    })), this.fieldTriangles);
+    if (fields.length > 0) {
+      for (const definition of this.dynamicBodies) {
+        const body = this.rigidBody(definition.id);
+        const translation = body.translation();
+        const centerOfMass = body.worldCom();
+        const load = calculateFieldLoad(
+          {
+            position: { x: translation.x, y: translation.y },
+            angle: body.rotation(),
+            centerOfMass: { x: centerOfMass.x, y: centerOfMass.y },
+            pieces: definition.pieces,
+          },
+          fields,
+        );
+        const active =
+          Math.abs(load.force.x) > GEOMETRY_EPSILON ||
+          Math.abs(load.force.y) > GEOMETRY_EPSILON ||
+          Math.abs(load.torque) > GEOMETRY_EPSILON;
+        if (active) {
+          body.addForce({ x: load.force.x, y: load.force.y }, true);
+          body.addTorque(load.torque, true);
+        }
       }
     }
 
@@ -197,6 +207,18 @@ export class Simulation implements Game {
     this.assertCompatibleSnapshot(snapshot);
     const replacement = RAPIER.World.restoreSnapshot(new Uint8Array(snapshot.physics));
     replacement.timestep = FIXED_DT;
+    try {
+      for (const definition of this.dynamicBodies) {
+        const handle = snapshot.bodyHandles[definition.id];
+        if (handle === undefined || !Number.isSafeInteger(handle) || handle < 0 ||
+          replacement.getRigidBody(handle) === null) {
+          throw new Error(`snapshot is missing body ${definition.id}`);
+        }
+      }
+    } catch (error) {
+      replacement.free();
+      throw error;
+    }
     this.world.free();
     this.world = replacement;
     this.bodyHandles = { ...snapshot.bodyHandles };
@@ -211,6 +233,7 @@ export class Simulation implements Game {
     this.ruleState = { ...snapshot.ruleState };
     this.tick = snapshot.tick;
     this.events = [];
+    this.preparedFields = undefined;
     this.indexFields();
     this.assertSnapshotContents();
     this.renderState = this.buildRenderState();
@@ -240,6 +263,7 @@ export class Simulation implements Game {
   private applyQueuedCommands(): void {
     const commands = [...this.queuedCommands].sort(compareCommands);
     this.queuedCommands = [];
+    if (commands.length > 0) this.preparedFields = undefined;
     for (const command of commands) {
       const field = this.requiredField(command.fieldId);
       if (command.type === 'move-field') {
@@ -276,12 +300,16 @@ export class Simulation implements Game {
 
     const fields = this.fieldDefinitions.map((definition) => {
       const state = this.requiredField(definition.id);
+      const uniform = 'forceDensityLocal' in definition;
       return {
         id: definition.id,
         worldPolygon: fieldWorldPolygon(definition, state),
         position: { ...state.position },
         angle: state.angle,
-        forceDensityWorld: rotateVector(definition.forceDensityLocal, state.angle),
+        kind: definition.kind ?? 'uniform',
+        forceDensityWorld: uniform ? rotateVector(definition.forceDensityLocal, state.angle) : null,
+        sourceWorld: uniform ? null : transformPoint(definition.sourceLocal, state.position, state.angle),
+        strength: uniform ? null : definition.strength,
         enabled: state.enabled,
       };
     });
@@ -289,7 +317,7 @@ export class Simulation implements Game {
     return {
       tick: this.tick,
       bodies,
-      staticBodies: staticRenderBodies(this.level),
+      staticBodies: this.staticBodies,
       fields,
       events: this.events.map((event) => ({ ...event })),
     };
@@ -354,6 +382,10 @@ export class Simulation implements Game {
       if (state === undefined) throw new Error(`snapshot is missing field ${definition.id}`);
       if (state.angle !== definition.angle) {
         throw new Error(`snapshot changed fixed angle for field ${definition.id}`);
+      }
+      if (!Number.isFinite(state.position.x) || !Number.isFinite(state.position.y) ||
+        typeof state.enabled !== 'boolean') {
+        throw new Error(`snapshot has invalid state for field ${definition.id}`);
       }
     }
     for (const command of snapshot.queuedCommands) {

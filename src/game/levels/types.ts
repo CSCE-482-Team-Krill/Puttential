@@ -31,14 +31,21 @@ export type StaticBodyDefinition = Readonly<{
   pieces: readonly ConvexPieceDefinition[];
 }>;
 
-export type FieldZoneDefinition = Readonly<{
+type FieldBase = Readonly<{
   id: string;
   localPolygon: readonly Vec2[];
   position: Vec2;
   angle: number;
-  forceDensityLocal: Vec2;
   enabled: boolean;
 }>;
+
+export type FieldZoneDefinition =
+  | (FieldBase & Readonly<{ kind?: 'uniform'; forceDensityLocal: Vec2 }>)
+  | (FieldBase & Readonly<{
+      kind: 'attractor' | 'repulsor';
+      sourceLocal: Vec2;
+      strength: number;
+    }>);
 
 export type Level = Readonly<{
   id: string;
