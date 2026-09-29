@@ -12,6 +12,8 @@ coverage/
 .cache/
 .next/
 
+/generated/prisma/
+
 # Logs and editor/OS files
 *.log
 .DS_Store
