@@ -54,7 +54,7 @@ model Puzzle {
 
 model Attempt {
   id             String   @id @default(uuid()) @map("attempt_id")
-  userId         String   @map("user_id")
+  userId         String?  @map("user_id")
   puzzleId       String   @map("puzzle_id")
   submittedAt    DateTime @default(now()) @map("submitted_at")
   success        Boolean  @default(false)
@@ -63,7 +63,7 @@ model Attempt {
   tileCount      Int?     @map("tile_count")
   pathLength     Float?   @map("path_length")
 
-  user     User      @relation(fields: [userId], references: [id])
+  user     User?     @relation(fields: [userId], references: [id])
   puzzle   Puzzle    @relation(fields: [puzzleId], references: [id])
   solution Solution?
 
@@ -78,7 +78,7 @@ model Attempt {
 
 model Solution {
   id              String   @id @default(uuid()) @map("solution_id")
-  userId          String   @map("user_id")
+  userId          String?  @map("user_id")
   puzzleId        String   @map("puzzle_id")
   attemptId       String   @unique @map("attempt_id")
   placementData   Json     @map("placement_data")
@@ -86,7 +86,7 @@ model Solution {
   dailyPercentile Float?   @map("daily_percentile")
   createdAt       DateTime @default(now()) @map("created_at")
 
-  user    User    @relation(fields: [userId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
   puzzle  Puzzle  @relation(fields: [puzzleId], references: [id])
   attempt Attempt @relation(fields: [attemptId], references: [id])
 
