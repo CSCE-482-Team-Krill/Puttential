@@ -1,5 +1,22 @@
-node_modules
-# Keep environment variables out of version control
+# Local configuration and secrets
 .env
+.env.*
+!.env.example
+*.local
 
-/generated/prisma
+# Dependencies, generated output, and caches
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+.next/
+
+/generated/prisma/
+
+# Logs and editor/OS files
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

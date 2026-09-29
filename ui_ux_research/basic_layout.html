@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Puttential — Basic Layout</title>
+    <style>
+      :root {
+        font-family: Poppins, "Segoe UI", Arial, sans-serif;
+        color: #2d3a3a;
+        background: #dff3d9;
+      }
+
+      * { box-sizing: border-box; }
+
+      body { margin: 0; }
+
+      .site-shell {
+        width: min(100% - 32px, 1440px);
+        margin: 24px auto;
+      }
+
+      .site-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 16px 20px;
+        background: #f8f9f4;
+        border-radius: 20px 20px 0 0;
+      }
+
+      .brand {
+        color: #2e7d32;
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 700;
+        text-decoration: none;
+      }
+
+      .site-nav { display: flex; flex-wrap: wrap; gap: 8px; }
+
+      button {
+        font: inherit;
+        font-weight: 600;
+        color: #2d3a3a;
+        background: white;
+        border: 1px solid #d5ded5;
+        border-radius: 12px;
+        padding: 10px 16px;
+        cursor: pointer;
+      }
+
+      .site-nav button[aria-pressed="true"] {
+        color: white;
+        background: #2e7d32;
+        border-color: #2e7d32;
+      }
+
+      .site-nav button:focus-visible {
+        outline: 3px solid #ffd166;
+        outline-offset: 2px;
+      }
+
+      main {
+        padding: 12px;
+        background: white;
+        border-radius: 0 0 20px 20px;
+      }
+
+      .game-frame {
+        display: grid;
+        place-items: center;
+        min-height: min(72vh, 760px);
+        background: #eaf0e7;
+        border: 2px dashed #a8c5a5;
+        border-radius: 12px;
+      }
+
+      .game-frame span {
+        color: #8a9ba0;
+        font-size: 1.5rem;
+      }
+
+      @media (max-width: 700px) {
+        .site-header { align-items: flex-start; flex-direction: column; }
+        .site-nav button { padding: 8px 12px; }
+        .game-frame { min-height: 65vh; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href="#" aria-label="Puttential home">Puttential</a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <button type="button" aria-pressed="true">Daily</button>
+          <button type="button" aria-pressed="false">Archive</button>
+          <button type="button" aria-pressed="false">Stats</button>
+          <button type="button" aria-pressed="false">Leaderboard</button>
+          <button type="button" aria-pressed="false">Settings</button>
+        </nav>
+      </header>
+      <main>
+        <section class="game-frame" aria-label="Game frame placeholder">
+          <span>Game Frame</span>
+        </section>
+      </main>
+    </div>
+    <script>
+      const navButtons = document.querySelectorAll('.site-nav button');
+
+      navButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          navButtons.forEach((navButton) => {
+            navButton.setAttribute('aria-pressed', String(navButton === button));
+          });
+        });
+      });
+    </script>
+  </body>
+</html>
