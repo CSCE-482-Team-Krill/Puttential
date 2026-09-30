@@ -1,8 +1,4 @@
-/** Locale-independent ordering, so every runtime iterates objects identically. */
-export function compareIds(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0;
-}
-
+/** Sorts by code unit rather than locale, so every runtime iterates objects identically. */
 export function sortById<T extends Readonly<{ id: string }>>(items: readonly T[]): T[] {
-  return [...items].sort((a, b) => compareIds(a.id, b.id));
+  return [...items].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }

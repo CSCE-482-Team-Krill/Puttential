@@ -7,7 +7,6 @@ function assertQuantizedInteger(value: number, label: string): void {
 }
 
 export function validateCommand(command: GameCommand): void {
-  if (!command.fieldId) throw new Error('command fieldId must not be empty');
   assertQuantizedInteger(command.sequence, 'command sequence');
   if (command.sequence < 0) throw new Error('command sequence must be non-negative');
   if (command.type === 'move-field') {

@@ -34,8 +34,7 @@ function createDynamicBody(world: RAPIER.World, definition: DynamicBodyDefinitio
     .setLinearDamping(0)
     .setAngularDamping(0)
     .setCanSleep(definition.canSleep ?? true)
-    .setCcdEnabled(definition.ccd)
-    .setUserData({ gameBodyId: definition.id });
+    .setCcdEnabled(definition.ccd);
   const body = world.createRigidBody(descriptor);
   for (const piece of resolvePieces(definition)) {
     world.createCollider(
@@ -50,8 +49,7 @@ function createStaticBody(world: RAPIER.World, definition: StaticBodyDefinition)
   const body = world.createRigidBody(
     RAPIER.RigidBodyDesc.fixed()
       .setTranslation(definition.position.x, definition.position.y)
-      .setRotation(definition.angle)
-      .setUserData({ gameBodyId: definition.id }),
+      .setRotation(definition.angle),
   );
   for (const piece of sortById(definition.pieces)) {
     world.createCollider(colliderForPolygon(piece.localPolygon, definition.material), body);

@@ -60,18 +60,14 @@ A simple polygon cannot contain holes or crossing edges.
 
 `radialRelay` and `radialRelayGoal` are exported from `puttential/game`. A puck starts in the lower-left chamber. The concave `launch` repulsor sends it through the upper passage above the divider; the `catch` attractor guides it into the upper-right goal. The goal requires the puck center to remain inside its bounds for 0.5 seconds. Both fields start disabled, so enable them with `set-field-enabled` commands to play the preset route. They can also be moved with `move-field` commands for alternate trajectories.
 
-`getRenderState()` returns plain data with world-space polygons and no Rapier handles. `snapshot()` includes both Rapier state and all authoritative TypeScript state. `restore()` requires the same level ID, level version, and simulation version.
+`getRenderState()` returns plain data with world-space polygons and no Rapier handles. `snapshot()` captures the Rapier world plus field positions and queued commands; `restore()` requires a snapshot from the same level ID and version.
 
-`predict(commands, options?)` restores the live snapshot into a separate Rapier world, applies one command or an array of commands, and runs fixed ticks until every moving body sleeps or the prediction limit is reached. A caller can override the level defaults with `{ maxTicks, sampleEveryTicks }`; it never changes the live game.
+`predict(commands, options?)` runs the commands on a copy of the game until every body sleeps or the tick limit is reached, and never changes the live game. `options` can override the level's `{ maxTicks, sampleEveryTicks }`.
 
-Ordinary motion and collisions are frictionless: colliders use zero contact friction and dynamic bodies use zero linear and angular damping. The example course uses restitution 0.01 on its bodies and rails for less rebound. Drag should come from a field whose force opposes `sample.velocity`, so it exists only inside that field.
+Ordinary motion and collisions are frictionless: colliders use zero contact friction and dynamic bodies use zero linear and angular damping. Drag should come from a field whose force opposes `sample.velocity`, so it exists only inside that field.
 
-## Determinism contract
+## Determinism
 
-- Dynamic bodies, material pieces, and fields are integrated in stable ID order, compared by code unit rather than locale.
-- Fields use deterministic three-point quadrature over overlap triangles, which is exact for constant and linear forces; no random samples are used.
-- The fixed timestep, command quantization, simulation version, and Rapier `0.20.0` dependency are pinned.
-- Replaying the same commands from the same snapshot produces the same `hashSnapshot` in the same JavaScript runtime.
-- Cross-browser or cross-device bitwise equality is not promised because JavaScript trigonometry may differ. If that becomes a requirement, the geometry and simulation wrapper should move behind the same API into Rust/Wasm.
+Bodies, pieces, and fields are processed in ID order (by code unit, not locale), commands are quantized, the timestep is fixed, and Rapier is pinned to `0.20.0`. Replaying the same commands gives the same result in the same JavaScript runtime; cross-browser bitwise equality is not guaranteed because JavaScript trigonometry may differ.
 
 Type-check with `npx tsc --noEmit` from the repository root.

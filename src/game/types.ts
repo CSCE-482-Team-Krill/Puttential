@@ -24,12 +24,6 @@ export type FieldState = Readonly<{
   enabled: boolean;
 }>;
 
-export type GameEvent = Readonly<{
-  type: 'body-slept' | 'body-woke';
-  tick: number;
-  bodyId: string;
-}>;
-
 export type RenderPiece = Readonly<{ id: string; worldPolygon: readonly Vec2[] }>;
 
 export type RenderBody = Readonly<{
@@ -62,19 +56,16 @@ export type RenderState = Readonly<{
   bodies: readonly RenderBody[];
   staticBodies: readonly RenderStaticBody[];
   fields: readonly RenderField[];
-  events: readonly GameEvent[];
 }>;
 
 export type GameSnapshot = Readonly<{
   levelId: string;
   levelVersion: number;
-  simulationVersion: string;
   tick: number;
   physics: Uint8Array;
   bodyHandles: Readonly<Record<string, number>>;
   fields: readonly FieldState[];
   queuedCommands: readonly GameCommand[];
-  sleepingByBody: Readonly<Record<string, boolean>>;
 }>;
 
 export type PredictionSample = Readonly<{
@@ -90,7 +81,6 @@ export type Prediction = Readonly<{
   ticksSimulated: number;
   settled: boolean;
   samples: readonly PredictionSample[];
-  events: readonly GameEvent[];
   finalState: RenderState;
   finalSnapshot: GameSnapshot;
 }>;

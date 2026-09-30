@@ -1,36 +1,52 @@
 import RAPIER from '@dimforge/rapier2d-compat';
 import { compareCommands, dequantizePosition, validateCommand } from './commands';
-import { FIXED_DT, SIMULATION_VERSION } from './constants';
 import { transformPolygon, triangulateSimplePolygon } from './geometry/polygon';
 import { GEOMETRY_EPSILON } from './geometry/vector';
 import { sortById } from './ids';
 import type { FieldZoneDefinition, Level } from './levels/types';
-import { validateLevel } from './levels/validate';
+import { assertPositiveInteger, validateLevel } from './levels/validate';
 import { buildPhysicsWorld, resolvePieces, staticRenderBodies } from './objects/bodies';
 import type { ResolvedPiece } from './objects/bodies';
 import { calculateFieldLoad, fieldWorldPolygon, prepareField } from './objects/fields';
 import type { PreparedField } from './objects/fields';
-import { predictFromSimulation } from './prediction';
-import { assertCompatibleSnapshot, copyFieldState } from './snapshot';
-import type { MutableFieldState } from './snapshot';
 import type {
+  FieldState,
   Game,
   GameCommand,
-  GameEvent,
   GameSnapshot,
   Prediction,
   PredictionOptions,
+  PredictionSample,
   RenderField,
   RenderState,
   RenderStaticBody,
   Vec2,
 } from './types';
 
+export const FIXED_DT = 1 / 120;
+
 type DynamicBody = Readonly<{ id: string; pieces: readonly ResolvedPiece[] }>;
 type Field = Readonly<{ definition: FieldZoneDefinition; localTriangles: readonly Vec2[][] }>;
+type MutableFieldState = { id: string; position: { x: number; y: number }; angle: number; enabled: boolean };
 
-export class Simulation implements Game {
-  readonly level: Level;
+function copyFieldState(field: FieldState): MutableFieldState {
+  return {
+    id: field.id,
+    position: { x: field.position.x, y: field.position.y },
+    angle: field.angle,
+    enabled: field.enabled,
+  };
+}
+
+function sample(state: RenderState): PredictionSample {
+  return {
+    tick: state.tick,
+    bodies: state.bodies.map(({ id, position, angle }) => ({ id, position, angle })),
+  };
+}
+
+class Simulation implements Game {
+  private readonly level: Level;
   // Level data, sorted by ID once so every tick iterates in the same order.
   private readonly dynamicBodies: readonly DynamicBody[];
   private readonly staticBodies: readonly RenderStaticBody[];
@@ -40,10 +56,7 @@ export class Simulation implements Game {
   private bodyHandles: Record<string, number> = {};
   private fieldStates = new Map<string, MutableFieldState>();
   private queuedCommands: GameCommand[] = [];
-  private sleepingByBody: Record<string, boolean> = {};
   private tick = 0;
-  private events: GameEvent[] = [];
-  private destroyed = false;
 
   // Derived from field state; cleared whenever a field moves or toggles.
   private preparedFields: readonly PreparedField[] | undefined;
@@ -64,7 +77,7 @@ export class Simulation implements Game {
     }));
 
     if (snapshot !== undefined) {
-      this.load(snapshot);
+      this.restore(snapshot);
       return;
     }
     const built = buildPhysicsWorld(level, FIXED_DT);
@@ -72,14 +85,10 @@ export class Simulation implements Game {
     this.bodyHandles = { ...built.bodyHandles };
     this.fieldStates = new Map(this.fields.map(({ definition }) =>
       [definition.id, copyFieldState(definition)]));
-    for (const body of this.dynamicBodies) {
-      this.sleepingByBody[body.id] = this.rigidBody(body.id).isSleeping();
-    }
     this.renderState = this.buildRenderState();
   }
 
   queueCommand(command: GameCommand): void {
-    this.assertAlive();
     validateCommand(command);
     if (!this.fieldStates.has(command.fieldId)) {
       throw new Error(`unknown field ID: ${command.fieldId}`);
@@ -91,87 +100,82 @@ export class Simulation implements Game {
   }
 
   step(): void {
-    this.assertAlive();
     this.applyQueuedCommands();
     this.applyFieldLoads();
     this.world.step();
     this.tick += 1;
-    this.recordSleepChanges();
     this.renderState = this.buildRenderState();
   }
 
   getRenderState(): RenderState {
-    this.assertAlive();
     return this.renderState;
   }
 
   snapshot(): GameSnapshot {
-    this.assertAlive();
     return {
       levelId: this.level.id,
       levelVersion: this.level.version,
-      simulationVersion: SIMULATION_VERSION,
       tick: this.tick,
-      physics: new Uint8Array(this.world.takeSnapshot()),
+      physics: this.world.takeSnapshot(),
       bodyHandles: { ...this.bodyHandles },
       fields: [...this.fieldStates.values()].map(copyFieldState),
       queuedCommands: [...this.queuedCommands].sort(compareCommands).map((command) => ({ ...command })),
-      sleepingByBody: { ...this.sleepingByBody },
     };
   }
 
   restore(snapshot: GameSnapshot): void {
-    this.assertAlive();
-    this.load(snapshot);
-  }
-
-  predict(commands: GameCommand | readonly GameCommand[], options?: PredictionOptions): Prediction {
-    this.assertAlive();
-    return predictFromSimulation(this, commands, options);
-  }
-
-  cloneFromSnapshot(snapshot = this.snapshot()): Simulation {
-    this.assertAlive();
-    return new Simulation(this.level, snapshot);
-  }
-
-  allDynamicBodiesSleeping(): boolean {
-    this.assertAlive();
-    return this.dynamicBodies.every((body) => this.rigidBody(body.id).isSleeping());
-  }
-
-  destroy(): void {
-    if (this.destroyed) return;
-    this.world.free();
-    this.destroyed = true;
-  }
-
-  /** Replaces all mutable state. Leaves the current state untouched if the snapshot is invalid. */
-  private load(snapshot: GameSnapshot): void {
-    assertCompatibleSnapshot(snapshot, this.level);
-    const world = RAPIER.World.restoreSnapshot(new Uint8Array(snapshot.physics));
-    world.timestep = FIXED_DT;
-    for (const body of this.dynamicBodies) {
-      const handle = snapshot.bodyHandles[body.id];
-      if (handle === undefined || !Number.isSafeInteger(handle) || handle < 0 ||
-        world.getRigidBody(handle) === null) {
-        world.free();
-        throw new Error(`snapshot is missing body ${body.id}`);
-      }
+    if (snapshot.levelId !== this.level.id || snapshot.levelVersion !== this.level.version) {
+      throw new Error('snapshot level ID/version does not match this game');
     }
-
-    const fieldsById = new Map(snapshot.fields.map((field) => [field.id, field]));
+    const world = RAPIER.World.restoreSnapshot(snapshot.physics);
+    world.timestep = FIXED_DT;
     this.world?.free();
     this.world = world;
     this.bodyHandles = { ...snapshot.bodyHandles };
-    this.fieldStates = new Map(this.fields.map(({ definition }) =>
-      [definition.id, copyFieldState(fieldsById.get(definition.id)!)]));
+    this.fieldStates = new Map(snapshot.fields.map((field) => [field.id, copyFieldState(field)]));
     this.queuedCommands = snapshot.queuedCommands.map((command) => ({ ...command }));
-    this.sleepingByBody = { ...snapshot.sleepingByBody };
     this.tick = snapshot.tick;
-    this.events = [];
     this.invalidateFields();
     this.renderState = this.buildRenderState();
+  }
+
+  /** Runs the commands on a copy of this game until every body sleeps or the tick limit. */
+  predict(commands: GameCommand | readonly GameCommand[], options?: PredictionOptions): Prediction {
+    const maxTicks = options?.maxTicks ?? this.level.prediction?.maxTicks ?? 1200;
+    const sampleEveryTicks =
+      options?.sampleEveryTicks ?? this.level.prediction?.sampleEveryTicks ?? 8;
+    assertPositiveInteger(maxTicks, 'prediction maxTicks');
+    assertPositiveInteger(sampleEveryTicks, 'prediction sampleEveryTicks');
+
+    const copy = new Simulation(this.level, this.snapshot());
+    try {
+      for (const command of Array.isArray(commands) ? commands : [commands]) {
+        copy.queueCommand(command);
+      }
+      const samples = [sample(copy.renderState)];
+      let settled = false;
+      while (!settled && copy.tick - this.tick < maxTicks) {
+        copy.step();
+        settled = copy.renderState.bodies.every((body) => body.sleeping);
+        if (settled || (copy.tick - this.tick) % sampleEveryTicks === 0) {
+          samples.push(sample(copy.renderState));
+        }
+      }
+      if (samples[samples.length - 1]!.tick !== copy.tick) samples.push(sample(copy.renderState));
+      return {
+        ticksSimulated: copy.tick - this.tick,
+        settled,
+        samples,
+        finalState: copy.renderState,
+        finalSnapshot: copy.snapshot(),
+      };
+    } finally {
+      copy.destroy();
+    }
+  }
+
+  destroy(): void {
+    this.world.free();
   }
 
   private applyQueuedCommands(): void {
@@ -214,22 +218,12 @@ export class Simulation implements Game {
         !Number.isFinite(load.torque)) {
         throw new Error(`field load on body ${body.id} is not finite`);
       }
+      // Skip empty loads so fields do not wake sleeping bodies they do not touch.
       if (Math.abs(load.force.x) > GEOMETRY_EPSILON || Math.abs(load.force.y) > GEOMETRY_EPSILON ||
         Math.abs(load.torque) > GEOMETRY_EPSILON) {
         rigidBody.addForce(load.force, true);
         rigidBody.addTorque(load.torque, true);
       }
-    }
-  }
-
-  private recordSleepChanges(): void {
-    this.events = [];
-    for (const body of this.dynamicBodies) {
-      const sleeping = this.rigidBody(body.id).isSleeping();
-      if (sleeping !== (this.sleepingByBody[body.id] ?? false)) {
-        this.events.push({ type: sleeping ? 'body-slept' : 'body-woke', tick: this.tick, bodyId: body.id });
-      }
-      this.sleepingByBody[body.id] = sleeping;
     }
   }
 
@@ -266,13 +260,7 @@ export class Simulation implements Game {
       };
     });
 
-    return {
-      tick: this.tick,
-      bodies,
-      staticBodies: this.staticBodies,
-      fields,
-      events: this.events.map((event) => ({ ...event })),
-    };
+    return { tick: this.tick, bodies, staticBodies: this.staticBodies, fields };
   }
 
   private invalidateFields(): void {
@@ -281,19 +269,13 @@ export class Simulation implements Game {
   }
 
   private rigidBody(id: string): RAPIER.RigidBody {
-    const handle = this.bodyHandles[id];
-    if (handle === undefined) throw new Error(`missing Rapier handle for body ${id}`);
-    return this.world.getRigidBody(handle);
+    return this.world.getRigidBody(this.bodyHandles[id]!);
   }
 
   private fieldState(id: string): MutableFieldState {
     const field = this.fieldStates.get(id);
     if (field === undefined) throw new Error(`missing state for field ${id}`);
     return field;
-  }
-
-  private assertAlive(): void {
-    if (this.destroyed) throw new Error('game has been destroyed');
   }
 }
 
