@@ -1,9 +1,11 @@
 {
   "scripts": {},
   "devDependencies": {
+    "typescript": "^5.7.3",
     "prisma": "^7.10.0"
   },
   "dependencies": {
+    "@dimforge/rapier2d-compat": "0.20.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "dotenv": "^18.0.4",
