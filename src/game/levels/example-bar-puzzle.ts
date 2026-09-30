@@ -1,4 +1,5 @@
 import { rectangle } from '../geometry/polygon';
+import { uniformForce } from '../objects/forces';
 import type { Level, StaticBodyDefinition } from './types';
 
 const railMaterial = { restitution: 0.01 } as const;
@@ -59,7 +60,7 @@ export const exampleBarPuzzle: Level = {
       ],
       position: { x: -4.8, y: 1.45 },
       angle: 0,
-      forceDensityLocal: { x: 0, y: -5.5 },
+      force: uniformForce({ x: 0, y: -5.5 }),
       enabled: false,
     },
     {
@@ -67,7 +68,7 @@ export const exampleBarPuzzle: Level = {
       localPolygon: rectangle(2.8, 1.8),
       position: { x: -4.45, y: -2.25 },
       angle: 0,
-      forceDensityLocal: { x: 5.5, y: 0 },
+      force: uniformForce({ x: 5.5, y: 0 }),
       enabled: false,
     },
   ],

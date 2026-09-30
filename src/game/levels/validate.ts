@@ -1,4 +1,4 @@
-import { assertValidConvexPolygon, assertValidSimplePolygon, pointInPolygon } from '../geometry/polygon';
+import { assertValidConvexPolygon, assertValidSimplePolygon } from '../geometry/polygon';
 import type { Vec2 } from '../types';
 import type { Level, SurfaceMaterial } from './types';
 
@@ -78,16 +78,8 @@ export function validateLevel(level: Level): void {
     assertValidSimplePolygon(field.localPolygon, `field ${field.id}`);
     assertVec2(field.position, `field ${field.id}.position`);
     assertFinite(field.angle, `field ${field.id}.angle`);
-    if (!('forceDensityLocal' in field)) {
-      assertVec2(field.sourceLocal, `field ${field.id}.sourceLocal`);
-      assertFinite(field.strength, `field ${field.id}.strength`);
-      if (field.strength <= 0) throw new Error(`field ${field.id}.strength must be positive`);
-      if (!pointInPolygon(field.sourceLocal, field.localPolygon)) {
-        throw new Error(`field ${field.id}.sourceLocal must be inside the polygon`);
-      }
-    } else {
-      assertVec2(field.forceDensityLocal, `field ${field.id}.forceDensityLocal`);
-    }
+    const forceError = field.force.validate?.(field.localPolygon) ?? null;
+    if (forceError !== null) throw new Error(`field ${field.id} ${field.force.kind} force ${forceError}`);
   }
 
   if (level.prediction !== undefined) {

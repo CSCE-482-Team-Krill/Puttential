@@ -1,9 +1,13 @@
 export { POSITION_QUANTUM, quantizePosition } from './commands';
 export { exampleBarPuzzle, exampleGoal } from './levels/example-bar-puzzle';
 export { radialRelay, radialRelayGoal } from './levels/radial-relay';
+export { attractorForce, repulsorForce, uniformForce } from './objects/forces';
 export type {
   ConvexPieceDefinition,
   DynamicBodyDefinition,
+  FieldForce,
+  FieldParam,
+  FieldSample,
   FieldZoneDefinition,
   Level,
   StaticBodyDefinition,

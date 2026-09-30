@@ -5,11 +5,11 @@ import {
   validateCommand,
 } from './commands';
 import { GEOMETRY_EPSILON } from './geometry/mass';
-import { rotateVector, transformPoint, transformPolygon, triangulateSimplePolygon } from './geometry/polygon';
+import { transformPolygon, triangulateSimplePolygon } from './geometry/polygon';
 import type { FieldZoneDefinition, Level } from './levels/types';
 import { validateLevel } from './levels/validate';
 import { buildPhysicsWorld, staticRenderBodies } from './objects/bodies';
-import { calculateFieldLoad, fieldWorldPolygon, prepareFields } from './objects/fields';
+import { calculateFieldLoad, fieldWorldPolygon, prepareField } from './objects/fields';
 import type { PreparedField } from './objects/fields';
 import { predictFromSimulation } from './preview';
 import type {
@@ -24,7 +24,7 @@ import type {
 } from './types';
 
 export const FIXED_DT = 1 / 120;
-export const SIMULATION_VERSION = 'puttential-core-2|rapier-0.20.0|dt-1/120';
+export const SIMULATION_VERSION = 'puttential-core-3|rapier-0.20.0|dt-1/120';
 
 type MutableFieldState = {
   id: string;
@@ -135,24 +135,36 @@ export class Simulation implements Game {
       body.resetTorques(false);
     }
 
-    const fields = this.preparedFields ??= prepareFields(this.fieldDefinitions.map((definition) => ({
-      definition,
-      state: this.requiredField(definition.id),
-    })), this.fieldTriangles);
+    const fields = this.preparedFields ??= this.fieldDefinitions
+      .filter((definition) => this.requiredField(definition.id).enabled)
+      .map((definition) => prepareField(
+        definition,
+        this.requiredField(definition.id),
+        this.fieldTriangles.get(definition.id)!,
+      ));
     if (fields.length > 0) {
       for (const definition of this.dynamicBodies) {
         const body = this.rigidBody(definition.id);
-        const translation = body.translation();
-        const centerOfMass = body.worldCom();
         const load = calculateFieldLoad(
           {
-            position: { x: translation.x, y: translation.y },
+            position: body.translation(),
             angle: body.rotation(),
-            centerOfMass: { x: centerOfMass.x, y: centerOfMass.y },
-            pieces: definition.pieces,
+            centerOfMass: body.worldCom(),
+            linearVelocity: body.linvel(),
+            angularVelocity: body.angvel(),
+            pieces: [...definition.pieces]
+              .sort((a, b) => a.id.localeCompare(b.id))
+              .map((piece) => ({
+                localPolygon: piece.localPolygon,
+                density: piece.density ?? definition.density,
+              })),
           },
           fields,
         );
+        if (!Number.isFinite(load.force.x) || !Number.isFinite(load.force.y) ||
+          !Number.isFinite(load.torque)) {
+          throw new Error(`field load on body ${definition.id} is not finite`);
+        }
         const active =
           Math.abs(load.force.x) > GEOMETRY_EPSILON ||
           Math.abs(load.force.y) > GEOMETRY_EPSILON ||
@@ -300,17 +312,13 @@ export class Simulation implements Game {
 
     const fields = this.fieldDefinitions.map((definition) => {
       const state = this.requiredField(definition.id);
-      const uniform = 'forceDensityLocal' in definition;
       return {
         id: definition.id,
         worldPolygon: fieldWorldPolygon(definition, state),
         position: { ...state.position },
         angle: state.angle,
-        kind: definition.kind ?? 'uniform',
-        forceDensityWorld: uniform ? rotateVector(definition.forceDensityLocal, state.angle) : null,
-        sourceWorld: uniform ? null : transformPoint(definition.sourceLocal, state.position, state.angle),
-        strength: uniform ? null : definition.strength,
         enabled: state.enabled,
+        force: { kind: definition.force.kind, params: definition.force.params },
       };
     });
 

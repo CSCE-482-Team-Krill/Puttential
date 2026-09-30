@@ -1,4 +1,5 @@
 import { rectangle } from '../geometry/polygon';
+import { attractorForce, repulsorForce } from '../objects/forces';
 import type { Level, StaticBodyDefinition } from './types';
 
 const material = { restitution: 0.01 } as const;
@@ -52,7 +53,6 @@ export const radialRelay: Level = {
   fields: [
     {
       id: 'launch',
-      kind: 'repulsor',
       localPolygon: [
         { x: -6, y: -3.5 }, { x: -1, y: -3.5 },
         { x: -1, y: 0.8 }, { x: -2.5, y: 0.8 },
@@ -60,18 +60,15 @@ export const radialRelay: Level = {
       ],
       position: { x: 0, y: 0 },
       angle: 0,
-      sourceLocal: { x: -5.4, y: -3 },
-      strength: 2,
+      force: repulsorForce({ x: -5.4, y: -3 }, 2),
       enabled: false,
     },
     {
       id: 'catch',
-      kind: 'attractor',
       localPolygon: rectangle(7, 2.5),
       position: { x: 2.5, y: 2.25 },
       angle: 0,
-      sourceLocal: { x: 2, y: -0.05 },
-      strength: 10,
+      force: attractorForce({ x: 2, y: -0.05 }, 10),
       enabled: false,
     },
   ],

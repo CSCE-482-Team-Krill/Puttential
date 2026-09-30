@@ -1,4 +1,4 @@
-import type { Level } from './levels/types';
+import type { FieldForce, Level } from './levels/types';
 
 export type Vec2 = Readonly<{ x: number; y: number }>;
 
@@ -50,11 +50,9 @@ export type RenderField = Readonly<{
   worldPolygon: readonly Vec2[];
   position: Vec2;
   angle: number;
-  kind: 'uniform' | 'attractor' | 'repulsor';
-  forceDensityWorld: Vec2 | null;
-  sourceWorld: Vec2 | null;
-  strength: number | null;
   enabled: boolean;
+  /** Force description in the field's local frame; apply `position` and `angle` to draw it. */
+  force: Pick<FieldForce, 'kind' | 'params'>;
 }>;
 
 export type RenderState = Readonly<{

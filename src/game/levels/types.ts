@@ -31,21 +31,39 @@ export type StaticBodyDefinition = Readonly<{
   pieces: readonly ConvexPieceDefinition[];
 }>;
 
-type FieldBase = Readonly<{
+export type FieldParam = number | string | boolean | Vec2;
+
+/** Body material at one quadrature point, expressed in the field's local frame. */
+export type FieldSample = Readonly<{
+  point: Vec2;
+  /** Velocity of the body material at `point`. */
+  velocity: Vec2;
+  /** Density of the body piece being sampled. */
+  density: number;
+}>;
+
+/**
+ * A field's force law. The engine never inspects `kind` or `params`; they only
+ * describe the force for rendering and serialization. `densityAt` must be pure
+ * so replays stay deterministic.
+ */
+export type FieldForce = Readonly<{
+  kind: string;
+  params: Readonly<Record<string, FieldParam>>;
+  /** Force per unit area at the sample, in the field's local frame. */
+  densityAt(sample: FieldSample): Vec2;
+  /** Returns an error message when the force is invalid for this polygon. */
+  validate?(localPolygon: readonly Vec2[]): string | null;
+}>;
+
+export type FieldZoneDefinition = Readonly<{
   id: string;
   localPolygon: readonly Vec2[];
   position: Vec2;
   angle: number;
   enabled: boolean;
+  force: FieldForce;
 }>;
-
-export type FieldZoneDefinition =
-  | (FieldBase & Readonly<{ kind?: 'uniform'; forceDensityLocal: Vec2 }>)
-  | (FieldBase & Readonly<{
-      kind: 'attractor' | 'repulsor';
-      sourceLocal: Vec2;
-      strength: number;
-    }>);
 
 export type Level = Readonly<{
   id: string;
