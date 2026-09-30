@@ -4,7 +4,7 @@ import {
   dequantizePosition,
   validateCommand,
 } from './commands';
-import { GEOMETRY_EPSILON } from './geometry/mass';
+import { GEOMETRY_EPSILON } from './geometry/vector';
 import { transformPolygon, triangulateSimplePolygon } from './geometry/polygon';
 import type { FieldZoneDefinition, Level } from './levels/types';
 import { validateLevel } from './levels/validate';

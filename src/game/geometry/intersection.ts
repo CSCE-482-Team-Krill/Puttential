@@ -1,6 +1,5 @@
 import type { Vec2 } from '../types';
-import { GEOMETRY_EPSILON } from './mass';
-import { cross, subtract } from './polygon';
+import { cross, GEOMETRY_EPSILON, subtract } from './vector';
 
 function inside(point: Vec2, edgeStart: Vec2, edgeEnd: Vec2): boolean {
   return cross(subtract(edgeEnd, edgeStart), subtract(point, edgeStart)) >= -GEOMETRY_EPSILON;

@@ -1,27 +1,7 @@
 import type { Vec2 } from '../types';
-import { GEOMETRY_EPSILON, signedPolygonArea } from './mass';
+import { cross, GEOMETRY_EPSILON, subtract, transformPoint } from './vector';
 
-export function cross(a: Vec2, b: Vec2): number {
-  return a.x * b.y - a.y * b.x;
-}
-
-export function subtract(a: Vec2, b: Vec2): Vec2 {
-  return { x: a.x - b.x, y: a.y - b.y };
-}
-
-export function rotateVector(vector: Vec2, angle: number): Vec2 {
-  const cosine = Math.cos(angle);
-  const sine = Math.sin(angle);
-  return {
-    x: vector.x * cosine - vector.y * sine,
-    y: vector.x * sine + vector.y * cosine,
-  };
-}
-
-export function transformPoint(point: Vec2, position: Vec2, angle: number): Vec2 {
-  const rotated = rotateVector(point, angle);
-  return { x: rotated.x + position.x, y: rotated.y + position.y };
-}
+export type Bounds = Readonly<{ minX: number; maxX: number; minY: number; maxY: number }>;
 
 export function transformPolygon(
   polygon: readonly Vec2[],
@@ -29,6 +9,29 @@ export function transformPolygon(
   angle: number,
 ): Vec2[] {
   return polygon.map((point) => transformPoint(point, position, angle));
+}
+
+export function signedPolygonArea(polygon: readonly Vec2[]): number {
+  let twiceArea = 0;
+  for (let i = 0; i < polygon.length; i += 1) {
+    twiceArea += cross(polygon[i]!, polygon[(i + 1) % polygon.length]!);
+  }
+  return twiceArea * 0.5;
+}
+
+export function polygonBounds(points: readonly Vec2[]): Bounds {
+  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+  for (const point of points) {
+    minX = Math.min(minX, point.x);
+    maxX = Math.max(maxX, point.x);
+    minY = Math.min(minY, point.y);
+    maxY = Math.max(maxY, point.y);
+  }
+  return { minX, maxX, minY, maxY };
+}
+
+export function boundsOverlap(a: Bounds, b: Bounds): boolean {
+  return a.minX <= b.maxX && a.maxX >= b.minX && a.minY <= b.maxY && a.maxY >= b.minY;
 }
 
 function orientation(a: Vec2, b: Vec2, c: Vec2): number {
@@ -67,57 +70,8 @@ function segmentsIntersect(a: Vec2, b: Vec2, c: Vec2, d: Vec2): boolean {
   );
 }
 
-export function convexPolygonValidationError(polygon: readonly Vec2[]): string | null {
-  if (polygon.length < 3) return 'must have at least three vertices';
-  if (polygon.some((point) => !Number.isFinite(point.x) || !Number.isFinite(point.y))) {
-    return 'contains a non-finite coordinate';
-  }
-
-  for (let i = 0; i < polygon.length; i += 1) {
-    const edge = subtract(polygon[(i + 1) % polygon.length]!, polygon[i]!);
-    if (Math.hypot(edge.x, edge.y) <= GEOMETRY_EPSILON) {
-      return 'contains a zero-length edge';
-    }
-  }
-
-  for (let i = 0; i < polygon.length; i += 1) {
-    const a = polygon[i]!;
-    const b = polygon[(i + 1) % polygon.length]!;
-    for (let j = i + 1; j < polygon.length; j += 1) {
-      const adjacent = j === i + 1 || (i === 0 && j === polygon.length - 1);
-      if (adjacent) continue;
-      const c = polygon[j]!;
-      const d = polygon[(j + 1) % polygon.length]!;
-      if (segmentsIntersect(a, b, c, d)) return 'is self-intersecting';
-    }
-  }
-
-  const area = signedPolygonArea(polygon);
-  if (Math.abs(area) <= GEOMETRY_EPSILON) return 'has zero area';
-  if (area < 0) return 'must use counter-clockwise winding';
-
-  let hasPositiveTurn = false;
-  for (let i = 0; i < polygon.length; i += 1) {
-    const a = polygon[i]!;
-    const b = polygon[(i + 1) % polygon.length]!;
-    const c = polygon[(i + 2) % polygon.length]!;
-    const turn = orientation(a, b, c);
-    if (turn < -GEOMETRY_EPSILON) return 'must be convex';
-    if (turn > GEOMETRY_EPSILON) hasPositiveTurn = true;
-  }
-  return hasPositiveTurn ? null : 'has zero area';
-}
-
-export function assertValidConvexPolygon(
-  polygon: readonly Vec2[],
-  label = 'polygon',
-): void {
-  const error = convexPolygonValidationError(polygon);
-  if (error !== null) throw new Error(`${label} ${error}`);
-}
-
 /** Accepts either winding, including concave polygons, but rejects holes and crossings. */
-export function simplePolygonValidationError(polygon: readonly Vec2[]): string | null {
+function simplePolygonValidationError(polygon: readonly Vec2[]): string | null {
   if (polygon.length < 3) return 'must have at least three vertices';
   if (polygon.some((point) => !Number.isFinite(point.x) || !Number.isFinite(point.y))) {
     return 'contains a non-finite coordinate';
@@ -139,8 +93,26 @@ export function simplePolygonValidationError(polygon: readonly Vec2[]): string |
   return null;
 }
 
+function convexPolygonValidationError(polygon: readonly Vec2[]): string | null {
+  const error = simplePolygonValidationError(polygon);
+  if (error !== null) return error;
+  if (signedPolygonArea(polygon) < 0) return 'must use counter-clockwise winding';
+  for (let i = 0; i < polygon.length; i += 1) {
+    const a = polygon[i]!;
+    const b = polygon[(i + 1) % polygon.length]!;
+    const c = polygon[(i + 2) % polygon.length]!;
+    if (orientation(a, b, c) < -GEOMETRY_EPSILON) return 'must be convex';
+  }
+  return null;
+}
+
 export function assertValidSimplePolygon(polygon: readonly Vec2[], label = 'polygon'): void {
   const error = simplePolygonValidationError(polygon);
+  if (error !== null) throw new Error(`${label} ${error}`);
+}
+
+export function assertValidConvexPolygon(polygon: readonly Vec2[], label = 'polygon'): void {
+  const error = convexPolygonValidationError(polygon);
   if (error !== null) throw new Error(`${label} ${error}`);
 }
 

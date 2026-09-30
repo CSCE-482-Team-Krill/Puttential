@@ -1,9 +1,9 @@
 import { intersectConvexPolygons } from '../geometry/intersection';
-import { cross, subtract, transformPolygon } from '../geometry/polygon';
+import { boundsOverlap, polygonBounds, transformPolygon } from '../geometry/polygon';
+import type { Bounds } from '../geometry/polygon';
+import { cross, subtract } from '../geometry/vector';
 import type { FieldForce, FieldZoneDefinition } from '../levels/types';
 import type { FieldState, Vec2 } from '../types';
-
-type Bounds = Readonly<{ minX: number; maxX: number; minY: number; maxY: number }>;
 
 export type FieldLoadBody = Readonly<{
   position: Vec2;
@@ -32,21 +32,6 @@ export function fieldWorldPolygon(field: FieldZoneDefinition, state: FieldState)
   return transformPolygon(field.localPolygon, state.position, state.angle);
 }
 
-function boundsOf(points: readonly Vec2[]): Bounds {
-  let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (const point of points) {
-    minX = Math.min(minX, point.x);
-    maxX = Math.max(maxX, point.x);
-    minY = Math.min(minY, point.y);
-    maxY = Math.max(maxY, point.y);
-  }
-  return { minX, maxX, minY, maxY };
-}
-
-function boundsOverlap(a: Bounds, b: Bounds): boolean {
-  return a.minX <= b.maxX && a.maxX >= b.minX && a.minY <= b.maxY && a.maxY >= b.minY;
-}
-
 /** `localTriangles` is the field polygon's triangulation in its local frame. */
 export function prepareField(
   definition: FieldZoneDefinition,
@@ -61,7 +46,7 @@ export function prepareField(
     cos: Math.cos(state.angle),
     sin: Math.sin(state.angle),
     triangles,
-    bounds: boundsOf(triangles.flat()),
+    bounds: polygonBounds(triangles.flat()),
   };
 }
 
@@ -105,7 +90,7 @@ export function calculateFieldLoad(
   const total: Accumulator = { forceX: 0, forceY: 0, torque: 0 };
   for (const piece of body.pieces) {
     const pieceWorld = transformPolygon(piece.localPolygon, body.position, body.angle);
-    const pieceBounds = boundsOf(pieceWorld);
+    const pieceBounds = polygonBounds(pieceWorld);
     for (const field of fields) {
       if (!boundsOverlap(pieceBounds, field.bounds)) continue;
       for (const triangle of field.triangles) {
