@@ -68,10 +68,10 @@ Ordinary motion and collisions are frictionless: colliders use zero contact fric
 
 ## Determinism contract
 
-- Dynamic bodies, material pieces, and fields are integrated in stable ID order.
+- Dynamic bodies, material pieces, and fields are integrated in stable ID order, compared by code unit rather than locale.
 - Fields use deterministic three-point quadrature over overlap triangles, which is exact for constant and linear forces; no random samples are used.
 - The fixed timestep, command quantization, simulation version, and Rapier `0.20.0` dependency are pinned.
-- Replay and prediction are tested for identical snapshots in the same JavaScript runtime.
+- Replaying the same commands from the same snapshot produces the same `hashSnapshot` in the same JavaScript runtime.
 - Cross-browser or cross-device bitwise equality is not promised because JavaScript trigonometry may differ. If that becomes a requirement, the geometry and simulation wrapper should move behind the same API into Rust/Wasm.
 
-Run `npm test` and `npm run typecheck` from the repository root.
+Type-check with `npx tsc --noEmit` from the repository root.
