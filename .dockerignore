@@ -1,0 +1,34 @@
+# Git
+.git
+.gitignore
+
+# Local dependencies and Next.js build output
+**/node_modules
+**/.next
+
+# Environment files / secrets
+.env
+.env.*
+!.env.example
+
+# Backend and database are not part of Iteration 1 deployment
+src/backend
+prisma
+generated
+
+# Unused UI prototypes
+ui_ux_research/design_a
+ui_ux_research/design_b
+
+# Other local/project files not needed in the image
+.vscode
+.agents
+.claude
+.cursor
+.devin
+.windsurf
+
+# Logs / OS files
+*.log
+.DS_Store
+Thumbs.db
