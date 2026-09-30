@@ -1,4 +1,4 @@
-import type { FieldForce, Level } from './levels/types';
+import type { FieldForce } from './levels/types';
 
 export type Vec2 = Readonly<{ x: number; y: number }>;
 
@@ -30,6 +30,8 @@ export type GameEvent = Readonly<{
   bodyId: string;
 }>;
 
+export type RenderPiece = Readonly<{ id: string; worldPolygon: readonly Vec2[] }>;
+
 export type RenderBody = Readonly<{
   id: string;
   position: Vec2;
@@ -37,12 +39,12 @@ export type RenderBody = Readonly<{
   linearVelocity: Vec2;
   angularVelocity: number;
   sleeping: boolean;
-  pieces: readonly Readonly<{ id: string; worldPolygon: readonly Vec2[] }>[];
+  pieces: readonly RenderPiece[];
 }>;
 
 export type RenderStaticBody = Readonly<{
   id: string;
-  pieces: readonly Readonly<{ id: string; worldPolygon: readonly Vec2[] }>[];
+  pieces: readonly RenderPiece[];
 }>;
 
 export type RenderField = Readonly<{
@@ -73,7 +75,6 @@ export type GameSnapshot = Readonly<{
   fields: readonly FieldState[];
   queuedCommands: readonly GameCommand[];
   sleepingByBody: Readonly<Record<string, boolean>>;
-  ruleState: Readonly<Record<string, number | string | boolean | null>>;
 }>;
 
 export type PredictionSample = Readonly<{
@@ -108,5 +109,3 @@ export type Game = {
   predict(commands: GameCommand | readonly GameCommand[], options?: PredictionOptions): Prediction;
   destroy(): void;
 };
-
-export type CreateGame = (level: Level) => Promise<Game>;

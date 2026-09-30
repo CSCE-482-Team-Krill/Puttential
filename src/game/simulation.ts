@@ -1,113 +1,79 @@
 import RAPIER from '@dimforge/rapier2d-compat';
-import {
-  compareCommands,
-  dequantizePosition,
-  validateCommand,
-} from './commands';
-import { GEOMETRY_EPSILON } from './geometry/vector';
+import { compareCommands, dequantizePosition, validateCommand } from './commands';
+import { FIXED_DT, SIMULATION_VERSION } from './constants';
 import { transformPolygon, triangulateSimplePolygon } from './geometry/polygon';
+import { GEOMETRY_EPSILON } from './geometry/vector';
+import { sortById } from './ids';
 import type { FieldZoneDefinition, Level } from './levels/types';
 import { validateLevel } from './levels/validate';
-import { buildPhysicsWorld, staticRenderBodies } from './objects/bodies';
+import { buildPhysicsWorld, resolvePieces, staticRenderBodies } from './objects/bodies';
+import type { ResolvedPiece } from './objects/bodies';
 import { calculateFieldLoad, fieldWorldPolygon, prepareField } from './objects/fields';
 import type { PreparedField } from './objects/fields';
-import { predictFromSimulation } from './preview';
+import { predictFromSimulation } from './prediction';
+import { assertCompatibleSnapshot, copyFieldState } from './snapshot';
+import type { MutableFieldState } from './snapshot';
 import type {
-  FieldState,
   Game,
   GameCommand,
   GameEvent,
   GameSnapshot,
   Prediction,
   PredictionOptions,
+  RenderField,
   RenderState,
+  RenderStaticBody,
+  Vec2,
 } from './types';
 
-export const FIXED_DT = 1 / 120;
-export const SIMULATION_VERSION = 'puttential-core-3|rapier-0.20.0|dt-1/120';
-
-type MutableFieldState = {
-  id: string;
-  position: { x: number; y: number };
-  angle: number;
-  enabled: boolean;
-};
-
-function cloneCommand(command: GameCommand): GameCommand {
-  return { ...command };
-}
-
-function copyFieldState(field: FieldState): FieldState {
-  return {
-    id: field.id,
-    position: { x: field.position.x, y: field.position.y },
-    angle: field.angle,
-    enabled: field.enabled,
-  };
-}
+type DynamicBody = Readonly<{ id: string; pieces: readonly ResolvedPiece[] }>;
+type Field = Readonly<{ definition: FieldZoneDefinition; localTriangles: readonly Vec2[][] }>;
 
 export class Simulation implements Game {
   readonly level: Level;
-  private world: RAPIER.World;
-  private bodyHandles: Record<string, number>;
-  private readonly dynamicBodies;
-  private readonly fieldDefinitions;
-  private readonly fieldDefinitionById: ReadonlyMap<string, FieldZoneDefinition>;
-  private readonly fieldTriangles: ReadonlyMap<string, readonly (readonly { x: number; y: number }[])[]>;
-  private readonly staticBodies;
-  private fields: MutableFieldState[];
-  private preparedFields: readonly PreparedField[] | undefined;
-  private readonly fieldById = new Map<string, MutableFieldState>();
+  // Level data, sorted by ID once so every tick iterates in the same order.
+  private readonly dynamicBodies: readonly DynamicBody[];
+  private readonly staticBodies: readonly RenderStaticBody[];
+  private readonly fields: readonly Field[];
+
+  private world!: RAPIER.World;
+  private bodyHandles: Record<string, number> = {};
+  private fieldStates = new Map<string, MutableFieldState>();
   private queuedCommands: GameCommand[] = [];
   private sleepingByBody: Record<string, boolean> = {};
-  private ruleState: Record<string, number | string | boolean | null> = {};
   private tick = 0;
   private events: GameEvent[] = [];
-  private renderState: RenderState;
   private destroyed = false;
+
+  // Derived from field state; cleared whenever a field moves or toggles.
+  private preparedFields: readonly PreparedField[] | undefined;
+  private renderFields: readonly RenderField[] | undefined;
+  private renderState!: RenderState;
 
   constructor(level: Level, snapshot?: GameSnapshot) {
     validateLevel(level);
     this.level = level;
-    this.dynamicBodies = [...level.dynamicBodies].sort((a, b) => a.id.localeCompare(b.id));
-    this.fieldDefinitions = [...level.fields].sort((a, b) => a.id.localeCompare(b.id));
-    this.fieldDefinitionById = new Map(this.fieldDefinitions.map((field) => [field.id, field]));
-    this.fieldTriangles = new Map(this.fieldDefinitions.map((field) => [
-      field.id, triangulateSimplePolygon(field.localPolygon),
-    ]));
+    this.dynamicBodies = sortById(level.dynamicBodies).map((body) => ({
+      id: body.id,
+      pieces: resolvePieces(body),
+    }));
     this.staticBodies = staticRenderBodies(level);
+    this.fields = sortById(level.fields).map((definition) => ({
+      definition,
+      localTriangles: triangulateSimplePolygon(definition.localPolygon),
+    }));
 
-    if (snapshot === undefined) {
-      const built = buildPhysicsWorld(level, FIXED_DT);
-      this.world = built.world;
-      this.bodyHandles = { ...built.bodyHandles };
-      this.fields = this.fieldDefinitions.map((field) => ({
-        id: field.id,
-        position: { ...field.position },
-        angle: field.angle,
-        enabled: field.enabled,
-      }));
-      this.indexFields();
-      for (const body of this.dynamicBodies) {
-        this.sleepingByBody[body.id] = this.rigidBody(body.id).isSleeping();
-      }
-    } else {
-      this.assertCompatibleSnapshot(snapshot);
-      this.world = RAPIER.World.restoreSnapshot(new Uint8Array(snapshot.physics));
-      this.world.timestep = FIXED_DT;
-      this.bodyHandles = { ...snapshot.bodyHandles };
-      this.fields = snapshot.fields.map((field) => ({
-        id: field.id,
-        position: { ...field.position },
-        angle: field.angle,
-        enabled: field.enabled,
-      }));
-      this.queuedCommands = snapshot.queuedCommands.map(cloneCommand);
-      this.sleepingByBody = { ...snapshot.sleepingByBody };
-      this.ruleState = { ...snapshot.ruleState };
-      this.tick = snapshot.tick;
-      this.indexFields();
-      this.assertSnapshotContents();
+    if (snapshot !== undefined) {
+      this.load(snapshot);
+      return;
+    }
+    const built = buildPhysicsWorld(level, FIXED_DT);
+    this.world = built.world;
+    this.bodyHandles = { ...built.bodyHandles };
+    this.fieldStates = new Map(this.fields.map(({ definition }) =>
+      [definition.id, copyFieldState(definition)]));
+    for (const body of this.dynamicBodies) {
+      this.sleepingByBody[body.id] = this.rigidBody(body.id).isSleeping();
     }
     this.renderState = this.buildRenderState();
   }
@@ -115,81 +81,22 @@ export class Simulation implements Game {
   queueCommand(command: GameCommand): void {
     this.assertAlive();
     validateCommand(command);
-    if (!this.fieldById.has(command.fieldId)) {
+    if (!this.fieldStates.has(command.fieldId)) {
       throw new Error(`unknown field ID: ${command.fieldId}`);
     }
     if (this.queuedCommands.some((queued) => queued.sequence === command.sequence)) {
       throw new Error(`duplicate queued command sequence: ${command.sequence}`);
     }
-    this.queuedCommands.push(cloneCommand(command));
+    this.queuedCommands.push({ ...command });
   }
 
   step(): void {
     this.assertAlive();
     this.applyQueuedCommands();
-    this.events = [];
-
-    for (const definition of this.dynamicBodies) {
-      const body = this.rigidBody(definition.id);
-      body.resetForces(false);
-      body.resetTorques(false);
-    }
-
-    const fields = this.preparedFields ??= this.fieldDefinitions
-      .filter((definition) => this.requiredField(definition.id).enabled)
-      .map((definition) => prepareField(
-        definition,
-        this.requiredField(definition.id),
-        this.fieldTriangles.get(definition.id)!,
-      ));
-    if (fields.length > 0) {
-      for (const definition of this.dynamicBodies) {
-        const body = this.rigidBody(definition.id);
-        const load = calculateFieldLoad(
-          {
-            position: body.translation(),
-            angle: body.rotation(),
-            centerOfMass: body.worldCom(),
-            linearVelocity: body.linvel(),
-            angularVelocity: body.angvel(),
-            pieces: [...definition.pieces]
-              .sort((a, b) => a.id.localeCompare(b.id))
-              .map((piece) => ({
-                localPolygon: piece.localPolygon,
-                density: piece.density ?? definition.density,
-              })),
-          },
-          fields,
-        );
-        if (!Number.isFinite(load.force.x) || !Number.isFinite(load.force.y) ||
-          !Number.isFinite(load.torque)) {
-          throw new Error(`field load on body ${definition.id} is not finite`);
-        }
-        const active =
-          Math.abs(load.force.x) > GEOMETRY_EPSILON ||
-          Math.abs(load.force.y) > GEOMETRY_EPSILON ||
-          Math.abs(load.torque) > GEOMETRY_EPSILON;
-        if (active) {
-          body.addForce({ x: load.force.x, y: load.force.y }, true);
-          body.addTorque(load.torque, true);
-        }
-      }
-    }
-
+    this.applyFieldLoads();
     this.world.step();
     this.tick += 1;
-    for (const definition of this.dynamicBodies) {
-      const sleeping = this.rigidBody(definition.id).isSleeping();
-      const previous = this.sleepingByBody[definition.id] ?? false;
-      if (sleeping !== previous) {
-        this.events.push({
-          type: sleeping ? 'body-slept' : 'body-woke',
-          tick: this.tick,
-          bodyId: definition.id,
-        });
-      }
-      this.sleepingByBody[definition.id] = sleeping;
-    }
+    this.recordSleepChanges();
     this.renderState = this.buildRenderState();
   }
 
@@ -207,48 +114,15 @@ export class Simulation implements Game {
       tick: this.tick,
       physics: new Uint8Array(this.world.takeSnapshot()),
       bodyHandles: { ...this.bodyHandles },
-      fields: this.fields.map(copyFieldState),
-      queuedCommands: [...this.queuedCommands].sort(compareCommands).map(cloneCommand),
+      fields: [...this.fieldStates.values()].map(copyFieldState),
+      queuedCommands: [...this.queuedCommands].sort(compareCommands).map((command) => ({ ...command })),
       sleepingByBody: { ...this.sleepingByBody },
-      ruleState: { ...this.ruleState },
     };
   }
 
   restore(snapshot: GameSnapshot): void {
     this.assertAlive();
-    this.assertCompatibleSnapshot(snapshot);
-    const replacement = RAPIER.World.restoreSnapshot(new Uint8Array(snapshot.physics));
-    replacement.timestep = FIXED_DT;
-    try {
-      for (const definition of this.dynamicBodies) {
-        const handle = snapshot.bodyHandles[definition.id];
-        if (handle === undefined || !Number.isSafeInteger(handle) || handle < 0 ||
-          replacement.getRigidBody(handle) === null) {
-          throw new Error(`snapshot is missing body ${definition.id}`);
-        }
-      }
-    } catch (error) {
-      replacement.free();
-      throw error;
-    }
-    this.world.free();
-    this.world = replacement;
-    this.bodyHandles = { ...snapshot.bodyHandles };
-    this.fields = snapshot.fields.map((field) => ({
-      id: field.id,
-      position: { ...field.position },
-      angle: field.angle,
-      enabled: field.enabled,
-    }));
-    this.queuedCommands = snapshot.queuedCommands.map(cloneCommand);
-    this.sleepingByBody = { ...snapshot.sleepingByBody };
-    this.ruleState = { ...snapshot.ruleState };
-    this.tick = snapshot.tick;
-    this.events = [];
-    this.preparedFields = undefined;
-    this.indexFields();
-    this.assertSnapshotContents();
-    this.renderState = this.buildRenderState();
+    this.load(snapshot);
   }
 
   predict(commands: GameCommand | readonly GameCommand[], options?: PredictionOptions): Prediction {
@@ -272,12 +146,40 @@ export class Simulation implements Game {
     this.destroyed = true;
   }
 
+  /** Replaces all mutable state. Leaves the current state untouched if the snapshot is invalid. */
+  private load(snapshot: GameSnapshot): void {
+    assertCompatibleSnapshot(snapshot, this.level);
+    const world = RAPIER.World.restoreSnapshot(new Uint8Array(snapshot.physics));
+    world.timestep = FIXED_DT;
+    for (const body of this.dynamicBodies) {
+      const handle = snapshot.bodyHandles[body.id];
+      if (handle === undefined || !Number.isSafeInteger(handle) || handle < 0 ||
+        world.getRigidBody(handle) === null) {
+        world.free();
+        throw new Error(`snapshot is missing body ${body.id}`);
+      }
+    }
+
+    const fieldsById = new Map(snapshot.fields.map((field) => [field.id, field]));
+    this.world?.free();
+    this.world = world;
+    this.bodyHandles = { ...snapshot.bodyHandles };
+    this.fieldStates = new Map(this.fields.map(({ definition }) =>
+      [definition.id, copyFieldState(fieldsById.get(definition.id)!)]));
+    this.queuedCommands = snapshot.queuedCommands.map((command) => ({ ...command }));
+    this.sleepingByBody = { ...snapshot.sleepingByBody };
+    this.tick = snapshot.tick;
+    this.events = [];
+    this.invalidateFields();
+    this.renderState = this.buildRenderState();
+  }
+
   private applyQueuedCommands(): void {
-    const commands = [...this.queuedCommands].sort(compareCommands);
+    if (this.queuedCommands.length === 0) return;
+    const commands = this.queuedCommands.sort(compareCommands);
     this.queuedCommands = [];
-    if (commands.length > 0) this.preparedFields = undefined;
     for (const command of commands) {
-      const field = this.requiredField(command.fieldId);
+      const field = this.fieldState(command.fieldId);
       if (command.type === 'move-field') {
         field.position.x = dequantizePosition(command.xQ);
         field.position.y = dequantizePosition(command.yQ);
@@ -285,33 +187,75 @@ export class Simulation implements Game {
         field.enabled = command.enabled;
       }
     }
+    this.invalidateFields();
+  }
+
+  private applyFieldLoads(): void {
+    const fields = this.preparedFields ??= this.fields
+      .filter(({ definition }) => this.fieldState(definition.id).enabled)
+      .map(({ definition, localTriangles }) =>
+        prepareField(definition, this.fieldState(definition.id), localTriangles));
+
+    for (const body of this.dynamicBodies) {
+      const rigidBody = this.rigidBody(body.id);
+      rigidBody.resetForces(false);
+      rigidBody.resetTorques(false);
+      if (fields.length === 0) continue;
+
+      const load = calculateFieldLoad({
+        position: rigidBody.translation(),
+        angle: rigidBody.rotation(),
+        centerOfMass: rigidBody.worldCom(),
+        linearVelocity: rigidBody.linvel(),
+        angularVelocity: rigidBody.angvel(),
+        pieces: body.pieces,
+      }, fields);
+      if (!Number.isFinite(load.force.x) || !Number.isFinite(load.force.y) ||
+        !Number.isFinite(load.torque)) {
+        throw new Error(`field load on body ${body.id} is not finite`);
+      }
+      if (Math.abs(load.force.x) > GEOMETRY_EPSILON || Math.abs(load.force.y) > GEOMETRY_EPSILON ||
+        Math.abs(load.torque) > GEOMETRY_EPSILON) {
+        rigidBody.addForce(load.force, true);
+        rigidBody.addTorque(load.torque, true);
+      }
+    }
+  }
+
+  private recordSleepChanges(): void {
+    this.events = [];
+    for (const body of this.dynamicBodies) {
+      const sleeping = this.rigidBody(body.id).isSleeping();
+      if (sleeping !== (this.sleepingByBody[body.id] ?? false)) {
+        this.events.push({ type: sleeping ? 'body-slept' : 'body-woke', tick: this.tick, bodyId: body.id });
+      }
+      this.sleepingByBody[body.id] = sleeping;
+    }
   }
 
   private buildRenderState(): RenderState {
-    const bodies = this.dynamicBodies.map((definition) => {
-      const body = this.rigidBody(definition.id);
-      const translation = body.translation();
-      const velocity = body.linvel();
+    const bodies = this.dynamicBodies.map((body) => {
+      const rigidBody = this.rigidBody(body.id);
+      const translation = rigidBody.translation();
+      const velocity = rigidBody.linvel();
       const position = { x: translation.x, y: translation.y };
-      const angle = body.rotation();
+      const angle = rigidBody.rotation();
       return {
-        id: definition.id,
+        id: body.id,
         position,
         angle,
         linearVelocity: { x: velocity.x, y: velocity.y },
-        angularVelocity: body.angvel(),
-        sleeping: body.isSleeping(),
-        pieces: [...definition.pieces]
-          .sort((a, b) => a.id.localeCompare(b.id))
-          .map((piece) => ({
-            id: piece.id,
-            worldPolygon: transformPolygon(piece.localPolygon, position, angle),
-          })),
+        angularVelocity: rigidBody.angvel(),
+        sleeping: rigidBody.isSleeping(),
+        pieces: body.pieces.map((piece) => ({
+          id: piece.id,
+          worldPolygon: transformPolygon(piece.localPolygon, position, angle),
+        })),
       };
     });
 
-    const fields = this.fieldDefinitions.map((definition) => {
-      const state = this.requiredField(definition.id);
+    const fields = this.renderFields ??= this.fields.map(({ definition }) => {
+      const state = this.fieldState(definition.id);
       return {
         id: definition.id,
         worldPolygon: fieldWorldPolygon(definition, state),
@@ -331,77 +275,21 @@ export class Simulation implements Game {
     };
   }
 
+  private invalidateFields(): void {
+    this.preparedFields = undefined;
+    this.renderFields = undefined;
+  }
+
   private rigidBody(id: string): RAPIER.RigidBody {
     const handle = this.bodyHandles[id];
     if (handle === undefined) throw new Error(`missing Rapier handle for body ${id}`);
     return this.world.getRigidBody(handle);
   }
 
-  private requiredField(id: string): MutableFieldState {
-    const field = this.fieldById.get(id);
+  private fieldState(id: string): MutableFieldState {
+    const field = this.fieldStates.get(id);
     if (field === undefined) throw new Error(`missing state for field ${id}`);
     return field;
-  }
-
-  private indexFields(): void {
-    this.fieldById.clear();
-    for (const field of this.fields) {
-      if (this.fieldById.has(field.id)) throw new Error(`duplicate snapshot field ID: ${field.id}`);
-      this.fieldById.set(field.id, field);
-    }
-  }
-
-  private assertSnapshotContents(): void {
-    if (this.fields.length !== this.fieldDefinitions.length) {
-      throw new Error('snapshot field count does not match level');
-    }
-    for (const definition of this.fieldDefinitions) {
-      const state = this.requiredField(definition.id);
-      if (state.angle !== definition.angle) {
-        throw new Error(`snapshot changed fixed angle for field ${definition.id}`);
-      }
-    }
-    for (const body of this.dynamicBodies) this.rigidBody(body.id);
-    for (const command of this.queuedCommands) {
-      validateCommand(command);
-      if (!this.fieldDefinitionById.has(command.fieldId)) {
-        throw new Error(`snapshot command references unknown field ${command.fieldId}`);
-      }
-    }
-  }
-
-  private assertCompatibleSnapshot(snapshot: GameSnapshot): void {
-    if (snapshot.levelId !== this.level.id || snapshot.levelVersion !== this.level.version) {
-      throw new Error('snapshot level ID/version does not match this game');
-    }
-    if (snapshot.simulationVersion !== SIMULATION_VERSION) {
-      throw new Error('snapshot simulation version is incompatible');
-    }
-    if (!Number.isSafeInteger(snapshot.tick) || snapshot.tick < 0) {
-      throw new Error('snapshot tick must be a non-negative integer');
-    }
-    if (snapshot.fields.length !== this.fieldDefinitions.length) {
-      throw new Error('snapshot field count does not match level');
-    }
-    const fieldsById = new Map(snapshot.fields.map((field) => [field.id, field]));
-    if (fieldsById.size !== snapshot.fields.length) throw new Error('snapshot has duplicate field IDs');
-    for (const definition of this.fieldDefinitions) {
-      const state = fieldsById.get(definition.id);
-      if (state === undefined) throw new Error(`snapshot is missing field ${definition.id}`);
-      if (state.angle !== definition.angle) {
-        throw new Error(`snapshot changed fixed angle for field ${definition.id}`);
-      }
-      if (!Number.isFinite(state.position.x) || !Number.isFinite(state.position.y) ||
-        typeof state.enabled !== 'boolean') {
-        throw new Error(`snapshot has invalid state for field ${definition.id}`);
-      }
-    }
-    for (const command of snapshot.queuedCommands) {
-      validateCommand(command);
-      if (!this.fieldDefinitionById.has(command.fieldId)) {
-        throw new Error(`snapshot command references unknown field ${command.fieldId}`);
-      }
-    }
   }
 
   private assertAlive(): void {

@@ -6,6 +6,10 @@ function assertFinite(value: number, label: string): void {
   if (!Number.isFinite(value)) throw new Error(`${label} must be finite`);
 }
 
+export function assertPositiveInteger(value: number, label: string): void {
+  if (!Number.isSafeInteger(value) || value < 1) throw new Error(`${label} must be a positive integer`);
+}
+
 function assertVec2(vector: Vec2, label: string): void {
   assertFinite(vector.x, `${label}.x`);
   assertFinite(vector.y, `${label}.y`);
@@ -29,9 +33,7 @@ function assertUniqueIds(ids: readonly string[], label: string): void {
 
 export function validateLevel(level: Level): void {
   if (!level.id) throw new Error('level.id must not be empty');
-  if (!Number.isSafeInteger(level.version) || level.version < 1) {
-    throw new Error('level.version must be a positive integer');
-  }
+  assertPositiveInteger(level.version, 'level.version');
   assertVec2(level.gravity, 'level.gravity');
   assertUniqueIds(
     [...level.dynamicBodies.map((body) => body.id), ...level.staticBodies.map((body) => body.id)],
@@ -83,14 +85,7 @@ export function validateLevel(level: Level): void {
   }
 
   if (level.prediction !== undefined) {
-    if (!Number.isSafeInteger(level.prediction.maxTicks) || level.prediction.maxTicks < 1) {
-      throw new Error('level.prediction.maxTicks must be a positive integer');
-    }
-    if (
-      !Number.isSafeInteger(level.prediction.sampleEveryTicks) ||
-      level.prediction.sampleEveryTicks < 1
-    ) {
-      throw new Error('level.prediction.sampleEveryTicks must be a positive integer');
-    }
+    assertPositiveInteger(level.prediction.maxTicks, 'level.prediction.maxTicks');
+    assertPositiveInteger(level.prediction.sampleEveryTicks, 'level.prediction.sampleEveryTicks');
   }
 }
