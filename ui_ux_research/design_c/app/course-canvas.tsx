@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
-import type { FieldZoneDefinition, Level, RenderField, RenderState, Vec2 } from "@game";
+import { forceDensity, shapePolygon } from "@game";
+import type { FieldZoneDefinition, Level, RenderBody, RenderField, RenderPiece, RenderState, Vec2 } from "@game";
 import type { Draft, Mode } from "./puzzle";
 
 type Props = Readonly<{
@@ -29,8 +30,15 @@ function rotate(vector: Vec2, angle: number): Vec2 {
   return { x: vector.x * cos - vector.y * sin, y: vector.x * sin + vector.y * cos };
 }
 
+/** World points that span the piece: its vertices, or a circle's bounding corners. */
+function pieceExtent(piece: RenderPiece): readonly Vec2[] {
+  if (piece.kind === "polygon") return piece.worldPolygon;
+  const { center, radius } = piece;
+  return [{ x: center.x - radius, y: center.y - radius }, { x: center.x + radius, y: center.y + radius }];
+}
+
 function worldBounds(state: RenderState): Bounds {
-  const points = state.staticBodies.flatMap((body) => body.pieces.flatMap((piece) => piece.worldPolygon));
+  const points = state.staticBodies.flatMap((body) => body.pieces.flatMap(pieceExtent));
   const xs = points.map((point) => point.x), ys = points.map((point) => point.y);
   return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys) };
 }
@@ -65,6 +73,23 @@ function polygonPath(view: View, polygon: readonly Vec2[]): Path2D {
     else path.lineTo(x, y);
   });
   path.closePath();
+  return path;
+}
+
+function piecePath(view: View, piece: RenderPiece): Path2D {
+  if (piece.kind === "polygon") return polygonPath(view, piece.worldPolygon);
+  const path = new Path2D();
+  const center = toCanvas(view, piece.center);
+  path.arc(center.x, center.y, piece.radius * view.scale, 0, Math.PI * 2);
+  return path;
+}
+
+/** A dot off a circle's center, so its spin is visible. */
+function spinMarkerPath(view: View, body: RenderBody, piece: Extract<RenderPiece, { kind: "circle" }>): Path2D {
+  const offset = rotate({ x: piece.radius * 0.55, y: 0 }, body.angle);
+  const center = toCanvas(view, { x: piece.center.x + offset.x, y: piece.center.y + offset.y });
+  const path = new Path2D();
+  path.arc(center.x, center.y, Math.max(1.5, piece.radius * view.scale * 0.16), 0, Math.PI * 2);
   return path;
 }
 
@@ -104,11 +129,13 @@ function drawArrow(context: CanvasRenderingContext2D, from: Vec2, to: Vec2): voi
  */
 function drawForceArrows(context: CanvasRenderingContext2D, view: View, field: RenderField, definition: FieldZoneDefinition): number {
   let drawn = 0;
-  const xs = definition.localPolygon.map((point) => point.x);
-  const ys = definition.localPolygon.map((point) => point.y);
+  const densityAt = forceDensity(definition.force);
+  const polygon = shapePolygon(definition.shape);
+  const xs = polygon.map((point) => point.x);
+  const ys = polygon.map((point) => point.y);
   for (let x = Math.min(...xs) + ARROW_SPACING / 2; x < Math.max(...xs); x += ARROW_SPACING) {
     for (let y = Math.min(...ys) + ARROW_SPACING / 2; y < Math.max(...ys); y += ARROW_SPACING) {
-      const force = definition.force.densityAt({ point: { x, y }, velocity: { x: 0, y: 0 }, density: 1 });
+      const force = densityAt({ point: { x, y }, velocity: { x: 0, y: 0 }, density: 1 });
       const magnitude = Math.hypot(force.x, force.y);
       if (magnitude < 1e-9) continue;
       const center = rotate({ x, y }, field.angle);
@@ -191,7 +218,7 @@ function draw(context: CanvasRenderingContext2D, view: View, state: RenderState,
   context.shadowOffsetX = 3;
   context.shadowOffsetY = 4;
   for (const body of state.staticBodies) {
-    for (const piece of body.pieces) context.fill(polygonPath(view, piece.worldPolygon));
+    for (const piece of body.pieces) context.fill(piecePath(view, piece));
   }
   context.shadowColor = "transparent";
 
@@ -226,16 +253,20 @@ function draw(context: CanvasRenderingContext2D, view: View, state: RenderState,
   context.lineWidth = 1.5;
   for (const body of state.bodies) {
     for (const piece of body.pieces) {
-      const points = piece.worldPolygon.map((point) => toCanvas(view, point));
+      const points = pieceExtent(piece).map((point) => toCanvas(view, point));
       const xs = points.map((point) => point.x), ys = points.map((point) => point.y);
       const gradient = context.createLinearGradient(Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys));
       gradient.addColorStop(0, "#ffffff");
       gradient.addColorStop(0.5, "#f1fcf1");
       gradient.addColorStop(1, "#a9dcaa");
       context.fillStyle = gradient;
-      const path = polygonPath(view, piece.worldPolygon);
+      const path = piecePath(view, piece);
       context.fill(path);
       context.stroke(path);
+      if (piece.kind === "circle") {
+        context.fillStyle = "#7fc681";
+        context.fill(spinMarkerPath(view, body, piece));
+      }
     }
   }
   context.restore();

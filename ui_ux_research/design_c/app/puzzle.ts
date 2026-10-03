@@ -7,7 +7,7 @@ import type { Game, GameCommand, GameSnapshot, Level, RenderState, Vec2 } from "
 export type Mode = "loading" | "setup" | "running" | "done";
 export type FieldDraft = Readonly<{ position: Vec2; enabled: boolean }>;
 export type Draft = Readonly<Record<string, FieldDraft>>;
-export type RunResult = Readonly<{ solved: boolean; tiles: number; seconds: number }>;
+export type RunResult = Readonly<{ solved: boolean; fields: number; seconds: number }>;
 
 /** How much of the run the dotted preview shows. */
 const TRAIL_TICKS = 120;
@@ -105,7 +105,7 @@ export function usePuzzle(level: Level) {
       if (solved || stopped) {
         setResult({
           solved,
-          tiles: state.fields.filter((field) => field.enabled).length,
+          fields: state.fields.filter((field) => field.enabled).length,
           seconds: (state.goal.completedTick ?? state.tick) * FIXED_DT,
         });
         setMode("done");

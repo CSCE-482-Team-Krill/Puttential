@@ -1,5 +1,5 @@
 import type { Bounds } from './geometry/polygon';
-import type { FieldForce } from './levels/types';
+import type { FieldForceDefinition } from './levels/types';
 
 export type Vec2 = Readonly<{ x: number; y: number }>;
 
@@ -25,7 +25,10 @@ export type FieldState = Readonly<{
   enabled: boolean;
 }>;
 
-export type RenderPiece = Readonly<{ id: string; worldPolygon: readonly Vec2[] }>;
+/** A circle has no vertices to show its spin; draw that from the body's `angle`. */
+export type RenderPiece =
+  | Readonly<{ id: string; kind: 'polygon'; worldPolygon: readonly Vec2[] }>
+  | Readonly<{ id: string; kind: 'circle'; center: Vec2; radius: number }>;
 
 export type RenderBody = Readonly<{
   id: string;
@@ -49,7 +52,7 @@ export type RenderField = Readonly<{
   angle: number;
   enabled: boolean;
   /** Force description in the field's local frame; apply `position` and `angle` to draw it. */
-  force: Pick<FieldForce, 'kind' | 'params'>;
+  force: FieldForceDefinition;
 }>;
 
 export type GoalState = Readonly<{

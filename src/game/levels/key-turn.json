@@ -1,0 +1,137 @@
+{
+  "formatVersion": 1,
+  "id": "key-turn",
+  "name": "Key Turn",
+  "gravity": { "x": 0, "y": 0 },
+  "dynamicBodies": [
+    {
+      "id": "key",
+      "position": { "x": -3, "y": -2.2 },
+      "angle": 0,
+      "density": 1,
+      "material": { "restitution": 0.8 },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "key-shaft",
+          "shape": { "kind": "rectangle", "width": 2.6, "height": 0.35 }
+        },
+        {
+          "id": "key-bit",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              { "x": 0.9, "y": -0.725 },
+              { "x": 1.3, "y": -0.725 },
+              { "x": 1.3, "y": -0.175 },
+              { "x": 0.9, "y": -0.175 }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "staticBodies": [
+    {
+      "id": "left-rail",
+      "position": { "x": -7.15, "y": 0 },
+      "angle": 0,
+      "material": { "restitution": 0.8 },
+      "pieces": [
+        {
+          "id": "left-rail-piece",
+          "shape": { "kind": "rectangle", "width": 0.5, "height": 8.5 }
+        }
+      ]
+    },
+    {
+      "id": "right-rail",
+      "position": { "x": 7.15, "y": 0 },
+      "angle": 0,
+      "material": { "restitution": 0.8 },
+      "pieces": [
+        {
+          "id": "right-rail-piece",
+          "shape": { "kind": "rectangle", "width": 0.5, "height": 8.5 }
+        }
+      ]
+    },
+    {
+      "id": "bottom-rail",
+      "position": { "x": 0, "y": -4 },
+      "angle": 0,
+      "material": { "restitution": 0.8 },
+      "pieces": [
+        {
+          "id": "bottom-rail-piece",
+          "shape": { "kind": "rectangle", "width": 14.8, "height": 0.5 }
+        }
+      ]
+    },
+    {
+      "id": "top-rail",
+      "position": { "x": 0, "y": 4 },
+      "angle": 0,
+      "material": { "restitution": 0.8 },
+      "pieces": [
+        {
+          "id": "top-rail-piece",
+          "shape": { "kind": "rectangle", "width": 14.8, "height": 0.5 }
+        }
+      ]
+    },
+    {
+      "id": "left-shelf",
+      "position": { "x": -3.95, "y": 0.3 },
+      "angle": 0,
+      "material": { "restitution": 0.8 },
+      "pieces": [
+        {
+          "id": "left-shelf-piece",
+          "shape": { "kind": "rectangle", "width": 5.9, "height": 0.3 }
+        }
+      ]
+    },
+    {
+      "id": "right-shelf",
+      "position": { "x": 3.95, "y": 0.3 },
+      "angle": 0,
+      "material": { "restitution": 0.8 },
+      "pieces": [
+        {
+          "id": "right-shelf-piece",
+          "shape": { "kind": "rectangle", "width": 5.9, "height": 0.3 }
+        }
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "id": "lift",
+      "shape": { "kind": "rectangle", "width": 1.8, "height": 1.8 },
+      "position": { "x": -5, "y": -2.8 },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": { "x": 0, "y": 5 }
+      }
+    },
+    {
+      "id": "shove",
+      "shape": { "kind": "rectangle", "width": 1.6, "height": 2.2 },
+      "position": { "x": 4.5, "y": -2.4 },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": { "x": 4, "y": 0 }
+      }
+    }
+  ],
+  "goal": {
+    "bodyId": "key",
+    "area": { "minX": -2, "maxX": 2, "minY": 1.6, "maxY": 3.4 },
+    "holdSeconds": 1
+  }
+}
