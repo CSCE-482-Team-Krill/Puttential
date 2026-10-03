@@ -1,19 +1,21 @@
 export { POSITION_QUANTUM, quantizePosition } from './commands';
-export { exampleBarPuzzle, exampleGoal } from './levels/example-bar-puzzle';
-export { radialRelay, radialRelayGoal } from './levels/radial-relay';
-export { attractorForce, repulsorForce, uniformForce } from './objects/forces';
+export { parseLevel } from './levels/parse';
+export { LEVEL_FORMAT_VERSION } from './levels/types';
 export type {
+  CircleShape,
   ConvexPieceDefinition,
   DynamicBodyDefinition,
-  FieldForce,
-  FieldParam,
-  FieldSample,
+  FieldForceDefinition,
+  FieldShape,
   FieldZoneDefinition,
+  GoalDefinition,
   Level,
+  PieceShape,
+  PolygonShape,
+  RectangleShape,
   StaticBodyDefinition,
   SurfaceMaterial,
 } from './levels/types';
-export { validateLevel } from './levels/validate';
 export { createGame, FIXED_DT } from './simulation';
 export type {
   FieldState,

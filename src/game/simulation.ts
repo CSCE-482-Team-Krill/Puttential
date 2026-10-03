@@ -1,14 +1,17 @@
 import RAPIER from '@dimforge/rapier2d-compat';
 import { compareCommands, dequantizePosition, validateCommand } from './commands';
-import { transformPolygon, triangulateSimplePolygon } from './geometry/polygon';
+import { triangulateSimplePolygon } from './geometry/polygon';
+import { shapePolygon } from './geometry/shapes';
 import { GEOMETRY_EPSILON } from './geometry/vector';
 import { sortById } from './ids';
 import type { FieldZoneDefinition, Level } from './levels/types';
-import { assertPositiveInteger, validateLevel } from './levels/validate';
-import { buildPhysicsWorld, resolvePieces, staticRenderBodies } from './objects/bodies';
+import { assertPositiveInteger, parseLevel } from './levels/parse';
+import { buildPhysicsWorld, renderPiece, resolveBodyPieces, staticRenderBodies } from './objects/bodies';
 import type { ResolvedPiece } from './objects/bodies';
 import { calculateFieldLoad, fieldWorldPolygon, prepareField } from './objects/fields';
 import type { PreparedField } from './objects/fields';
+import { forceDensity } from './objects/forces';
+import type { ForceDensity } from './objects/forces';
 import type {
   FieldState,
   Game,
@@ -26,7 +29,11 @@ import type {
 export const FIXED_DT = 1 / 120;
 
 type DynamicBody = Readonly<{ id: string; pieces: readonly ResolvedPiece[] }>;
-type Field = Readonly<{ definition: FieldZoneDefinition; localTriangles: readonly Vec2[][] }>;
+type Field = Readonly<{
+  definition: FieldZoneDefinition;
+  localTriangles: readonly Vec2[][];
+  densityAt: ForceDensity;
+}>;
 type MutableFieldState = { id: string; position: { x: number; y: number }; angle: number; enabled: boolean };
 
 function copyFieldState(field: FieldState): MutableFieldState {
@@ -63,17 +70,18 @@ class Simulation implements Game {
   private renderFields: readonly RenderField[] | undefined;
   private renderState!: RenderState;
 
-  constructor(level: Level, snapshot?: GameSnapshot) {
-    validateLevel(level);
+  constructor(data: Level, snapshot?: GameSnapshot) {
+    const level = parseLevel(data);
     this.level = level;
     this.dynamicBodies = sortById(level.dynamicBodies).map((body) => ({
       id: body.id,
-      pieces: resolvePieces(body),
+      pieces: resolveBodyPieces(body),
     }));
     this.staticBodies = staticRenderBodies(level);
     this.fields = sortById(level.fields).map((definition) => ({
       definition,
-      localTriangles: triangulateSimplePolygon(definition.localPolygon),
+      localTriangles: triangulateSimplePolygon(shapePolygon(definition.shape)),
+      densityAt: forceDensity(definition.force),
     }));
 
     if (snapshot !== undefined) {
@@ -197,8 +205,8 @@ class Simulation implements Game {
   private applyFieldLoads(): void {
     const fields = this.preparedFields ??= this.fields
       .filter(({ definition }) => this.fieldState(definition.id).enabled)
-      .map(({ definition, localTriangles }) =>
-        prepareField(definition, this.fieldState(definition.id), localTriangles));
+      .map(({ definition, localTriangles, densityAt }) =>
+        prepareField(densityAt, this.fieldState(definition.id), localTriangles));
 
     for (const body of this.dynamicBodies) {
       const rigidBody = this.rigidBody(body.id);
@@ -241,10 +249,7 @@ class Simulation implements Game {
         linearVelocity: { x: velocity.x, y: velocity.y },
         angularVelocity: rigidBody.angvel(),
         sleeping: rigidBody.isSleeping(),
-        pieces: body.pieces.map((piece) => ({
-          id: piece.id,
-          worldPolygon: transformPolygon(piece.localPolygon, position, angle),
-        })),
+        pieces: body.pieces.map((piece) => renderPiece(piece, position, angle)),
       };
     });
 
@@ -256,7 +261,7 @@ class Simulation implements Game {
         position: { ...state.position },
         angle: state.angle,
         enabled: state.enabled,
-        force: { kind: definition.force.kind, params: definition.force.params },
+        force: definition.force,
       };
     });
 

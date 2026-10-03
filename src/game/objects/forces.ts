@@ -1,51 +1,51 @@
 import { pointInPolygon } from '../geometry/polygon';
-import type { FieldForce } from '../levels/types';
+import type { FieldForceDefinition } from '../levels/types';
 import type { Vec2 } from '../types';
 
 /** Keeps radial forces finite at the source point. */
 const RADIAL_SOFTENING = 0.05;
 
-function isFiniteVec2(vector: Vec2): boolean {
-  return Number.isFinite(vector.x) && Number.isFinite(vector.y);
-}
+/** Body material at one quadrature point, expressed in the field's local frame. */
+export type FieldSample = Readonly<{
+  point: Vec2;
+  /** Velocity of the body material at `point`. */
+  velocity: Vec2;
+  /** Density of the body piece being sampled. */
+  density: number;
+}>;
 
-/** Constant force per unit area. */
-export function uniformForce(density: Vec2): FieldForce {
-  const value = { x: density.x, y: density.y };
-  return {
-    kind: 'uniform',
-    params: { density: value },
-    densityAt: () => value,
-    validate: () => (isFiniteVec2(value) ? null : 'density must be finite'),
+/** Force per unit area at the sample, in the field's local frame. Must be pure so replays stay deterministic. */
+export type ForceDensity = (sample: FieldSample) => Vec2;
+
+function radialDensity(source: Vec2, signedStrength: number): ForceDensity {
+  return ({ point }) => {
+    const dx = point.x - source.x;
+    const dy = point.y - source.y;
+    const scale = signedStrength / Math.sqrt(dx * dx + dy * dy + RADIAL_SOFTENING ** 2);
+    return { x: dx * scale, y: dy * scale };
   };
 }
 
-function radialForce(kind: string, source: Vec2, strength: number, direction: 1 | -1): FieldForce {
-  const origin = { x: source.x, y: source.y };
-  const signedStrength = direction * strength;
-  return {
-    kind,
-    params: { source: origin, strength },
-    densityAt: ({ point }) => {
-      const dx = point.x - origin.x;
-      const dy = point.y - origin.y;
-      const scale = signedStrength / Math.sqrt(dx * dx + dy * dy + RADIAL_SOFTENING ** 2);
-      return { x: dx * scale, y: dy * scale };
-    },
-    validate: (localPolygon) => {
-      if (!isFiniteVec2(origin)) return 'source must be finite';
-      if (!(strength > 0) || !Number.isFinite(strength)) return 'strength must be positive and finite';
-      return pointInPolygon(origin, localPolygon) ? null : 'source must be inside the polygon';
-    },
-  };
+/** Builds the force law a level's force definition describes. */
+export function forceDensity(force: FieldForceDefinition): ForceDensity {
+  switch (force.kind) {
+    case 'uniform': {
+      const value = { x: force.density.x, y: force.density.y };
+      return () => value;
+    }
+    case 'attractor':
+      return radialDensity({ x: force.source.x, y: force.source.y }, -force.strength);
+    case 'repulsor':
+      return radialDensity({ x: force.source.x, y: force.source.y }, force.strength);
+  }
 }
 
-/** Pulls toward a local source point with `strength` force per unit area. */
-export function attractorForce(source: Vec2, strength: number): FieldForce {
-  return radialForce('attractor', source, strength, -1);
-}
-
-/** Pushes away from a local source point with `strength` force per unit area. */
-export function repulsorForce(source: Vec2, strength: number): FieldForce {
-  return radialForce('repulsor', source, strength, 1);
+/** Returns an error message when the force is invalid for this polygon. */
+export function forceValidationError(
+  force: FieldForceDefinition,
+  localPolygon: readonly Vec2[],
+): string | null {
+  if (force.kind === 'uniform') return null;
+  if (!(force.strength > 0)) return 'strength must be positive';
+  return pointInPolygon(force.source, localPolygon) ? null : 'source must be inside the polygon';
 }
