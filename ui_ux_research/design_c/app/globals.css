@@ -132,11 +132,3 @@ button:focus-visible{outline:3px solid #44ba46;outline-offset:3px}
 .strip-icon.yellow{color:#bd8e25;background:linear-gradient(145deg,#ffffffad,#ffedb4b8)}
 .strip-icon.coral{color:#d66558;background:linear-gradient(145deg,#ffffffad,#ffddd7b8)}
 .tip-icon{color:#bc8b25;background:#fff0c5aa}
-
-/* Engine-backed course and controls. */
-.course-canvas{position:absolute;inset:0;z-index:3;width:100%;height:100%;display:block;touch-action:none}
-.course-canvas.editable{cursor:grab}.course-canvas.editable:active{cursor:grabbing}
-.legend-field{background:#ffffffb0;border:1px solid #2e7d32}.legend-goal{border:1px dashed #2e7d32;background:#ffffff66}
-.tile-option:disabled,.text-button:disabled{cursor:default;opacity:.65;transform:none}
-.primary-button:disabled{cursor:default;opacity:.7;transform:none}
-button.archive-row{width:100%;border:0;background:transparent;color:inherit;font:inherit;text-align:left}button.archive-row:hover{background:#ffffffb0}

@@ -2,7 +2,7 @@
 
 ## Project Structure & Assets
 
-UI reference images live in `mock ui/`; research, a basic HTML sketch, and three Next.js/TypeScript mockups live in `ui_ux_research/`. `design_a/` uses the green palette and `design_b/` uses blue glass styling, and `design_c/` combines that glass styling with A’s green palette. Each has its page in `app/page.tsx` and styles in `app/globals.css`. `design_a/` and `design_b/` are static mockups with sample data. `design_c/` is the working frontend: it imports the game engine from `src/game/` through the `@game` alias, draws the course on a canvas (`app/course-canvas.tsx`), and runs the game loop in `app/puzzle.ts`; its stats, leaderboard, and streak panels still use sample data. The deterministic game engine lives in `src/game/` (see its README) and the backend in `src/backend/`.
+UI reference images live in `mock ui/`; research, a basic HTML sketch, and three Next.js/TypeScript mockups live in `ui_ux_research/`. `design_a/` uses the green palette and `design_b/` uses blue glass styling, and `design_c/` combines that glass styling with A’s green palette. Each has its page in `app/page.tsx` and styles in `app/globals.css`. All use sample data and have no backend or physics engine yet.
 
 ## Game Design Principles
 
@@ -10,7 +10,7 @@ Puttential is a web-first daily physics puzzle. Every player must receive the sa
 
 ## Development and Verification
 
-From `ui_ux_research/design_a/`, `design_b/`, or `design_c/`, run `npm install` to install dependencies, `npm run dev` to preview locally, and `npm run build` to compile and type-check. `design_c/` also needs `npm install` at the repository root, where the engine's Rapier dependency lives. Type-check the engine with `npx tsc --noEmit` from the repository root. No automated test command is configured. Inspect image changes at native size and use `git diff --stat` and `git status --short` to review changes.
+From `ui_ux_research/design_a/`, `design_b/`, or `design_c/`, run `npm install` to install dependencies, `npm run dev` to preview locally, and `npm run build` to compile and type-check. No automated test command is configured. Inspect image changes at native size and use `git diff --stat` and `git status --short` to review changes.
 
 ## Naming and Editing Conventions
 
