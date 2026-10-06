@@ -1,30 +1,27 @@
 export { POSITION_QUANTUM, quantizePosition } from './commands';
-export { cornerPocket } from './levels/corner-pocket';
-export { exampleBarPuzzle } from './levels/example-bar-puzzle';
-export { keyTurn } from './levels/key-turn';
-export { radialRelay } from './levels/radial-relay';
-export { spinCycle } from './levels/spin-cycle';
-export { attractorForce, dragForce, repulsorForce, uniformForce, vortexForce } from './objects/forces';
+export { parseLevel } from './levels/parse';
+export { LEVEL_FORMAT_VERSION } from './levels/types';
 export type {
+  CircleShape,
   ConvexPieceDefinition,
   DynamicBodyDefinition,
-  FieldForce,
-  FieldParam,
-  FieldSample,
+  FieldForceDefinition,
+  FieldShape,
   FieldZoneDefinition,
+  GoalDefinition,
   Level,
-  LevelGoal,
+  PieceShape,
+  PolygonShape,
+  RectangleShape,
   StaticBodyDefinition,
   SurfaceMaterial,
 } from './levels/types';
-export { validateLevel } from './levels/validate';
 export { createGame, FIXED_DT } from './simulation';
 export type {
   FieldState,
   Game,
   GameCommand,
   GameSnapshot,
-  GoalState,
   Prediction,
   PredictionOptions,
   PredictionSample,

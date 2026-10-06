@@ -1,14 +1,17 @@
 import RAPIER from '@dimforge/rapier2d-compat';
 import { compareCommands, dequantizePosition, validateCommand } from './commands';
-import { transformPolygon, triangulateSimplePolygon } from './geometry/polygon';
+import { triangulateSimplePolygon } from './geometry/polygon';
+import { shapePolygon } from './geometry/shapes';
 import { GEOMETRY_EPSILON } from './geometry/vector';
 import { sortById } from './ids';
 import type { FieldZoneDefinition, Level } from './levels/types';
-import { assertPositiveInteger, validateLevel } from './levels/validate';
-import { buildPhysicsWorld, resolvePieces, staticRenderBodies } from './objects/bodies';
+import { assertPositiveInteger, parseLevel } from './levels/parse';
+import { buildPhysicsWorld, renderPiece, resolveBodyPieces, staticRenderBodies } from './objects/bodies';
 import type { ResolvedPiece } from './objects/bodies';
 import { calculateFieldLoad, fieldWorldPolygon, prepareField } from './objects/fields';
 import type { PreparedField } from './objects/fields';
+import { forceDensity } from './objects/forces';
+import type { ForceDensity } from './objects/forces';
 import type {
   FieldState,
   Game,
@@ -26,7 +29,11 @@ import type {
 export const FIXED_DT = 1 / 120;
 
 type DynamicBody = Readonly<{ id: string; pieces: readonly ResolvedPiece[] }>;
-type Field = Readonly<{ definition: FieldZoneDefinition; localTriangles: readonly Vec2[][] }>;
+type Field = Readonly<{
+  definition: FieldZoneDefinition;
+  localTriangles: readonly Vec2[][];
+  densityAt: ForceDensity;
+}>;
 type MutableFieldState = { id: string; position: { x: number; y: number }; angle: number; enabled: boolean };
 
 function copyFieldState(field: FieldState): MutableFieldState {
@@ -57,25 +64,24 @@ class Simulation implements Game {
   private fieldStates = new Map<string, MutableFieldState>();
   private queuedCommands: GameCommand[] = [];
   private tick = 0;
-  private goalHeldTicks = 0;
-  private goalCompletedTick: number | null = null;
 
   // Derived from field state; cleared whenever a field moves or toggles.
   private preparedFields: readonly PreparedField[] | undefined;
   private renderFields: readonly RenderField[] | undefined;
   private renderState!: RenderState;
 
-  constructor(level: Level, snapshot?: GameSnapshot) {
-    validateLevel(level);
+  constructor(data: Level, snapshot?: GameSnapshot) {
+    const level = parseLevel(data);
     this.level = level;
     this.dynamicBodies = sortById(level.dynamicBodies).map((body) => ({
       id: body.id,
-      pieces: resolvePieces(body),
+      pieces: resolveBodyPieces(body),
     }));
     this.staticBodies = staticRenderBodies(level);
     this.fields = sortById(level.fields).map((definition) => ({
       definition,
-      localTriangles: triangulateSimplePolygon(definition.localPolygon),
+      localTriangles: triangulateSimplePolygon(shapePolygon(definition.shape)),
+      densityAt: forceDensity(definition.force),
     }));
 
     if (snapshot !== undefined) {
@@ -106,7 +112,6 @@ class Simulation implements Game {
     this.applyFieldLoads();
     this.world.step();
     this.tick += 1;
-    this.updateGoal();
     this.renderState = this.buildRenderState();
   }
 
@@ -117,18 +122,18 @@ class Simulation implements Game {
   snapshot(): GameSnapshot {
     return {
       levelId: this.level.id,
+      levelVersion: this.level.version,
       tick: this.tick,
       physics: this.world.takeSnapshot(),
       bodyHandles: { ...this.bodyHandles },
       fields: [...this.fieldStates.values()].map(copyFieldState),
       queuedCommands: [...this.queuedCommands].sort(compareCommands).map((command) => ({ ...command })),
-      goal: { heldTicks: this.goalHeldTicks, completedTick: this.goalCompletedTick },
     };
   }
 
   restore(snapshot: GameSnapshot): void {
-    if (snapshot.levelId !== this.level.id) {
-      throw new Error('snapshot level ID does not match this game');
+    if (snapshot.levelId !== this.level.id || snapshot.levelVersion !== this.level.version) {
+      throw new Error('snapshot level ID/version does not match this game');
     }
     const world = RAPIER.World.restoreSnapshot(snapshot.physics);
     world.timestep = FIXED_DT;
@@ -138,15 +143,15 @@ class Simulation implements Game {
     this.fieldStates = new Map(snapshot.fields.map((field) => [field.id, copyFieldState(field)]));
     this.queuedCommands = snapshot.queuedCommands.map((command) => ({ ...command }));
     this.tick = snapshot.tick;
-    this.goalHeldTicks = snapshot.goal.heldTicks;
-    this.goalCompletedTick = snapshot.goal.completedTick;
     this.invalidateFields();
     this.renderState = this.buildRenderState();
   }
 
-  /** Runs the commands on a copy of this game until the goal completes, every body sleeps, or the tick limit. */
-  predict(commands: GameCommand | readonly GameCommand[], options: PredictionOptions): Prediction {
-    const { maxTicks, sampleEveryTicks = 1 } = options;
+  /** Runs the commands on a copy of this game until every body sleeps or the tick limit. */
+  predict(commands: GameCommand | readonly GameCommand[], options?: PredictionOptions): Prediction {
+    const maxTicks = options?.maxTicks ?? this.level.prediction?.maxTicks ?? 1200;
+    const sampleEveryTicks =
+      options?.sampleEveryTicks ?? this.level.prediction?.sampleEveryTicks ?? 8;
     assertPositiveInteger(maxTicks, 'prediction maxTicks');
     assertPositiveInteger(sampleEveryTicks, 'prediction sampleEveryTicks');
 
@@ -157,12 +162,10 @@ class Simulation implements Game {
       }
       const samples = [sample(copy.renderState)];
       let settled = false;
-      const completed = (): boolean => copy.goalCompletedTick !== this.goalCompletedTick;
-      while (!settled && !completed() && copy.tick - this.tick < maxTicks) {
+      while (!settled && copy.tick - this.tick < maxTicks) {
         copy.step();
-        // A body resting inside the goal still has to finish its hold.
-        settled = copy.renderState.bodies.every((body) => body.sleeping) && !copy.renderState.goal.inside;
-        if ((copy.tick - this.tick) % sampleEveryTicks === 0) {
+        settled = copy.renderState.bodies.every((body) => body.sleeping);
+        if (settled || (copy.tick - this.tick) % sampleEveryTicks === 0) {
           samples.push(sample(copy.renderState));
         }
       }
@@ -202,8 +205,8 @@ class Simulation implements Game {
   private applyFieldLoads(): void {
     const fields = this.preparedFields ??= this.fields
       .filter(({ definition }) => this.fieldState(definition.id).enabled)
-      .map(({ definition, localTriangles }) =>
-        prepareField(definition, this.fieldState(definition.id), localTriangles));
+      .map(({ definition, localTriangles, densityAt }) =>
+        prepareField(densityAt, this.fieldState(definition.id), localTriangles));
 
     for (const body of this.dynamicBodies) {
       const rigidBody = this.rigidBody(body.id);
@@ -232,23 +235,6 @@ class Simulation implements Game {
     }
   }
 
-  private holdTicks(): number {
-    return Math.max(1, Math.round(this.level.goal.holdSeconds / FIXED_DT));
-  }
-
-  private goalContainsBody(): boolean {
-    const { area, bodyId } = this.level.goal;
-    const { x, y } = this.rigidBody(bodyId).translation();
-    return x >= area.minX && x <= area.maxX && y >= area.minY && y <= area.maxY;
-  }
-
-  private updateGoal(): void {
-    this.goalHeldTicks = this.goalContainsBody() ? this.goalHeldTicks + 1 : 0;
-    if (this.goalCompletedTick === null && this.goalHeldTicks >= this.holdTicks()) {
-      this.goalCompletedTick = this.tick;
-    }
-  }
-
   private buildRenderState(): RenderState {
     const bodies = this.dynamicBodies.map((body) => {
       const rigidBody = this.rigidBody(body.id);
@@ -263,10 +249,7 @@ class Simulation implements Game {
         linearVelocity: { x: velocity.x, y: velocity.y },
         angularVelocity: rigidBody.angvel(),
         sleeping: rigidBody.isSleeping(),
-        pieces: body.pieces.map((piece) => ({
-          id: piece.id,
-          worldPolygon: transformPolygon(piece.localPolygon, position, angle),
-        })),
+        pieces: body.pieces.map((piece) => renderPiece(piece, position, angle)),
       };
     });
 
@@ -278,24 +261,11 @@ class Simulation implements Game {
         position: { ...state.position },
         angle: state.angle,
         enabled: state.enabled,
-        force: { kind: definition.force.kind, params: definition.force.params },
+        force: definition.force,
       };
     });
 
-    return {
-      tick: this.tick,
-      bodies,
-      staticBodies: this.staticBodies,
-      fields,
-      goal: {
-        bodyId: this.level.goal.bodyId,
-        area: this.level.goal.area,
-        inside: this.goalContainsBody(),
-        heldTicks: this.goalHeldTicks,
-        holdTicks: this.holdTicks(),
-        completedTick: this.goalCompletedTick,
-      },
-    };
+    return { tick: this.tick, bodies, staticBodies: this.staticBodies, fields };
   }
 
   private invalidateFields(): void {

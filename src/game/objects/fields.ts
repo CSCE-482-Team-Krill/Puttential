@@ -1,9 +1,11 @@
 import { intersectConvexPolygons } from '../geometry/intersection';
 import { boundsOverlap, polygonBounds, transformPolygon } from '../geometry/polygon';
 import type { Bounds } from '../geometry/polygon';
+import { shapePolygon } from '../geometry/shapes';
 import { cross, subtract } from '../geometry/vector';
-import type { FieldForce, FieldZoneDefinition } from '../levels/types';
+import type { FieldZoneDefinition, PieceShape } from '../levels/types';
 import type { FieldState, Vec2 } from '../types';
+import type { ForceDensity } from './forces';
 
 export type FieldLoadBody = Readonly<{
   position: Vec2;
@@ -11,14 +13,14 @@ export type FieldLoadBody = Readonly<{
   centerOfMass: Vec2;
   linearVelocity: Vec2;
   angularVelocity: number;
-  pieces: readonly Readonly<{ localPolygon: readonly Vec2[]; density: number }>[];
+  pieces: readonly Readonly<{ shape: PieceShape; outline: readonly Vec2[]; density: number }>[];
 }>;
 
 export type FieldLoad = Readonly<{ force: Vec2; torque: number }>;
 
 /** World-space field geometry, prepared once and shared by every body. */
 export type PreparedField = Readonly<{
-  force: FieldForce;
+  densityAt: ForceDensity;
   position: Vec2;
   cos: number;
   sin: number;
@@ -29,19 +31,19 @@ export type PreparedField = Readonly<{
 type Accumulator = { forceX: number; forceY: number; torque: number };
 
 export function fieldWorldPolygon(field: FieldZoneDefinition, state: FieldState): Vec2[] {
-  return transformPolygon(field.localPolygon, state.position, state.angle);
+  return transformPolygon(shapePolygon(field.shape), state.position, state.angle);
 }
 
 /** `localTriangles` is the field polygon's triangulation in its local frame. */
 export function prepareField(
-  definition: FieldZoneDefinition,
+  densityAt: ForceDensity,
   state: FieldState,
   localTriangles: readonly (readonly Vec2[])[],
 ): PreparedField {
   const triangles = localTriangles.map((triangle) =>
     transformPolygon(triangle, state.position, state.angle));
   return {
-    force: definition.force,
+    densityAt,
     position: state.position,
     cos: Math.cos(state.angle),
     sin: Math.sin(state.angle),
@@ -65,7 +67,7 @@ function addSample(
   const velocityY = body.linearVelocity.y + body.angularVelocity * arm.x;
   const offsetX = point.x - field.position.x;
   const offsetY = point.y - field.position.y;
-  const local = field.force.densityAt({
+  const local = field.densityAt({
     point: { x: offsetX * cos + offsetY * sin, y: -offsetX * sin + offsetY * cos },
     velocity: { x: velocityX * cos + velocityY * sin, y: -velocityX * sin + velocityY * cos },
     density,
@@ -89,7 +91,9 @@ export function calculateFieldLoad(
 ): FieldLoad {
   const total: Accumulator = { forceX: 0, forceY: 0, torque: 0 };
   for (const piece of body.pieces) {
-    const pieceWorld = transformPolygon(piece.localPolygon, body.position, body.angle);
+    // A circle's outline stays unrotated so its load does not depend on the body's spin.
+    const angle = piece.shape.kind === 'circle' ? 0 : body.angle;
+    const pieceWorld = transformPolygon(piece.outline, body.position, angle);
     const pieceBounds = polygonBounds(pieceWorld);
     for (const field of fields) {
       if (!boundsOverlap(pieceBounds, field.bounds)) continue;

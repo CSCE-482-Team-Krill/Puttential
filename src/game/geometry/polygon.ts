@@ -173,15 +173,3 @@ export function triangulateSimplePolygon(polygon: readonly Vec2[]): Vec2[][] {
   triangles.push(indices.map((index) => points[index]!));
   return triangles;
 }
-
-export function rectangle(width: number, height: number): Vec2[] {
-  if (!(width > 0) || !(height > 0)) throw new Error('rectangle dimensions must be positive');
-  const halfWidth = width * 0.5;
-  const halfHeight = height * 0.5;
-  return [
-    { x: -halfWidth, y: -halfHeight },
-    { x: halfWidth, y: -halfHeight },
-    { x: halfWidth, y: halfHeight },
-    { x: -halfWidth, y: halfHeight },
-  ];
-}
