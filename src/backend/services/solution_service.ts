@@ -2,6 +2,7 @@ import { Prisma } from "../../../generated/prisma/client";
 
 import { prisma } from "../prisma";
 import type { CreateSolutionRequest, CreateSolutionResponse,} from "../types";
+import { ConflictError, NotFoundError, ValidationError } from "../errors";
 
 /**
  * Performs basic structural validation for replay/placement data.
@@ -15,20 +16,20 @@ import type { CreateSolutionRequest, CreateSolutionResponse,} from "../types";
  */
 function validatePlacementData(placementData: CreateSolutionRequest["placementData"]): void {
     if (!placementData.levelId || placementData.levelId.trim().length === 0) {
-        throw new Error("placementData.levelId is required.");
+        throw new ValidationError("placementData.levelId is required.");
     }
 
     if (
         !Number.isSafeInteger(placementData.levelVersion) ||
         placementData.levelVersion < 0
     ) {
-        throw new Error(
+        throw new ValidationError(
         "placementData.levelVersion must be a non-negative integer."
         );
     }
 
     if (!Array.isArray(placementData.commands)) {
-        throw new Error("placementData.commands must be an array.");
+        throw new ValidationError("placementData.commands must be an array.");
     }
 
     /**
@@ -42,17 +43,17 @@ function validatePlacementData(placementData: CreateSolutionRequest["placementDa
 
     for (const command of placementData.commands) {
         if (!command.fieldId || command.fieldId.trim().length === 0) {
-        throw new Error("Every replay command must include a fieldId.");
+        throw new ValidationError("Every replay command must include a fieldId.");
         }
 
         if (!Number.isSafeInteger(command.sequence) || command.sequence < 0) {
-        throw new Error(
+        throw new ValidationError(
             "Replay command sequence must be a non-negative integer."
         );
         }
 
         if (sequences.has(command.sequence)) {
-        throw new Error(
+        throw new ValidationError(
             `Duplicate replay command sequence: ${command.sequence}`
         );
         }
@@ -70,7 +71,7 @@ function validatePlacementData(placementData: CreateSolutionRequest["placementDa
             !Number.isSafeInteger(command.xQ) ||
             !Number.isSafeInteger(command.yQ)
         ) {
-            throw new Error(
+            throw new ValidationError(
             "move-field xQ and yQ must be safe integers."
             );
         }
@@ -94,11 +95,11 @@ function validatePlacementData(placementData: CreateSolutionRequest["placementDa
 export async function createSolution(input: CreateSolutionRequest): Promise<CreateSolutionResponse> {
     // Basic ID validation before querying the database.
     if (!input.puzzleId || input.puzzleId.trim().length === 0) {
-        throw new Error("puzzleId is required.");
+        throw new ValidationError("puzzleId is required.");
     }
 
     if (!input.attemptId || input.attemptId.trim().length === 0) {
-        throw new Error("attemptId is required.");
+        throw new ValidationError("attemptId is required.");
     }
 
     // Reject clearly malformed replay data before storing it.
@@ -130,7 +131,7 @@ export async function createSolution(input: CreateSolutionRequest): Promise<Crea
     });
 
     if (!attempt) {
-        throw new Error(`Attempt not found: ${input.attemptId}`);
+        throw new NotFoundError(`Attempt not found: ${input.attemptId}`);
     }
 
     /**
@@ -140,7 +141,7 @@ export async function createSolution(input: CreateSolutionRequest): Promise<Crea
      * while attaching it to another puzzle's Solution.
      */
     if (attempt.puzzleId !== input.puzzleId) {
-        throw new Error(
+        throw new ValidationError(
         "The attempt does not belong to the specified puzzle."
         );
     }
@@ -153,7 +154,7 @@ export async function createSolution(input: CreateSolutionRequest): Promise<Crea
      * independently before a Solution is accepted.
      */
     if (!attempt.success) {
-        throw new Error(
+        throw new ValidationError(
         "A solution cannot be created from an unsuccessful attempt."
         );
     }
@@ -166,7 +167,7 @@ export async function createSolution(input: CreateSolutionRequest): Promise<Crea
      * instead of relying only on the database uniqueness constraint.
      */
     if (attempt.solution) {
-        throw new Error(
+        throw new ConflictError(
         `A solution already exists for attempt ${input.attemptId}.`
         );
     }
@@ -181,7 +182,7 @@ export async function createSolution(input: CreateSolutionRequest): Promise<Crea
         input.userId !== undefined &&
         input.userId !== attempt.userId
     ) {
-        throw new Error(
+        throw new ValidationError(
         "The solution user does not match the attempt user."
         );
     }

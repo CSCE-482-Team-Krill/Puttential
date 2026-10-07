@@ -28,6 +28,9 @@
       ],
       "@game": [
         "../../src/game/index.ts"
+      ],
+      "@backend/*": [
+        "../../src/backend/*"
       ]
     }
   },
