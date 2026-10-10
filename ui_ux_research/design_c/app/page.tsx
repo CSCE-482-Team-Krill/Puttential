@@ -8,7 +8,7 @@ import { usePuzzle } from "./puzzle";
 import type { RunResult } from "./puzzle";
 
 type Panel = "archive" | "stats" | "leaderboard" | "settings" | "help" | "result" | null;
-type IconName = "home" | "calendar" | "stats" | "trophy" | "settings" | "help" | "close" | "arrow" | "reset" | "play" | "fire";
+type IconName = "home" | "calendar" | "stats" | "profile" | "trophy" | "settings" | "help" | "close" | "arrow" | "reset" | "play" | "fire";
 
 function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   const common = { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const, "aria-hidden": true as const };
@@ -16,6 +16,7 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     home: <><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" /></>,
     calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M7 3v4M17 3v4M3 10h18M7 14h6M7 17h4" /></>,
     stats: <><rect x="3" y="13" width="4" height="8" rx="1" /><rect x="10" y="8" width="4" height="13" rx="1" /><rect x="17" y="3" width="4" height="18" rx="1" /></>,
+    profile: <><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></>,
     trophy: <><path d="M7 3h10v7a5 5 0 0 1-10 0zM7 5H4v3a4 4 0 0 0 4 4M17 5h3v3a4 4 0 0 1-4 4M12 15v4M8 21h8M10 19h4" /></>,
     settings: <><path d="m9.5 3-.5 2a7 7 0 0 0-1.5.9l-2-.6-2.5 4.4 1.5 1.4a7 7 0 0 0 0 1.8L3 14.3l2.5 4.4 2-.6a7 7 0 0 0 1.5.9l.5 2h5l.5-2a7 7 0 0 0 1.5-.9l2 .6 2.5-4.4-1.5-1.4a7 7 0 0 0 0-1.8L21 9.7l-2.5-4.4-2 .6A7 7 0 0 0 15 5l-.5-2z" /><circle cx="12" cy="12" r="3" /></>,
     help: <><circle cx="12" cy="12" r="10" /><path d="M9.2 9a3 3 0 0 1 5.6 1.5c0 2-2.8 2.5-2.8 4.5M12 18h.01" /></>,
@@ -70,7 +71,7 @@ function fieldGlyph(field: FieldZoneDefinition): string {
 function Modal({ panel, close, reducedMotion, setReducedMotion, result, currentLevel, chooseLevel }: { panel: Exclude<Panel, null>; close: () => void; reducedMotion: boolean; setReducedMotion: (value: boolean) => void; result: RunResult | null; currentLevel: Level; chooseLevel: (level: Level) => void }) {
   const [sound, setSound] = useState(true);
   const titles: Record<Exclude<Panel, null>, string> = {
-    archive: "Puzzle archive", stats: "Your stats", leaderboard: "Leaderboard", settings: "Settings", help: "How to play", result: result?.solved === false ? "So close" : "Nice work!",
+    archive: "Puzzle calendar", stats: "Your profile", leaderboard: "Leaderboard", settings: "Settings", help: "How to play", result: result?.solved === false ? "So close" : "Nice work!",
   };
 
   useEffect(() => {
@@ -99,8 +100,12 @@ export default function Home() {
   const [level, setLevel] = useState<Level>(LEVELS[0]!.level);
   const [reducedMotion, setReducedMotion] = useState(false);
   const puzzle = usePuzzle(level);
-  const nav: { name: Exclude<Panel, "result" | null> | "daily"; label: string; icon: IconName }[] = [
-    { name: "daily", label: "Daily", icon: "calendar" }, { name: "archive", label: "Archive", icon: "calendar" }, { name: "stats", label: "Stats", icon: "stats" }, { name: "leaderboard", label: "Leaderboard", icon: "trophy" }, { name: "settings", label: "Settings", icon: "settings" },
+  const nav: { name: Exclude<Panel, "result" | null>; label: string; icon: IconName }[] = [
+    { name: "archive", label: "Calendar", icon: "calendar" },
+    { name: "leaderboard", label: "Leaderboard", icon: "trophy" },
+    { name: "settings", label: "Settings", icon: "settings" },
+    { name: "stats", label: "Profile", icon: "profile" },
+    { name: "help", label: "Help", icon: "help" },
   ];
 
   useEffect(() => {
@@ -113,24 +118,87 @@ export default function Home() {
     else puzzle.rewind();
   };
 
-  return <div className={`site-wrap ${reducedMotion ? "reduce-motion" : ""}`}>
-    <header className="site-header">
-      <button className="brand" onClick={() => setPanel(null)} aria-label="Puttential home"><span className="brand-mark"><span className="brand-ball" /><span className="brand-flag" /></span><span>Puttential<span className="brand-dot">.</span></span></button>
-      <nav className="main-nav" aria-label="Main navigation">{nav.map((item) => <button key={item.name} className={`nav-button ${panel === item.name || (item.name === "daily" && panel === null) ? "active" : ""}`} onClick={() => { if (item.name === "daily") setLevel(LEVELS[0]!.level); setPanel(item.name === "daily" ? null : item.name); }}><Icon name={item.icon} size={18} /><span>{item.label}</span></button>)}</nav>
-      <button className="streak-pill" onClick={() => setPanel("stats")}><Icon name="fire" size={17} /> <strong>14</strong><span>day streak</span></button>
-    </header>
+  const placedTiles = Object.values(puzzle.draft).filter((field) => field.enabled).length;
+  const levelIndex = LEVELS.findIndex((entry) => entry.level === level);
+  const status = puzzle.mode === "loading" ? "Loading course…"
+    : puzzle.mode === "running" ? "Simulation running"
+    : puzzle.mode === "done" ? "Run finished"
+    : placedTiles > 0 ? "Drag fields on the course to move them." : "Choose a force block to get started.";
 
-    <main className="dashboard">
-      <div className="page-heading"><div><span className="eyebrow">TUESDAY • SEPTEMBER 22, 2026</span><h1>Daily challenge <span>#126</span></h1><p>One course. Your own way to the cup.</p></div><button className="how-button" onClick={() => setPanel("help")}><Icon name="help" size={18} /> How to play</button></div>
+  return (
+    <div className={`site-wrap ${reducedMotion ? "reduce-motion" : ""}`}>
+      <header className="site-header">
+        <button className="brand" onClick={() => { setLevel(LEVELS[0]!.level); setPanel(null); }} aria-label="Puttential home">
+          <span className="brand-mark"><span className="brand-ball" /><span className="brand-flag" /></span>
+          <span>Puttential<span className="brand-dot">.</span></span>
+        </button>
+        <nav className="main-nav" aria-label="Main navigation">
+          {nav.map((item) => (
+            <button key={item.name} className={`nav-button ${panel === item.name ? "active" : ""}`} onClick={() => setPanel(item.name)} aria-expanded={panel === item.name}>
+              <Icon name={item.icon} size={23} /><span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </header>
 
-      <div className="game-layout">
-        <section className="game-card" aria-labelledby="course-title"><div className="card-heading"><div><span className="section-kicker">{level === LEVELS[0]!.level ? "TODAY'S COURSE" : "ARCHIVE COURSE"}</span><h2 id="course-title">{level.name}</h2></div><span className="difficulty"><span /> MODERATE</span></div><div className="course"><div className="course-grid" /><CourseCanvas level={level} frameRef={puzzle.frameRef} draft={puzzle.draft} mode={puzzle.mode} trail={puzzle.trail} onMoveField={puzzle.moveField} /></div><div className="game-toolbar"><div className="course-legend"><span><i className="legend-ball" /> {fieldName(level.goal.bodyId)}</span><span><i className="legend-field" /> Force field</span><span><i className="legend-goal" /> Goal</span></div><span className="demo-note">{puzzle.mode === "setup" ? (Object.values(puzzle.draft).some((field) => field.enabled) ? "Drag fields to move them" : "Pick a tile to add its field") : puzzle.mode === "running" ? "Simulation running" : puzzle.mode === "loading" ? "Loading course…" : "Run finished"}</span></div></section>
+      <main className="dashboard">
+        <div className="game-layout">
+          <section className="play-column" aria-labelledby="course-title">
+            <div className="course-stage">
+              <div className="course-heading">
+                <span className="challenge-label"><Icon name="calendar" size={16} /> {levelIndex === 0 ? "Daily challenge" : "Archive challenge"} <b>#{126 - levelIndex}</b></span>
+                <span className={`course-status ${puzzle.mode === "running" ? "running" : ""}`}><i /> {puzzle.mode === "setup" ? "Planning" : puzzle.mode === "running" ? "In motion" : puzzle.mode === "done" ? "Finished" : "Loading"}</span>
+              </div>
+              <div className="course">
+                <div className="course-grid" />
+                <CourseCanvas level={level} frameRef={puzzle.frameRef} draft={puzzle.draft} mode={puzzle.mode} trail={puzzle.trail} onMoveField={puzzle.moveField} />
+              </div>
+            </div>
 
-        <aside className="control-column"><section className="control-card"><div className="control-heading"><span className="section-kicker">YOUR TOOLKIT</span><h2>Force tiles</h2><p>Pick a tile to add its field to the course. Each tile costs 1 point.</p></div><div className="tile-list">{level.fields.map((field) => { const enabled = puzzle.draft[field.id]?.enabled ?? false; return <button className={`tile-option ${enabled ? "selected" : ""}`} key={field.id} disabled={puzzle.mode !== "setup"} onClick={() => puzzle.toggleField(field.id)} aria-pressed={enabled}><span className="tile-arrows">{fieldGlyph(field)}</span><span className="tile-info"><strong>{fieldName(field.id)}</strong><small>{enabled ? "ON" : "OFF"} · {field.force.kind.toUpperCase()}</small></span><span className="tile-cost">{TILE_COST} pt</span></button>; })}</div><div className="attempt-line"><span>Attempts today</span><strong>{puzzle.attempts}</strong></div><button className="primary-button play-button" disabled={puzzle.mode === "loading"} onClick={onPlay}><Icon name={puzzle.mode === "setup" ? "play" : "reset"} size={20} /> {playLabel} <Icon name="arrow" size={19} /></button><button className="text-button" disabled={puzzle.mode === "loading"} onClick={puzzle.resetLayout}><Icon name="reset" size={16} /> Reset layout</button></section><div className="tip-card"><span className="tip-icon">✦</span><div><strong>Today&apos;s tip</strong><p>The dotted line previews the first second of your run. After that, you&apos;re on your own.</p></div></div></aside>
-      </div>
+            <div className="course-details">
+              <div className="details-heading">
+                <div><span className="section-kicker">{levelIndex === 0 ? "TODAY'S COURSE" : "FROM THE ARCHIVE"}</span><h1 id="course-title">{level.name}</h1><p>One course. Your own way to the goal.</p></div>
+                <button className="how-button" onClick={() => setPanel("help")} aria-label="How to play"><Icon name="help" size={17} /><span>How to play</span></button>
+              </div>
+              <div className="run-controls">
+                <dl className="run-metrics" aria-label="Current solution">
+                  <div><dt>Force cost</dt><dd>{placedTiles * TILE_COST}<small>pt</small></dd></div>
+                  <div><dt>Blocks placed</dt><dd>{placedTiles}<small>/ {level.fields.length}</small></dd></div>
+                  <div><dt>Attempts</dt><dd>{puzzle.attempts}</dd></div>
+                </dl>
+                <div className="run-actions">
+                  <button className="text-button" disabled={puzzle.mode === "loading"} onClick={puzzle.resetLayout}><Icon name="reset" size={17} /> Reset layout</button>
+                  <button className="primary-button play-button" disabled={puzzle.mode === "loading"} onClick={onPlay}><Icon name={puzzle.mode === "setup" ? "play" : "reset"} size={20} /> {playLabel}</button>
+                </div>
+              </div>
+              <div className="game-toolbar">
+                <div className="course-legend"><span><i className="legend-ball" /> {fieldName(level.goal.bodyId)}</span><span><i className="legend-field" /> Force field</span><span><i className="legend-goal" /> Goal</span></div>
+                <span className="demo-note" role="status">{status}</span>
+              </div>
+            </div>
+          </section>
 
-      <section className="bottom-strip" aria-label="Daily progress"><div><span className="strip-icon green"><Icon name="calendar" /></span><span><strong>One puzzle each day</strong><small>Come back tomorrow for a new course.</small></span></div><div><span className="strip-icon yellow"><Icon name="trophy" /></span><span><strong>Find your best solution</strong><small>Use less force to climb the leaderboard.</small></span></div><div><span className="strip-icon coral"><Icon name="fire" /></span><span><strong>Keep the streak alive</strong><small>You&apos;re on a 14 day run.</small></span></div></section>
-    </main>
-    {panel && <Modal panel={panel} close={() => setPanel(null)} reducedMotion={reducedMotion} setReducedMotion={setReducedMotion} result={puzzle.result} currentLevel={level} chooseLevel={setLevel} />}
-  </div>;
+          <aside className="control-column" aria-labelledby="toolkit-title">
+            <div className="control-heading"><span className="section-kicker">YOUR TOOLKIT</span><div className="toolkit-title"><h2 id="toolkit-title">Force blocks</h2><span className="inventory-count">{level.fields.length}</span></div><p>Choose a block, then drag its field into position on the course.</p></div>
+            <div className="tile-list">
+              {level.fields.map((field) => {
+                const enabled = puzzle.draft[field.id]?.enabled ?? false;
+                return (
+                  <button className={`tile-option ${enabled ? "selected" : ""}`} key={field.id} disabled={puzzle.mode !== "setup"} onClick={() => puzzle.toggleField(field.id)} aria-pressed={enabled}>
+                    <span className="tile-arrows" aria-hidden="true">{fieldGlyph(field)}</span>
+                    <span className="tile-info"><strong>{fieldName(field.id)}</strong><small>{field.force.kind === "uniform" ? "Directional force" : field.force.kind === "attractor" ? "Pull toward center" : field.force.kind === "repulsor" ? "Push from center" : field.force.kind}</small><span className="tile-state">{enabled ? "Placed · click to remove" : "Click to place"}</span></span>
+                    <span className="tile-cost">{TILE_COST} pt</span>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="toolkit-note">Every block costs 1 point. Use fewer to improve your solution.</p>
+            <div className="tip-card"><span className="tip-icon">✦</span><div><strong>A little foresight</strong><p>The dotted path previews the first second of your run. Adjust your fields before pressing Play.</p></div></div>
+            <div className="toolkit-footer"><Icon name="trophy" size={18} /><span>Small moves. Better solutions.</span></div>
+          </aside>
+        </div>
+      </main>
+      {panel && <Modal panel={panel} close={() => setPanel(null)} reducedMotion={reducedMotion} setReducedMotion={setReducedMotion} result={puzzle.result} currentLevel={level} chooseLevel={setLevel} />}
+    </div>
+  );
 }

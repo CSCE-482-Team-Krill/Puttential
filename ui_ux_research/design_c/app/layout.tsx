@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Puttential — Design C",
-  description: "A green liquid-glass daily physics puzzle mockup for Puttential.",
+  description: "Puttential: a daily physics puzzle. Place force blocks and find your own way to the goal.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
