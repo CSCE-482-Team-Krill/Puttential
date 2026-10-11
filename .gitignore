@@ -20,3 +20,8 @@ coverage/
 Thumbs.db
 .idea/
 .vscode/
+
+# TypeScript and browser verification output
+*.tsbuildinfo
+test-results/
+playwright-report/

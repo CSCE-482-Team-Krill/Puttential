@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "e8e4d19b79f4112331ca636710efc38baabddd3142718defc2dc8be662a2983f",
+  "editor": {
+    "name": "Big U",
+    "arena": {
+      "bounds": {
+        "minX": -10,
+        "maxX": 10,
+        "minY": -17.625,
+        "maxY": 22.375
+      },
+      "walls": [
+        "left-boundary",
+        "right-boundary",
+        "bottom-boundary",
+        "top-boundary"
+      ],
+      "thickness": 0.5
+    }
+  }
+}

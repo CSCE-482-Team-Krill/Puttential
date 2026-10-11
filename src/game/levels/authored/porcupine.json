@@ -1,0 +1,461 @@
+{
+  "formatVersion": 1,
+  "id": "porcupine",
+  "version": 4,
+  "gravity": {
+    "x": 0,
+    "y": 0
+  },
+  "dynamicBodies": [
+    {
+      "id": "ball-1",
+      "position": {
+        "x": -11.25,
+        "y": 6.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "ball-1-piece-1",
+          "shape": {
+            "kind": "circle",
+            "radius": 0.4
+          }
+        }
+      ]
+    }
+  ],
+  "staticBodies": [
+    {
+      "id": "left-boundary",
+      "position": {
+        "x": -19.75,
+        "y": 2.375
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "left-boundary-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 18.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "right-boundary",
+      "position": {
+        "x": 19.75,
+        "y": 2.375
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "right-boundary-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 18.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "bottom-boundary",
+      "position": {
+        "x": 0,
+        "y": -6.5
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "bottom-boundary-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 40,
+            "height": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "top-boundary",
+      "position": {
+        "x": 0,
+        "y": 11.25
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "top-boundary-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 40,
+            "height": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "hexagon-1",
+      "position": {
+        "x": 5.75,
+        "y": 7.75
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "hexagon-1-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 4.3277777777777775,
+                "y": -2.166666666666667
+              },
+              {
+                "x": 3.75,
+                "y": 1
+              },
+              {
+                "x": -1.75,
+                "y": 2
+              },
+              {
+                "x": -5.9222222222222225,
+                "y": 1.0833333333333335
+              },
+              {
+                "x": -0.9111111111111112,
+                "y": -4.333333333333334
+              },
+              {
+                "x": 1.8222222222222224,
+                "y": -3.25
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "rectangle-1",
+      "position": {
+        "x": 11.25,
+        "y": -1.25
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "rectangle-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1.6,
+            "height": 10.1
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1",
+      "position": {
+        "x": 13.5,
+        "y": 3
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "triangle-1-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 2.933333333333333,
+                "y": 0
+              },
+              {
+                "x": -1.466666666666666,
+                "y": 0.7696152422706632
+              },
+              {
+                "x": -1.466666666666668,
+                "y": -0.769615242270663
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-2",
+      "position": {
+        "x": 8.75,
+        "y": 1
+      },
+      "angle": -3.141592653589793,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "triangle-2-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 3.599999999999999,
+                "y": 0
+              },
+              {
+                "x": -1.799999999999999,
+                "y": 0.7696152422706632
+              },
+              {
+                "x": -1.8000000000000014,
+                "y": -0.769615242270663
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-2-1",
+      "position": {
+        "x": 13.75,
+        "y": -1
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "triangle-2-1-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 3.599999999999999,
+                "y": 0
+              },
+              {
+                "x": -1.799999999999999,
+                "y": 0.7696152422706632
+              },
+              {
+                "x": -1.8000000000000014,
+                "y": -0.769615242270663
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "ell-1",
+      "position": {
+        "x": 11.5,
+        "y": 7.25
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "ell-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.4,
+            "height": 1.4
+          }
+        },
+        {
+          "id": "ell-1-piece-2",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2,
+                "y": -0.7
+              },
+              {
+                "x": 1.2,
+                "y": -0.7
+              },
+              {
+                "x": 1.2,
+                "y": -0.3
+              },
+              {
+                "x": 0.2,
+                "y": -0.3
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-3",
+      "position": {
+        "x": 19,
+        "y": 8.25
+      },
+      "angle": 3.141592653589793,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "triangle-3-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 1.2666666666666664,
+                "y": 0
+              },
+              {
+                "x": -0.633333333333333,
+                "y": 1.0196152422706632
+              },
+              {
+                "x": -0.6333333333333337,
+                "y": -1.0196152422706628
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "id": "attractor-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 6.5,
+        "height": 6.5
+      },
+      "position": {
+        "x": -11.75,
+        "y": -1.5
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "attractor",
+        "source": {
+          "x": 0,
+          "y": 0
+        },
+        "strength": 4
+      }
+    },
+    {
+      "id": "uniform-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 4.5,
+        "height": 0.5
+      },
+      "position": {
+        "x": -5.25,
+        "y": -4
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "uniform-2",
+      "shape": {
+        "kind": "rectangle",
+        "width": 9,
+        "height": 1.5
+      },
+      "position": {
+        "x": -6,
+        "y": 2.25
+      },
+      "angle": 1.5707963267948966,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "uniform-3",
+      "shape": {
+        "kind": "rectangle",
+        "width": 9.5,
+        "height": 0.5
+      },
+      "position": {
+        "x": -14.25,
+        "y": 3
+      },
+      "angle": 0.2617993877991494,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    }
+  ],
+  "goal": {
+    "bodyId": "ball-1",
+    "minX": 11.700000000000001,
+    "maxX": 15.1,
+    "minY": 6.85,
+    "maxY": 8.95,
+    "holdSeconds": 1
+  },
+  "prediction": {
+    "maxTicks": 2400,
+    "sampleEveryTicks": 12
+  }
+}

@@ -1,0 +1,357 @@
+@import '../../src/frontend/game.css';
+
+.editor-wrap {
+  min-height: 100vh;
+}
+.editor-header {
+  height: 76px;
+  gap: 18px;
+}
+.editor-badge {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.save-state {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+.editor-wrap button:not(.tile-option):not(.primary-button):not(.text-button) {
+  padding: 8px 11px;
+  border: 1px solid #bfd9c1;
+  border-radius: 9px;
+  background: #ffffffc9;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.editor-wrap button[aria-pressed='true'] {
+  background: #ceefcd !important;
+  border-color: #448d43 !important;
+}
+.editor-wrap button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.save-button {
+  width: auto;
+  margin: 0;
+  padding: 11px 18px;
+  font-size: 13px;
+}
+.editor-notices {
+  padding: 0 24px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+}
+.editor-notices p {
+  margin: 8px 0;
+}
+.error-message {
+  color: #a23026;
+  background: #fff0e9;
+  border: 1px solid #edc3b5;
+  border-radius: 8px;
+  padding: 9px 14px;
+  width: 100%;
+}
+.success-message {
+  color: #26662d;
+}
+.recovery-banner {
+  padding: 12px 24px;
+  background: #fff4d5;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  font-size: 13px;
+}
+.editor-toolbar {
+  padding: 10px 24px;
+  background: #ffffff8c;
+  border-block: 1px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.button-row {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.check {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 5px 0;
+}
+.check input {
+  accent-color: #37933b;
+}
+.test-button {
+  width: auto;
+  padding: 9px 19px;
+  margin: 0;
+  font-size: 13px;
+}
+.editor-layout {
+  display: grid;
+  grid-template-columns: 235px minmax(440px, 1fr) 300px;
+  min-height: calc(100vh - 180px);
+}
+.editor-sidebar {
+  background: #ffffff9c;
+  padding: 19px 16px;
+  overflow: auto;
+  max-height: calc(100vh - 180px);
+  border-right: 1px solid #fff;
+}
+.inspector {
+  border-left: 1px solid #fff;
+  border-right: none;
+}
+.editor-sidebar h2 {
+  font-size: 17px;
+  margin: 0 0 12px;
+}
+.editor-sidebar h3 {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 23px 0 10px;
+  color: #427e44;
+}
+.editor-sidebar h4 {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 13px 0 5px;
+}
+.editor-sidebar .muted {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.preset-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.preset-grid button {
+  min-height: 42px;
+  text-align: left;
+}
+.property {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  margin: 10px 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+.property input,
+.property select,
+.editor-wrap textarea {
+  font: inherit;
+  font-size: 12px;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 9px;
+  border: 1px solid #bed4bf;
+  border-radius: 7px;
+  background: #fff;
+  color: var(--ink);
+}
+.property-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.editor-center {
+  min-width: 0;
+  padding: 22px;
+}
+.editor-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+.editor-heading h1 {
+  font-size: 23px;
+  margin: 5px 0;
+  letter-spacing: -0.5px;
+}
+.editor-heading > span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.canvas-panel {
+  background: #ffffffad;
+  border: 1px solid white;
+  border-radius: 18px;
+  padding: 12px;
+  box-shadow: var(--glass-shadow);
+}
+.canvas-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.canvas-tools .button-row {
+  flex-wrap: nowrap;
+}
+.editor-course {
+  position: relative;
+  height: calc(100vh - 360px);
+  min-height: 390px;
+  border-radius: 10px;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+.editor-course:after,
+.editor-course:before {
+  display: none;
+}
+.canvas-input {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  touch-action: none;
+}
+.editor-course .course-canvas {
+  z-index: 1;
+}
+.canvas-caption {
+  font-size: 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 12px;
+  color: var(--muted);
+}
+.object-list {
+  border-top: 1px solid #cfe2d0;
+  margin-top: 20px;
+}
+.object-list button {
+  width: 100%;
+  display: block;
+  text-align: left;
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+.vertex-row {
+  display: grid;
+  grid-template-columns: 14px 1fr 1fr 24px 24px;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+}
+.vertex-row .property span {
+  display: none;
+}
+.vertex-row .property {
+  margin: 3px 0;
+}
+.vertex-row input {
+  padding: 5px;
+  width: 100%;
+}
+.editor-wrap .vertex-row button {
+  padding: 4px !important;
+}
+.editor-wrap details {
+  font-size: 12px;
+  margin: 18px 0;
+}
+.editor-wrap summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.playtest-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 24px;
+  padding: 24px;
+  max-width: 1500px;
+  margin: auto;
+}
+.playtest-course {
+  height: 65vh;
+}
+.playtest-layout .control-card {
+  padding: 22px;
+}
+.playtest-layout .game-card:hover,
+.playtest-layout .control-card:hover {
+  transform: none;
+}
+.playtest-layout .muted {
+  font-size: 12px;
+  line-height: 1.6;
+}
+.editor-wrap :focus-visible {
+  outline: 2px solid #338943;
+  outline-offset: 2px;
+}
+.local-level-import {
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+@media (max-width: 1100px) {
+  .editor-layout {
+    grid-template-columns: 190px minmax(380px, 1fr) 270px;
+  }
+  .editor-center {
+    padding: 14px;
+  }
+  .editor-header {
+    padding-inline: 18px;
+  }
+  .canvas-tools > span {
+    display: none;
+  }
+  .editor-badge {
+    display: none;
+  }
+}
+@media (max-width: 850px) {
+  .editor-layout {
+    min-width: 840px;
+  }
+  .editor-header {
+    min-width: 840px;
+    flex-wrap: nowrap;
+  }
+  .editor-toolbar {
+    min-width: 840px;
+  }
+  .editor-wrap {
+    overflow-x: auto;
+  }
+  .playtest-layout {
+    grid-template-columns: 1fr;
+  }
+  .editor-notices {
+    min-width: 800px;
+  }
+}
+
+.editor-header .brand {
+  text-decoration: none;
+}

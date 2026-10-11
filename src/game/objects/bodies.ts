@@ -1,24 +1,58 @@
 import RAPIER from '@dimforge/rapier2d-compat';
 import { transformPolygon } from '../geometry/polygon';
+import { circleOutline, shapePolygon } from '../geometry/shapes';
 import { sortById } from '../ids';
-import type { DynamicBodyDefinition, Level, StaticBodyDefinition, SurfaceMaterial } from '../levels/types';
-import type { RenderStaticBody, Vec2 } from '../types';
+import type {
+  ConvexPieceDefinition,
+  DynamicBodyDefinition,
+  Level,
+  PieceShape,
+  StaticBodyDefinition,
+  SurfaceMaterial,
+} from '../levels/types';
+import type { RenderPiece, RenderStaticBody, Vec2 } from '../types';
 
-/** A body piece with its effective density, in stable ID order. */
-export type ResolvedPiece = Readonly<{ id: string; localPolygon: readonly Vec2[]; density: number }>;
+/**
+ * A body piece with its effective density, in stable ID order. `outline` is
+ * the piece's local polygon; for a circle it is an equal-area approximation
+ * used only to integrate field loads.
+ */
+export type ResolvedPiece = Readonly<{
+  id: string;
+  shape: PieceShape;
+  outline: readonly Vec2[];
+  density: number;
+}>;
 
-export function resolvePieces(body: DynamicBodyDefinition): ResolvedPiece[] {
-  return sortById(body.pieces).map((piece) => ({
+function resolvePieces(pieces: readonly ConvexPieceDefinition[], bodyDensity: number): ResolvedPiece[] {
+  return sortById(pieces).map((piece) => ({
     id: piece.id,
-    localPolygon: piece.localPolygon,
-    density: piece.density ?? body.density,
+    shape: piece.shape,
+    outline: piece.shape.kind === 'circle' ? circleOutline(piece.shape.radius) : shapePolygon(piece.shape),
+    density: piece.density ?? bodyDensity,
   }));
 }
 
-function colliderForPolygon(polygon: readonly Vec2[], material: SurfaceMaterial): RAPIER.ColliderDesc {
-  const coordinates = new Float32Array(polygon.flatMap((point) => [point.x, point.y]));
-  const descriptor = RAPIER.ColliderDesc.convexPolyline(coordinates);
-  if (descriptor === null) throw new Error('Rapier could not create a convex polygon collider');
+export function resolveBodyPieces(body: DynamicBodyDefinition): ResolvedPiece[] {
+  return resolvePieces(body.pieces, body.density);
+}
+
+export function renderPiece(piece: ResolvedPiece, position: Vec2, angle: number): RenderPiece {
+  if (piece.shape.kind === 'circle') {
+    return { id: piece.id, kind: 'circle', center: { x: position.x, y: position.y }, radius: piece.shape.radius };
+  }
+  return { id: piece.id, kind: 'polygon', worldPolygon: transformPolygon(piece.outline, position, angle) };
+}
+
+function colliderForPiece(piece: ResolvedPiece, material: SurfaceMaterial): RAPIER.ColliderDesc {
+  let descriptor: RAPIER.ColliderDesc | null;
+  if (piece.shape.kind === 'circle') {
+    descriptor = RAPIER.ColliderDesc.ball(piece.shape.radius);
+  } else {
+    const coordinates = new Float32Array(piece.outline.flatMap((point) => [point.x, point.y]));
+    descriptor = RAPIER.ColliderDesc.convexPolyline(coordinates);
+    if (descriptor === null) throw new Error('Rapier could not create a convex polygon collider');
+  }
   // Ordinary surfaces are frictionless. Drag belongs to fields, which apply it
   // from overlap instead of relying on contact friction.
   return descriptor.setFriction(0).setRestitution(material.restitution);
@@ -36,11 +70,8 @@ function createDynamicBody(world: RAPIER.World, definition: DynamicBodyDefinitio
     .setCanSleep(definition.canSleep ?? true)
     .setCcdEnabled(definition.ccd);
   const body = world.createRigidBody(descriptor);
-  for (const piece of resolvePieces(definition)) {
-    world.createCollider(
-      colliderForPolygon(piece.localPolygon, definition.material).setDensity(piece.density),
-      body,
-    );
+  for (const piece of resolveBodyPieces(definition)) {
+    world.createCollider(colliderForPiece(piece, definition.material).setDensity(piece.density), body);
   }
   return body.handle;
 }
@@ -51,8 +82,8 @@ function createStaticBody(world: RAPIER.World, definition: StaticBodyDefinition)
       .setTranslation(definition.position.x, definition.position.y)
       .setRotation(definition.angle),
   );
-  for (const piece of sortById(definition.pieces)) {
-    world.createCollider(colliderForPolygon(piece.localPolygon, definition.material), body);
+  for (const piece of resolvePieces(definition.pieces, 1)) {
+    world.createCollider(colliderForPiece(piece, definition.material), body);
   }
 }
 
@@ -75,9 +106,6 @@ export function buildPhysicsWorld(
 export function staticRenderBodies(level: Level): readonly RenderStaticBody[] {
   return sortById(level.staticBodies).map((body) => ({
     id: body.id,
-    pieces: sortById(body.pieces).map((piece) => ({
-      id: piece.id,
-      worldPolygon: transformPolygon(piece.localPolygon, body.position, body.angle),
-    })),
+    pieces: resolvePieces(body.pieces, 1).map((piece) => renderPiece(piece, body.position, body.angle)),
   }));
 }

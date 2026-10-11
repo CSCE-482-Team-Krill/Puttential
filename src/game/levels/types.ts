@@ -1,9 +1,27 @@
-import type { Bounds } from '../geometry/polygon';
 import type { Vec2 } from '../types';
+
+/**
+ * A level is plain JSON data: everything here must survive
+ * `JSON.parse(JSON.stringify(level))` unchanged. Behavior such as force laws
+ * lives in the engine and is selected by `kind`.
+ */
+export const LEVEL_FORMAT_VERSION = 1;
+
+/** Vertices in the owner's local frame. */
+export type PolygonShape = Readonly<{ kind: 'polygon'; points: readonly Vec2[] }>;
+/** Centered on the owner's local origin. */
+export type RectangleShape = Readonly<{ kind: 'rectangle'; width: number; height: number }>;
+/** Centered on the owner's local origin. */
+export type CircleShape = Readonly<{ kind: 'circle'; radius: number }>;
+
+/** Body pieces must be convex; a polygon piece winds counter-clockwise. */
+export type PieceShape = PolygonShape | RectangleShape | CircleShape;
+/** A field polygon may be concave and wind either way. */
+export type FieldShape = PolygonShape | RectangleShape;
 
 export type ConvexPieceDefinition = Readonly<{
   id: string;
-  localPolygon: readonly Vec2[];
+  shape: PieceShape;
   density?: number;
 }>;
 
@@ -32,55 +50,46 @@ export type StaticBodyDefinition = Readonly<{
   pieces: readonly ConvexPieceDefinition[];
 }>;
 
-export type FieldParam = number | string | boolean | Vec2;
-
-/** Body material at one quadrature point, expressed in the field's local frame. */
-export type FieldSample = Readonly<{
-  point: Vec2;
-  /** Velocity of the body material at `point`. */
-  velocity: Vec2;
-  /** Density of the body piece being sampled. */
-  density: number;
-}>;
-
 /**
- * A field's force law. The engine never inspects `kind` or `params`; they only
- * describe the force for rendering and serialization. `densityAt` must be pure
- * so replays stay deterministic.
+ * A field's force law, in the field's local frame. `strength` and `density`
+ * are force per unit of body area. A radial `source` must lie inside the
+ * field shape.
  */
-export type FieldForce = Readonly<{
-  kind: string;
-  params: Readonly<Record<string, FieldParam>>;
-  /** Force per unit area at the sample, in the field's local frame. */
-  densityAt(sample: FieldSample): Vec2;
-  /** Returns an error message when the force is invalid for this polygon. */
-  validate?(localPolygon: readonly Vec2[]): string | null;
-}>;
+export type FieldForceDefinition =
+  | Readonly<{ kind: 'uniform'; density: Vec2 }>
+  | Readonly<{ kind: 'attractor'; source: Vec2; strength: number }>
+  | Readonly<{ kind: 'repulsor'; source: Vec2; strength: number }>;
 
 export type FieldZoneDefinition = Readonly<{
   id: string;
-  localPolygon: readonly Vec2[];
+  shape: FieldShape;
   position: Vec2;
   angle: number;
   enabled: boolean;
-  force: FieldForce;
+  force: FieldForceDefinition;
 }>;
 
-export type LevelGoal = Readonly<{
-  /** Dynamic body that must reach the goal. */
+/** Solved once the body's position stays inside the bounds for `holdSeconds`. */
+export type GoalDefinition = Readonly<{
   bodyId: string;
-  /** World-space box that must contain the body's origin. */
-  area: Bounds;
-  /** How long the body must stay inside without leaving. */
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
   holdSeconds: number;
 }>;
 
 export type Level = Readonly<{
+  formatVersion: typeof LEVEL_FORMAT_VERSION;
   id: string;
-  name: string;
+  version: number;
   gravity: Vec2;
   dynamicBodies: readonly DynamicBodyDefinition[];
   staticBodies: readonly StaticBodyDefinition[];
   fields: readonly FieldZoneDefinition[];
-  goal: LevelGoal;
+  goal: GoalDefinition;
+  prediction?: Readonly<{
+    maxTicks: number;
+    sampleEveryTicks: number;
+  }>;
 }>;

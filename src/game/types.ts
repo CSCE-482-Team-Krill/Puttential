@@ -1,5 +1,4 @@
-import type { Bounds } from './geometry/polygon';
-import type { FieldForce } from './levels/types';
+import type { FieldForceDefinition } from './levels/types';
 
 export type Vec2 = Readonly<{ x: number; y: number }>;
 
@@ -25,7 +24,10 @@ export type FieldState = Readonly<{
   enabled: boolean;
 }>;
 
-export type RenderPiece = Readonly<{ id: string; worldPolygon: readonly Vec2[] }>;
+/** A circle has no vertices to show its spin; draw that from the body's `angle`. */
+export type RenderPiece =
+  | Readonly<{ id: string; kind: 'polygon'; worldPolygon: readonly Vec2[] }>
+  | Readonly<{ id: string; kind: 'circle'; center: Vec2; radius: number }>;
 
 export type RenderBody = Readonly<{
   id: string;
@@ -49,18 +51,7 @@ export type RenderField = Readonly<{
   angle: number;
   enabled: boolean;
   /** Force description in the field's local frame; apply `position` and `angle` to draw it. */
-  force: Pick<FieldForce, 'kind' | 'params'>;
-}>;
-
-export type GoalState = Readonly<{
-  bodyId: string;
-  area: Bounds;
-  inside: boolean;
-  /** Consecutive ticks the body has been inside, up to now. */
-  heldTicks: number;
-  holdTicks: number;
-  /** First tick at which the hold was satisfied; null until then. */
-  completedTick: number | null;
+  force: FieldForceDefinition;
 }>;
 
 export type RenderState = Readonly<{
@@ -68,17 +59,16 @@ export type RenderState = Readonly<{
   bodies: readonly RenderBody[];
   staticBodies: readonly RenderStaticBody[];
   fields: readonly RenderField[];
-  goal: GoalState;
 }>;
 
 export type GameSnapshot = Readonly<{
   levelId: string;
+  levelVersion: number;
   tick: number;
   physics: Uint8Array;
   bodyHandles: Readonly<Record<string, number>>;
   fields: readonly FieldState[];
   queuedCommands: readonly GameCommand[];
-  goal: Readonly<{ heldTicks: number; completedTick: number | null }>;
 }>;
 
 export type PredictionSample = Readonly<{
@@ -99,8 +89,7 @@ export type Prediction = Readonly<{
 }>;
 
 export type PredictionOptions = Readonly<{
-  maxTicks: number;
-  /** Defaults to every tick. */
+  maxTicks?: number;
   sampleEveryTicks?: number;
 }>;
 
@@ -110,6 +99,6 @@ export type Game = {
   getRenderState(): RenderState;
   snapshot(): GameSnapshot;
   restore(snapshot: GameSnapshot): void;
-  predict(commands: GameCommand | readonly GameCommand[], options: PredictionOptions): Prediction;
+  predict(commands: GameCommand | readonly GameCommand[], options?: PredictionOptions): Prediction;
   destroy(): void;
 };
