@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "65b482cda57a011e23a0687b350f2c03777ca04731c5d3344f2e95c77e1c0ba4",
+  "editor": {
+    "name": "Whirly Gig",
+    "arena": {
+      "bounds": {
+        "minX": -7.4,
+        "maxX": 7.4,
+        "minY": -4.25,
+        "maxY": 4.25
+      },
+      "walls": [
+        "left-boundary",
+        "right-boundary",
+        "bottom-boundary",
+        "top-boundary"
+      ],
+      "thickness": 0.5
+    }
+  }
+}

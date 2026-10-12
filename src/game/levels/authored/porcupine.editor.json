@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "fb11d96c936e654925684b39d5b007bd27c2ee0ac98dfc29799292a83aef666a",
+  "editor": {
+    "name": "Porcupine",
+    "arena": {
+      "bounds": {
+        "minX": -20,
+        "maxX": 20,
+        "minY": -6.75,
+        "maxY": 11.5
+      },
+      "walls": [
+        "left-boundary",
+        "right-boundary",
+        "bottom-boundary",
+        "top-boundary"
+      ],
+      "thickness": 0.5
+    }
+  }
+}

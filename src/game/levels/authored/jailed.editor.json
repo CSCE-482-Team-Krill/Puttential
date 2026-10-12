@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "9e34389bf95d933d73db578544b8fee7daa53ff20b73f318c099687c21bc330c",
+  "editor": {
+    "name": "Jailed",
+    "arena": {
+      "bounds": {
+        "minX": -10,
+        "maxX": 10,
+        "minY": -4.25,
+        "maxY": 7.25
+      },
+      "walls": [
+        "left-rail",
+        "right-rail",
+        "bottom-rail",
+        "top-rail"
+      ],
+      "thickness": 0.5
+    }
+  }
+}
