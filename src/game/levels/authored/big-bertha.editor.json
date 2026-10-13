@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "729a0d58c1493987ffd9f125af5dc569bd752724e727c13f2f6c7d06c76a585c",
+  "editor": {
+    "name": "Big Bertha",
+    "arena": {
+      "bounds": {
+        "minX": -7.4,
+        "maxX": 7.4,
+        "minY": -4.25,
+        "maxY": 4.25
+      },
+      "walls": [
+        "left-rail",
+        "right-rail",
+        "bottom-rail",
+        "top-rail"
+      ],
+      "thickness": 0.5
+    }
+  }
+}

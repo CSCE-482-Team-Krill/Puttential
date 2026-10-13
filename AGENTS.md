@@ -2,7 +2,7 @@
 
 ## Project Structure & Assets
 
-UI reference images live in `mock ui/`; research, a basic HTML sketch, and three Next.js/TypeScript mockups live in `ui_ux_research/`. `design_a/` uses the green palette and `design_b/` uses blue glass styling, and `design_c/` combines that glass styling with A’s green palette. Each has its page in `app/page.tsx` and styles in `app/globals.css`. `design_a/` and `design_b/` are static mockups with sample data. `design_c/` is the working frontend: it imports the game engine from `src/game/` through the `@game` alias, draws the course on a canvas (`app/course-canvas.tsx`), and runs the game loop in `app/puzzle.ts`; its stats, leaderboard, and streak panels still use sample data. The deterministic game engine lives in `src/game/` (see its README) and the backend in `src/backend/`.
+UI reference images live in `mock ui/`; research, a basic HTML sketch, and three Next.js/TypeScript mockups live in `ui_ux_research/`. `design_a/` uses the green palette and `design_b/` uses blue glass styling, and `design_c/` combines that glass styling with A’s green palette. Each has its page in `app/page.tsx` and styles in `app/globals.css`. `design_a/` and `design_b/` are static mockups with sample data. `design_c/` is the working frontend: it imports the game engine from `src/game/` through the `@game` alias, re-exports the shared course canvas and game loop from `src/frontend/`; its stats, leaderboard, and streak panels still use sample data. The deterministic Rapier engine lives in `src/game/` (see its README) and the backend in `src/backend/`. The desktop editor lives in `level-editor/` and saves canonical engine JSON plus editor metadata sidecars under `src/game/levels/authored/`. Both apps import shared drawing, controls, styles and simulation hooks from `src/frontend/`; never fork editor physics. Register new forces/shapes in `src/game/objects/catalog.ts` and `presets.ts` so the editor inherits them.
 
 ## Game Design Principles
 
@@ -10,15 +10,15 @@ Puttential is a web-first daily physics puzzle. Every player must receive the sa
 
 ## Development and Verification
 
-From `ui_ux_research/design_a/`, `design_b/`, or `design_c/`, run `npm install` to install dependencies, `npm run dev` to preview locally, and `npm run build` to compile and type-check. `design_c/` also needs `npm install` at the repository root, where the engine's Rapier dependency lives. Type-check the engine with `npx tsc --noEmit` from the repository root. No automated test command is configured. Inspect image changes at native size and use `git diff --stat` and `git status --short` to review changes.
+Use Node 22.12+. Run `npm install` at the repository root for the Design C/editor workspaces. `npm run editor` starts 127.0.0.1:3001; `npm run game` starts 127.0.0.1:3000. Build with `npm run editor:build` and `npm run game:build`. Run `npm test` for codecs, bounds, history, persistence and Rapier equivalence; `npm run test:e2e` runs browser checks after `npx playwright install chromium`. Run `npx prisma generate --schema prisma/schema.prisma` when the backend client is absent, then `npm run typecheck`. A/B keep their independent install/dev/build commands. Inspect screenshots at native size and review `git diff --check`, `git diff --stat` and `git status --short`.
 
 ## Naming and Editing Conventions
 
-Use descriptive, lowercase file names with hyphens, following the existing `puttential-ui-mockup-v2.png` pattern. Add a version suffix only when retaining an earlier design for comparison; otherwise update the relevant asset. Preserve PNG format for the existing mockups. For future code, follow the language's standard formatter and add its configuration to the repository rather than relying on undocumented local settings.
+Use descriptive, lowercase file names with hyphens, following the existing `puttential-ui-mockup-v2.png` pattern. Add a version suffix only when retaining an earlier design for comparison; otherwise update the relevant asset. Preserve PNG format for the existing mockups. Use the root Prettier configuration for new TypeScript/React code (`npm run format`).
 
 ## Testing Guidelines
 
-There is no automated test framework or coverage target. Visual inspection is the current verification method. For future features, test fixed-timestep determinism, collision and surface behavior, tile inventory limits, goal capture, and ranking order. Daily puzzle validation should confirm solvability and more than one practical solution. Include before-and-after images when a pull request changes a mockup.
+Tests live in `tests/`: Node's test runner through tsx covers model/engine behavior, and Playwright covers desktop interactions. Verify existing-level round trips and identical Rapier replays in the same runtime when changing codecs or physics. Editor operations must reject geometry outside board bounds and preserve authored data across playtest. New force registration should supply serialization, palette and property controls automatically. Daily puzzle validation should confirm solvability and multiple practical solutions. Include before-and-after images when a pull request changes a mockup.
 
 ## Commits and Pull Requests
 

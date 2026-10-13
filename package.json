@@ -1,14 +1,41 @@
 {
-  "scripts": {},
+  "scripts": {
+    "editor": "npm run dev --workspace=puttential-level-editor",
+    "editor:build": "npm run build --workspace=puttential-level-editor",
+    "editor:start": "npm run start --workspace=puttential-level-editor",
+    "game": "npm run dev --workspace=puttential-design-c -- --hostname 127.0.0.1",
+    "game:build": "npm run build --workspace=puttential-design-c",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "format": "prettier --write level-editor src/frontend src/game/levels/codec.ts src/game/objects/catalog.ts tests",
+    "test:e2e": "playwright test"
+  },
   "devDependencies": {
     "typescript": "^5.7.3",
-    "prisma": "^7.10.0"
+    "prisma": "^7.10.0",
+    "tsx": "^4.20.0",
+    "@playwright/test": "^1.55.0",
+    "prettier": "^3.6.0",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/node": "26.6.2"
   },
   "dependencies": {
     "@dimforge/rapier2d-compat": "0.20.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "dotenv": "^18.0.4",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "name": "puttential",
+  "private": true,
+  "workspaces": [
+    "level-editor",
+    "ui_ux_research/design_c"
+  ],
+  "engines": {
+    "node": ">=22.12"
   }
 }

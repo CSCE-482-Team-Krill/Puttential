@@ -111,3 +111,9 @@ Ordinary motion and collisions are frictionless: colliders use zero contact fric
 Bodies, pieces, and fields are processed in ID order (by code unit, not locale), commands are quantized, the timestep is fixed, and Rapier is pinned to `0.20.0`. Replaying the same commands gives the same result in the same JavaScript runtime; cross-browser bitwise equality is not guaranteed because JavaScript trigonometry may differ.
 
 Type-check with `npx tsc --noEmit` from the repository root.
+
+## Shared frontend and editor
+
+Design C and `level-editor/` share `src/frontend/`. The canvas consumes the engine's polygon/circle render records; playtest and prediction call this engine directly. The shared frontend tracks goal hold time after every engine tick, since engine render state does not include goal progress.
+
+Editor saves use this exact JSON format under `levels/authored/`. Separate `.editor.json` files hold authoring metadata; they are not part of `Level`. `levels/codec.ts` handles editor documents and explicit legacy migration, while `parseLevel` remains the engine schema authority. Metadata for supported force controls lives in `objects/catalog.ts`; shape presets live in `objects/presets.ts`. See [the editor guide](../../level-editor/README.md).

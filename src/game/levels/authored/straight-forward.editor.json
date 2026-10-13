@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "68773922a66a9a1b69abcfb40d12e147235ff3d02844da825171b24ed9297991",
+  "editor": {
+    "name": "Straight Forward",
+    "arena": {
+      "bounds": {
+        "minX": -10,
+        "maxX": 10,
+        "minY": -17.625,
+        "maxY": 22.375
+      },
+      "walls": [
+        "left-boundary",
+        "right-boundary",
+        "bottom-boundary",
+        "top-boundary"
+      ],
+      "thickness": 0.5
+    }
+  }
+}

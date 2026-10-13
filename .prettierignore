@@ -1,0 +1,7 @@
+node_modules/
+.next/
+**/.next/
+generated/
+package-lock.json
+ui_ux_research/design_a/
+ui_ux_research/design_b/

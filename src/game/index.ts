@@ -32,3 +32,25 @@ export type {
   RenderStaticBody,
   Vec2,
 } from './types';
+export { decodeLevel, encodeLevel, parseDocument, levelName, levelBounds } from './levels/codec';
+export type { LevelData, LevelDocument, Arena } from './levels/codec';
+export {
+  validateDocument,
+  documentFromLevel,
+  resizeArena,
+  containsBounds,
+} from './levels/document';
+export { starterLevels, starterDocument } from './levels/starters';
+export { forceCatalog, forceDefinition } from './objects/catalog';
+export type { FieldParam } from './objects/catalog';
+export { forceDensity } from './objects/forces';
+export { shapePresets } from './objects/presets';
+export {
+  polygonBounds,
+  transformPolygon,
+  pointInPolygon,
+  triangulateSimplePolygon,
+} from './geometry/polygon';
+export { shapePolygon } from './geometry/shapes';
+export { rectangle, shapeOutline, shapeBounds, unionBounds } from './geometry/authoring';
+export type { Bounds } from './geometry/polygon';
