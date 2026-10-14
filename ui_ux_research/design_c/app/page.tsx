@@ -1,25 +1,17 @@
 'use client';
 
-import { Icon } from '../../../src/frontend/icon';
-import type { IconName } from '../../../src/frontend/icon';
-import { fieldName } from '../../../src/frontend/field-label';
-import { ForceToolkit, PlayButton } from '../../../src/frontend/player-controls';
-import { LevelImport } from '../../../src/frontend/level-import';
 import { useEffect, useState } from 'react';
 import { starterLevels, levelName } from '@game';
 import type { Bounds, Level } from '@game';
+import { fieldName } from '../../../src/frontend/field-label';
+import { ForceToolkit, PlayButton } from '../../../src/frontend/player-controls';
+import { LevelImport } from '../../../src/frontend/level-import';
 import { CourseCanvas } from './course-canvas';
 import { usePuzzle } from './puzzle';
-import type { RunResult } from './puzzle';
-
-type Panel = 'archive' | 'stats' | 'leaderboard' | 'settings' | 'help' | 'result' | null;
-const rankings = [
-  { rank: '01', name: 'birdbrain', force: 2, tiles: 1, time: '4.82s' },
-  { rank: '02', name: 'physwiz', force: 3, tiles: 2, time: '3.14s' },
-  { rank: '03', name: 'krillking', force: 3, tiles: 2, time: '5.26s' },
-  { rank: '•••', name: '', force: '', tiles: '', time: '' },
-  { rank: '218', name: 'You', force: 5, tiles: 3, time: '6.31s' },
-];
+import { Icon } from './ui-icon';
+import type { IconName } from './ui-icon';
+import { Modal, usePreferences } from './modal';
+import type { Panel } from './modal';
 
 /** Today's puzzle first; the archive lists the rest. */
 /** Every tile adds the same amount to a solution's force cost. */
@@ -27,271 +19,8 @@ const TILE_COST = 1;
 
 const LEVELS = starterLevels.map((level, index) => ({
   level,
-  day: ['Today', 'Yesterday', 'Sep 20', 'Sep 19', 'Sep 18'][index]!,
+  day: ['Today', 'Yesterday'][index]!,
 }));
-
-function Modal({
-  panel,
-  close,
-  reducedMotion,
-  setReducedMotion,
-  result,
-  currentLevel,
-  chooseLevel,
-}: {
-  panel: Exclude<Panel, null>;
-  close: () => void;
-  reducedMotion: boolean;
-  setReducedMotion: (value: boolean) => void;
-  result: RunResult | null;
-  currentLevel: Level;
-  chooseLevel: (level: Level) => void;
-}) {
-  const [sound, setSound] = useState(true);
-  const titles: Record<Exclude<Panel, null>, string> = {
-    archive: 'Puzzle archive',
-    stats: 'Your stats',
-    leaderboard: 'Leaderboard',
-    settings: 'Settings',
-    help: 'How to play',
-    result: result?.solved === false ? 'So close' : 'Nice work!',
-  };
-
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') close();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [close]);
-
-  return (
-    <div
-      className="modal-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) close();
-      }}
-    >
-      <section className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <div className="modal-header">
-          <div>
-            <span className="eyebrow">PUTTENTIAL</span>
-            <h2 id="modal-title">{titles[panel]}</h2>
-          </div>
-          <button className="icon-button close-button" onClick={close} aria-label="Close panel">
-            <Icon name="close" />
-          </button>
-        </div>
-        {panel === 'archive' && (
-          <div className="modal-body">
-            <p className="muted">Past puzzles are ready whenever you are.</p>
-            <div className="archive-list">
-              {LEVELS.map(({ level, day }, index) => (
-                <button
-                  className="archive-row"
-                  key={level.id}
-                  onClick={() => {
-                    chooseLevel(level);
-                    close();
-                  }}
-                >
-                  <span className="archive-number">#{126 - index}</span>
-                  <span>
-                    {day} · {levelName(level)}
-                  </span>
-                  <span className="row-status">{level === currentLevel ? 'Playing' : 'Play'}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        {panel === 'stats' && (
-          <div className="modal-body">
-            <p className="muted">Your progress at a glance. These are sample results.</p>
-            <div className="stat-grid">
-              <div className="stat-card">
-                <strong>14</strong>
-                <span>Current streak</span>
-              </div>
-              <div className="stat-card">
-                <strong>87</strong>
-                <span>Games played</span>
-              </div>
-              <div className="stat-card">
-                <strong>78%</strong>
-                <span>Avg. percentile</span>
-              </div>
-              <div className="stat-card">
-                <strong>4.2</strong>
-                <span>Avg. attempts</span>
-              </div>
-            </div>
-            <h3>Recent scores</h3>
-            <div className="score-bars">
-              <div>
-                <span>Mon</span>
-                <i style={{ height: '68%' }} />
-                <b>68</b>
-              </div>
-              <div>
-                <span>Tue</span>
-                <i style={{ height: '82%' }} />
-                <b>82</b>
-              </div>
-              <div>
-                <span>Wed</span>
-                <i style={{ height: '74%' }} />
-                <b>74</b>
-              </div>
-              <div>
-                <span>Thu</span>
-                <i style={{ height: '91%' }} />
-                <b>91</b>
-              </div>
-              <div>
-                <span>Fri</span>
-                <i style={{ height: '79%' }} />
-                <b>79</b>
-              </div>
-              <div>
-                <span>Sat</span>
-                <i style={{ height: '88%' }} />
-                <b>88</b>
-              </div>
-              <div>
-                <span>Sun</span>
-                <i style={{ height: '94%' }} />
-                <b>94</b>
-              </div>
-            </div>
-          </div>
-        )}
-        {panel === 'leaderboard' && (
-          <div className="modal-body">
-            <p className="muted">Today&apos;s best solutions · sample rankings</p>
-            <div className="leaderboard-head">
-              <span>RANK / PLAYER</span>
-              <span>FORCE</span>
-              <span>TILES</span>
-              <span>TIME</span>
-            </div>
-            <div className="leaderboard-list">
-              {rankings.map((entry, index) => (
-                <div
-                  className={`leaderboard-row ${entry.name === 'You' ? 'your-row' : ''}`}
-                  key={index}
-                >
-                  <span>
-                    <b>{entry.rank}</b> {entry.name}
-                  </span>
-                  <span>{entry.force}</span>
-                  <span>{entry.tiles}</span>
-                  <span>{entry.time}</span>
-                </div>
-              ))}
-            </div>
-            <p className="modal-footnote">Solutions unlock after you solve the daily puzzle.</p>
-          </div>
-        )}
-        {panel === 'settings' && (
-          <div className="modal-body">
-            <p className="muted">Make the preview feel right for you.</p>
-            <div className="setting-row">
-              <div>
-                <strong>Sound effects</strong>
-                <span>Play sounds during a run</span>
-              </div>
-              <button
-                className={`switch ${sound ? 'on' : ''}`}
-                role="switch"
-                aria-checked={sound}
-                aria-label="Sound effects"
-                onClick={() => setSound(!sound)}
-              >
-                <span />
-              </button>
-            </div>
-            <div className="setting-row">
-              <div>
-                <strong>Reduced motion</strong>
-                <span>Use simpler animations</span>
-              </div>
-              <button
-                className={`switch ${reducedMotion ? 'on' : ''}`}
-                role="switch"
-                aria-checked={reducedMotion}
-                aria-label="Reduced motion"
-                onClick={() => setReducedMotion(!reducedMotion)}
-              >
-                <span />
-              </button>
-            </div>
-            <p className="modal-footnote">Settings are for this mockup and are not saved yet.</p>
-          </div>
-        )}
-        {panel === 'help' && (
-          <div className="modal-body">
-            <p className="muted">Get the ball into the cup using the fewest forces you can.</p>
-            <div className="steps">
-              <div>
-                <b>01</b>
-                <span>
-                  <strong>Study the course</strong>
-                  <small>Look for terrain, walls, and the goal.</small>
-                </span>
-              </div>
-              <div>
-                <b>02</b>
-                <span>
-                  <strong>Place force tiles</strong>
-                  <small>Pick tiles from your toolkit, then drag their fields on the course.</small>
-                </span>
-              </div>
-              <div>
-                <b>03</b>
-                <span>
-                  <strong>Press Play</strong>
-                  <small>Watch the ball move, then improve your plan.</small>
-                </span>
-              </div>
-            </div>
-            <p className="modal-footnote">
-              A field pushes only the part of the ball it overlaps. Hold the ball in the goal to
-              finish.
-            </p>
-          </div>
-        )}
-        {panel === 'result' && result && (
-          <div className="modal-body result-body">
-            <div className="result-trophy">{result.solved ? '🏆' : '⛳'}</div>
-            <p>
-              {result.solved
-                ? 'The ball held in the goal.'
-                : 'The ball stopped short of the goal. Adjust your fields and try again.'}
-            </p>
-            <div className="result-grid">
-              <div>
-                <strong>{result.tiles * TILE_COST}</strong>
-                <span>Force cost</span>
-              </div>
-              <div>
-                <strong>{result.tiles}</strong>
-                <span>Tiles</span>
-              </div>
-              <div>
-                <strong>{result.seconds.toFixed(2)}s</strong>
-                <span>{result.solved ? 'Ball time' : 'Run time'}</span>
-              </div>
-            </div>
-            <button className="primary-button" onClick={close}>
-              Back to course <Icon name="arrow" size={18} />
-            </button>
-          </div>
-        )}
-      </section>
-    </div>
-  );
-}
 
 export default function Home() {
   const [panel, setPanel] = useState<Panel>(null);
@@ -301,25 +30,46 @@ export default function Home() {
     setLevel(next);
     setImportBounds(bounds ?? null);
   }
-  const [reducedMotion, setReducedMotion] = useState(false);
+  const [preferences, setPreferences] = usePreferences();
   const puzzle = usePuzzle(level);
-  const nav: { name: Exclude<Panel, 'result' | null> | 'daily'; label: string; icon: IconName }[] =
-    [
-      { name: 'daily', label: 'Daily', icon: 'calendar' },
-      { name: 'archive', label: 'Archive', icon: 'calendar' },
-      { name: 'stats', label: 'Stats', icon: 'stats' },
-      { name: 'leaderboard', label: 'Leaderboard', icon: 'trophy' },
-      { name: 'settings', label: 'Settings', icon: 'settings' },
-    ];
+  const nav: { name: Exclude<Panel, 'result' | null>; label: string; icon: IconName }[] = [
+    { name: 'archive', label: 'Calendar', icon: 'calendar' },
+    { name: 'leaderboard', label: 'Leaderboard', icon: 'trophy' },
+    { name: 'settings', label: 'Settings', icon: 'settings' },
+    { name: 'stats', label: 'Profile', icon: 'profile' },
+    { name: 'help', label: 'Help', icon: 'help' },
+  ];
 
   useEffect(() => {
     if (puzzle.result !== null) setPanel('result');
   }, [puzzle.result]);
 
+  const placedTiles = Object.values(puzzle.draft).filter((field) => field.enabled).length;
+  const levelIndex = LEVELS.findIndex((entry) => entry.level === level);
+  const status =
+    puzzle.mode === 'error'
+      ? (puzzle.error ?? 'Could not load course')
+      : puzzle.mode === 'loading'
+        ? 'Loading course…'
+        : puzzle.mode === 'running'
+          ? 'Simulation running'
+          : puzzle.mode === 'done'
+            ? 'Run finished'
+            : placedTiles > 0
+              ? 'Drag fields on the course to move them.'
+              : 'Choose a force block to get started.';
+
   return (
-    <div className={`site-wrap ${reducedMotion ? 'reduce-motion' : ''}`}>
+    <div className={`site-wrap ${preferences.reducedMotion ? 'reduce-motion' : ''}`}>
       <header className="site-header">
-        <button className="brand" onClick={() => setPanel(null)} aria-label="Puttential home">
+        <button
+          className="brand"
+          onClick={() => {
+            loadCourse(LEVELS[0]!.level);
+            setPanel(null);
+          }}
+          aria-label="Puttential home"
+        >
           <span className="brand-mark">
             <span className="brand-ball" />
             <span className="brand-flag" />
@@ -332,174 +82,186 @@ export default function Home() {
           {nav.map((item) => (
             <button
               key={item.name}
-              className={`nav-button ${panel === item.name || (item.name === 'daily' && panel === null) ? 'active' : ''}`}
-              onClick={() => {
-                if (item.name === 'daily') loadCourse(LEVELS[0]!.level);
-                setPanel(item.name === 'daily' ? null : item.name);
-              }}
+              className={`nav-button ${panel === item.name ? 'active' : ''}`}
+              onClick={() => setPanel(item.name)}
+              aria-expanded={panel === item.name}
             >
-              <Icon name={item.icon} size={18} />
+              <Icon name={item.icon} size={23} />
               <span>{item.label}</span>
             </button>
           ))}
         </nav>
-        <button className="streak-pill" onClick={() => setPanel('stats')}>
-          <Icon name="fire" size={17} /> <strong>14</strong>
-          <span>day streak</span>
-        </button>
       </header>
 
       <main className="dashboard">
         <LevelImport onLoad={loadCourse} />
-        <div className="page-heading">
-          <div>
-            <span className="eyebrow">TUESDAY • SEPTEMBER 22, 2026</span>
-            <h1>
-              Daily challenge <span>#126</span>
-            </h1>
-            <p>One course. Your own way to the cup.</p>
-          </div>
-          <button className="how-button" onClick={() => setPanel('help')}>
-            <Icon name="help" size={18} /> How to play
-          </button>
-        </div>
-
         <div className="game-layout">
-          <section className="game-card" aria-labelledby="course-title">
-            <div className="card-heading">
-              <div>
-                <span className="section-kicker">
-                  {level === LEVELS[0]!.level ? "TODAY'S COURSE" : 'ARCHIVE COURSE'}
+          <section className="play-column" aria-labelledby="course-title">
+            <div className="course-stage">
+              <div className="course-heading">
+                <span className="challenge-label">
+                  <Icon name="calendar" size={16} />{' '}
+                  {levelIndex < 0
+                    ? 'Local course'
+                    : levelIndex === 0
+                      ? 'Daily challenge'
+                      : 'Archive challenge'}{' '}
+                  {levelIndex >= 0 && <b>#{126 - levelIndex}</b>}
                 </span>
-                <h2 id="course-title">{levelName(level)}</h2>
+                <span className={`course-status ${puzzle.mode === 'running' ? 'running' : ''}`}>
+                  <i />{' '}
+                  {puzzle.mode === 'setup'
+                    ? 'Planning'
+                    : puzzle.mode === 'running'
+                      ? 'In motion'
+                      : puzzle.mode === 'done'
+                        ? 'Finished'
+                        : puzzle.mode === 'error'
+                          ? 'Error'
+                          : 'Loading'}
+                </span>
               </div>
-              <span className="difficulty">
-                <span /> MODERATE
-              </span>
-            </div>
-            <div className="course">
-              <div className="course-grid" />
-              <CourseCanvas
-                {...(importBounds
-                  ? {
-                      camera: {
-                        bounds: importBounds,
-                        zoom: 1,
-                        center: {
-                          x: (importBounds.minX + importBounds.maxX) / 2,
-                          y: (importBounds.minY + importBounds.maxY) / 2,
+              <div className="course">
+                <div className="course-grid" />
+                <CourseCanvas
+                  {...(importBounds
+                    ? {
+                        camera: {
+                          bounds: importBounds,
+                          zoom: 1,
+                          center: {
+                            x: (importBounds.minX + importBounds.maxX) / 2,
+                            y: (importBounds.minY + importBounds.maxY) / 2,
+                          },
                         },
-                      },
-                    }
-                  : {})}
-                level={level}
-                frameRef={puzzle.frameRef}
-                goalRef={puzzle.goalRef}
-                draft={puzzle.draft}
-                mode={puzzle.mode}
-                trail={puzzle.trail}
-                onMoveField={puzzle.moveField}
-              />
+                      }
+                    : {})}
+                  level={level}
+                  goalRef={puzzle.goalRef}
+                  frameRef={puzzle.frameRef}
+                  draft={puzzle.draft}
+                  mode={puzzle.mode}
+                  trail={preferences.showPreview ? puzzle.trail : []}
+                  onMoveField={puzzle.moveField}
+                />
+              </div>
             </div>
-            <div className="game-toolbar">
-              <div className="course-legend">
-                <span>
-                  <i className="legend-ball" /> {fieldName(level.goal.bodyId)}
-                </span>
-                <span>
-                  <i className="legend-field" /> Force field
-                </span>
-                <span>
-                  <i className="legend-goal" /> Goal
+
+            <div className="course-details">
+              <div className="details-heading">
+                <div>
+                  <span className="section-kicker">
+                    {levelIndex < 0
+                      ? 'LOCAL COURSE'
+                      : levelIndex === 0
+                        ? "TODAY'S COURSE"
+                        : 'FROM THE ARCHIVE'}
+                  </span>
+                  <h1 id="course-title">{levelName(level)}</h1>
+                  <p>One course. Your own way to the goal.</p>
+                </div>
+                <button
+                  className="how-button"
+                  onClick={() => setPanel('help')}
+                  aria-label="How to play"
+                >
+                  <Icon name="help" size={17} />
+                  <span>How to play</span>
+                </button>
+              </div>
+              <div className="run-controls">
+                <dl className="run-metrics" aria-label="Current solution">
+                  <div>
+                    <dt>Force cost</dt>
+                    <dd>
+                      {placedTiles * TILE_COST}
+                      <small>pt</small>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Blocks placed</dt>
+                    <dd>
+                      {placedTiles}
+                      <small>/ {level.fields.length}</small>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Attempts</dt>
+                    <dd>{puzzle.attempts}</dd>
+                  </div>
+                </dl>
+                <div className="run-actions">
+                  <button
+                    className="text-button"
+                    disabled={puzzle.mode === 'loading' || puzzle.mode === 'error'}
+                    onClick={puzzle.resetLayout}
+                  >
+                    <Icon name="reset" size={17} /> Reset layout
+                  </button>
+                  <PlayButton puzzle={puzzle} />
+                </div>
+              </div>
+              <div className="game-toolbar">
+                <div className="course-legend">
+                  <span>
+                    <i className="legend-ball" /> {fieldName(level.goal.bodyId)}
+                  </span>
+                  <span>
+                    <i className="legend-field" /> Force field
+                  </span>
+                  <span>
+                    <i className="legend-goal" /> Goal
+                  </span>
+                </div>
+                <span className="demo-note" role="status">
+                  {status}
                 </span>
               </div>
-              <span className="demo-note">
-                {puzzle.mode === 'setup'
-                  ? Object.values(puzzle.draft).some((field) => field.enabled)
-                    ? 'Drag fields to move them'
-                    : 'Pick a tile to add its field'
-                  : puzzle.mode === 'running'
-                    ? 'Simulation running'
-                    : puzzle.mode === 'loading'
-                      ? 'Loading course…'
-                      : 'Run finished'}
-              </span>
             </div>
           </section>
 
-          <aside className="control-column">
-            <section className="control-card">
-              <div className="control-heading">
-                <span className="section-kicker">YOUR TOOLKIT</span>
-                <h2>Force tiles</h2>
-                <p>Pick a tile to add its field to the course. Each tile costs 1 point.</p>
+          <aside className="control-column" aria-labelledby="toolkit-title">
+            <div className="control-heading">
+              <span className="section-kicker">YOUR TOOLKIT</span>
+              <div className="toolkit-title">
+                <h2 id="toolkit-title">Force blocks</h2>
+                <span className="inventory-count">{level.fields.length}</span>
               </div>
-              <ForceToolkit level={level} puzzle={puzzle} />
-              <div className="attempt-line">
-                <span>Attempts today</span>
-                <strong>{puzzle.attempts}</strong>
-              </div>
-              <PlayButton puzzle={puzzle} />
-              <button
-                className="text-button"
-                disabled={puzzle.mode === 'loading'}
-                onClick={puzzle.resetLayout}
-              >
-                <Icon name="reset" size={16} /> Reset layout
-              </button>
-            </section>
+              <p>Choose a block, then drag its field into position on the course.</p>
+            </div>
+            <ForceToolkit level={level} puzzle={puzzle} />
+            <p className="toolkit-note">
+              Every block costs 1 point. Use fewer to improve your solution.
+            </p>
             <div className="tip-card">
               <span className="tip-icon">✦</span>
               <div>
-                <strong>Today&apos;s tip</strong>
+                <strong>A little foresight</strong>
                 <p>
-                  The dotted line previews the first second of your run. After that, you&apos;re on
-                  your own.
+                  The dotted path previews the first second of your run. Adjust your fields before
+                  pressing Play.
                 </p>
               </div>
             </div>
+            <div className="toolkit-footer">
+              <Icon name="trophy" size={18} />
+              <span>Small moves. Better solutions.</span>
+            </div>
           </aside>
         </div>
-
-        <section className="bottom-strip" aria-label="Daily progress">
-          <div>
-            <span className="strip-icon green">
-              <Icon name="calendar" />
-            </span>
-            <span>
-              <strong>One puzzle each day</strong>
-              <small>Come back tomorrow for a new course.</small>
-            </span>
-          </div>
-          <div>
-            <span className="strip-icon yellow">
-              <Icon name="trophy" />
-            </span>
-            <span>
-              <strong>Find your best solution</strong>
-              <small>Use less force to climb the leaderboard.</small>
-            </span>
-          </div>
-          <div>
-            <span className="strip-icon coral">
-              <Icon name="fire" />
-            </span>
-            <span>
-              <strong>Keep the streak alive</strong>
-              <small>You&apos;re on a 14 day run.</small>
-            </span>
-          </div>
-        </section>
       </main>
       {panel && (
         <Modal
+          key={panel}
           panel={panel}
           close={() => setPanel(null)}
-          reducedMotion={reducedMotion}
-          setReducedMotion={setReducedMotion}
+          preferences={preferences}
+          setPreferences={setPreferences}
           result={puzzle.result}
+          levels={LEVELS}
           currentLevel={level}
           chooseLevel={loadCourse}
+          tileCost={TILE_COST}
         />
       )}
     </div>
