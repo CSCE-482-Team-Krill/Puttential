@@ -76,7 +76,7 @@ const HELP_SECTIONS = [
   {
     title: 'Daily Challenges',
     content:
-      'Everyone gets the same daily course, starting object, goal, tile inventory, and physics settings. Open Calendar to revisit the available past courses and try another solution.',
+      'Everyone gets the same daily course, starting object, goal, tile inventory, and physics settings. Open Calendar to choose the daily course or try a practice course.',
   },
 ] as const;
 
@@ -323,7 +323,7 @@ export function Modal({
         {panel === 'archive' && (
           <div className="modal-body modal-stack">
             <p className="modal-intro">
-              Past levels <span>Find another way to the goal</span>
+              Available courses <span>Find another way to the goal</span>
             </p>
             <div className="modal-stack archive-list">
               {levels.map(({ level, day }, index) => (
@@ -336,7 +336,7 @@ export function Modal({
                   }}
                   aria-current={level === currentLevel ? 'true' : undefined}
                 >
-                  <span className="archive-number">#{126 - index}</span>
+                  <span className="archive-number">#{index + 1}</span>
                   <span className="archive-course">
                     <strong>
                       {level.id
