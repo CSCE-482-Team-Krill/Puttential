@@ -1,3 +1,6 @@
+import type { Level } from '../game/levels/types';
+import type { GameCommand } from '../game/types';
+
 /**
  * Shared backend data types.
  *
@@ -8,7 +11,6 @@
  * (design_a, design_b, or design_c).
  */
 
-
 // ============================================================
 // Puzzle API
 // ============================================================
@@ -16,22 +18,15 @@
 /**
  * Data returned to the frontend for the daily puzzle.
  *
- * `configuration` will eventually contain the Level object used by
- * the shared game engine. It is left as `unknown` for now because
- * the game-engine branch has not yet been merged into the main app.
- *
- * Once the game engine is integrated, this can be changed to:
- *
- *   configuration: Level
+ * `configuration` is canonical JSON validated by the shared engine codec.
  */
 export type TodayPuzzleResponse = {
-    id: string;
-    date: string;
-    seed: string;
-    difficulty: number;
-    configuration: unknown;
+  id: string;
+  date: string;
+  seed: string;
+  difficulty: number;
+  configuration: Level;
 };
-
 
 // ============================================================
 // Attempt API
@@ -46,15 +41,15 @@ export type TodayPuzzleResponse = {
  * game engine does not yet calculate every scoring metric.
  */
 export type CreateAttemptRequest = {
-    puzzleId: string;
-    userId?: string | null;
+  puzzleId: string;
+  userId?: string | null;
 
-    success?: boolean;
+  success?: boolean;
 
-    simulationTime?: number | null;
-    forceCost?: number | null;
-    tileCount?: number | null;
-    pathLength?: number | null;
+  simulationTime?: number | null;
+  forceCost?: number | null;
+  tileCount?: number | null;
+  pathLength?: number | null;
 };
 
 /**
@@ -64,9 +59,8 @@ export type CreateAttemptRequest = {
  * solution.
  */
 export type CreateAttemptResponse = {
-    attemptId: string;
+  attemptId: string;
 };
-
 
 // ============================================================
 // Physics / Replay Commands
@@ -76,28 +70,9 @@ export type CreateAttemptResponse = {
  * API-friendly representation of the commands currently supported
  * by the game engine.
  *
- * These definitions mirror the current GameCommand type from:
- *
- *   src/game/types.ts
- *
- * When the game-engine branch is merged, we should ideally import
- * GameCommand directly instead of maintaining duplicate definitions.
+ * The API and simulation use the same GameCommand definition.
  */
-export type ReplayCommand =
-  | {
-      type: "move-field";
-      fieldId: string;
-      xQ: number;
-      yQ: number;
-      sequence: number;
-    }
-  | {
-      type: "set-field-enabled";
-      fieldId: string;
-      enabled: boolean;
-      sequence: number;
-    };
-
+export type ReplayCommand = GameCommand;
 
 /**
  * Information required to reconstruct a player's solution.
@@ -107,14 +82,13 @@ export type ReplayCommand =
  * interpreted using the same game rules that originally produced it.
  */
 export type SolutionPlacementData = {
-    levelId: string;
-    levelVersion: number;
+  levelId: string;
+  levelVersion: number;
 
-    simulationVersion?: string;
+  simulationVersion?: string;
 
-    commands: ReplayCommand[];
+  commands: ReplayCommand[];
 };
-
 
 // ============================================================
 // Solution API
@@ -124,24 +98,23 @@ export type SolutionPlacementData = {
  * Data sent to the backend when a successful solution is saved.
  *
  * Server-side physics validation is not implemented yet because
- * the current game engine does not expose a formal win/success rule.
+ * the prototype currently trusts the client-reported outcome.
  */
 export type CreateSolutionRequest = {
-    puzzleId: string;
-    attemptId: string;
+  puzzleId: string;
+  attemptId: string;
 
-    userId?: string | null;
+  userId?: string | null;
 
-    placementData: SolutionPlacementData;
+  placementData: SolutionPlacementData;
 };
 
 /**
  * Response returned after storing a solution.
  */
 export type CreateSolutionResponse = {
-    solutionId: string;
+  solutionId: string;
 };
-
 
 // ============================================================
 // Future Physics Validation
@@ -155,8 +128,8 @@ export type CreateSolutionResponse = {
  * actually produce a successful result.
  */
 export type SolutionValidationInput = {
-    puzzleId: string;
-    placementData: SolutionPlacementData;
+  puzzleId: string;
+  placementData: SolutionPlacementData;
 };
 
 /**
@@ -166,10 +139,9 @@ export type SolutionValidationInput = {
  * the actual validator has not been implemented yet.
  */
 export type SolutionValidationResult = {
-    valid: boolean;
-    reason?: string;
+  valid: boolean;
+  reason?: string;
 };
-
 
 // ============================================================
 // Common API Error
@@ -179,5 +151,5 @@ export type SolutionValidationResult = {
  * Standard error shape that our Next.js Route Handlers can return.
  */
 export type ApiErrorResponse = {
-    error: string;
+  error: string;
 };

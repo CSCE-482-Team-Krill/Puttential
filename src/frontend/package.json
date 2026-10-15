@@ -1,9 +1,10 @@
 {
-  "name": "puttential-design-c",
+  "name": "puttential-frontend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "prisma generate --config ../../prisma7.config.ts",
     "build": "next build",
     "start": "next start"
   },
