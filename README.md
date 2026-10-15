@@ -55,7 +55,15 @@ Use **Node 22.12+** and **PostgreSQL 17** (or Docker Desktop). Run commands from
 
    Open **http://127.0.0.1:3001**. See [the editor guide](level-editor/README.md). Courses save as canonical JSON with editor sidecars under `src/game/levels/authored/`. Use **Open local course** to playtest saved JSON, or seed that JSON as a daily course. The editor and practice/local-course play do not need a database; practice runs are not submitted.
 
-For a production build, run `npm run db:generate`, `npm run game:build`, then `npm run game:start` with `DATABASE_URL` set. Apply `npm run db:migrate` to the deployment database and provision dated courses before serving players. `docker compose stop db` stops the local database and retains its data.
+For a production build, run `npm run game:build`, then `npm run game:start` with `DATABASE_URL` set. The frontend's `prebuild` step generates Prisma Client, including on clean CI checkouts. Apply `npm run db:migrate` to the deployment database and provision dated courses before serving players. `docker compose stop db` stops the local database and retains its data.
+
+## Vercel deployment
+
+Set the Vercel project's **Root Directory** to `src/frontend`, with **Next.js** as the framework. Enable **Include source files outside of the Root Directory in the Build Step** so the build can access the shared engine, backend, Prisma schema and root workspace dependencies. The former `ui_ux_research/design_c` directory is documentation only.
+
+The checked-in `src/frontend/vercel.json` runs `npm run build`; its `prebuild` generates the ignored Prisma Client before Next.js compiles API routes. Use the root npm workspace lockfile and the default install command. Keep the Output Directory at its Next.js default (`.next`).
+
+Set `DATABASE_URL` in Vercel's Preview and Production environments to the corresponding hosted PostgreSQL database. Builds do not require a live database; the API needs it at runtime. Run migrations and seed dated courses against that database separately, rather than modifying it during preview builds.
 
 ## Integration status
 
