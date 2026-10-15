@@ -46,6 +46,8 @@ export default function ModalPreview() {
               key={item.panel}
               onClick={() => setPanel(item.panel)}
               aria-expanded={panel === item.panel}
+              aria-label={item.label}
+              title={item.label}
             >
               <Icon name={item.icon} size={23} />
               <span>{item.label}</span>

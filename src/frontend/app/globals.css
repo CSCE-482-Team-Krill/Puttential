@@ -52,10 +52,12 @@ button svg {
 
 .site-header {
   max-width: 1440px;
+  height: auto;
   min-height: 100px;
   margin: 0 auto;
   padding: 16px 24px;
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
@@ -124,6 +126,13 @@ button svg {
 }
 .main-nav {
   display: flex;
+  flex: 0 0 auto;
+  width: auto;
+  margin-left: auto;
+  order: 0;
+  border-top: 0;
+  padding-top: 0;
+  justify-content: flex-end;
   align-items: center;
   gap: 9px;
 }
@@ -151,6 +160,13 @@ button svg {
   background: linear-gradient(145deg, #ffffffec, #dffbdfca);
   color: var(--accent);
   box-shadow: 0 5px 14px #55bf5822;
+}
+.nav-button span {
+  display: inline;
+}
+.nav-button svg {
+  width: 23px;
+  height: 23px;
 }
 
 .dashboard {
@@ -1151,24 +1167,30 @@ button svg {
     padding: 12px;
   }
   .site-header {
-    flex-wrap: wrap;
-    padding: 18px 14px 12px;
-    gap: 18px;
+    min-height: 76px;
+    padding: 12px 14px;
+    gap: 10px;
     border-radius: 20px 20px 0 0;
   }
   .brand {
-    font-size: 27px;
+    font-size: 23px;
   }
   .main-nav {
-    width: 100%;
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 6px;
+    gap: 4px;
   }
   .nav-button {
-    min-width: 0;
-    min-height: 62px;
-    padding: 9px 3px;
+    width: clamp(28px, 6vw, 42px);
+    min-width: 28px;
+    min-height: 36px;
+    padding: 6px;
+    border-radius: 10px;
+  }
+  .nav-button span {
+    display: none;
+  }
+  .nav-button svg {
+    width: clamp(16px, 3vw, 21px);
+    height: clamp(16px, 3vw, 21px);
   }
   .dashboard {
     padding: 8px;
@@ -1295,17 +1317,44 @@ button svg {
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 480px) {
   .site-header {
-    padding-right: 10px;
-    padding-left: 10px;
+    padding-right: 8px;
+    padding-left: 8px;
+    gap: 8px;
+  }
+  .brand {
+    font-size: 20px;
+    letter-spacing: -1px;
+    gap: 6px;
+  }
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+  }
+  .brand-ball {
+    left: 4px;
+    top: 12px;
+    width: 11px;
+    height: 11px;
+  }
+  .brand-flag {
+    left: 18px;
+    height: 18px;
   }
   .main-nav {
-    gap: 4px;
+    gap: 3px;
   }
-  .nav-button {
-    padding-right: 0;
-    padding-left: 0;
-    font-size: 8px;
+}
+
+@media (max-width: 380px) {
+  .brand {
+    font-size: 18px;
+  }
+  .brand-mark {
+    display: none;
+  }
+  .main-nav {
+    gap: 2px;
   }
 }

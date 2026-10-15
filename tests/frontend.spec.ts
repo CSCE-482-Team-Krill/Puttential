@@ -28,6 +28,19 @@ test('migrated Figma modals retain focus, keyboard controls and preferences', as
   await page.getByText('How to play', { exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Press Play');
   await page.keyboard.press('Escape');
+  for (const width of [320, 390, 700, 760, 850, 1050, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    const brand = (await page.locator('.brand').boundingBox())!;
+    const nav = (await page.getByRole('navigation').boundingBox())!;
+    const header = await page.locator('.site-header').evaluate((element) => {
+      const bounds = element.getBoundingClientRect();
+      return { right: bounds.right, padding: parseFloat(getComputedStyle(element).paddingRight) };
+    });
+    expect(nav.x).toBeGreaterThanOrEqual(brand.x + brand.width);
+    expect(Math.abs(nav.y + nav.height / 2 - (brand.y + brand.height / 2))).toBeLessThan(2);
+    expect(Math.abs(nav.x + nav.width - (header.right - header.padding - 1))).toBeLessThan(2);
+    await expect(page.getByRole('button', { name: 'Calendar', exact: true })).toBeVisible();
+  }
 });
 
 test('daily course loads from the API and saves the locked successful replay once', async ({

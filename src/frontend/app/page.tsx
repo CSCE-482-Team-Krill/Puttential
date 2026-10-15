@@ -42,7 +42,7 @@ export default function Home() {
   if (daily === undefined)
     return (
       <main className="site-wrap" role="status">
-        Loading daily courseâ€¦
+        Loading daily course…
       </main>
     );
   return <Game daily={daily} loadError={error} />;
@@ -74,7 +74,7 @@ function Game({
     if (!run || !daily || run.level !== daily.configuration || savedRuns.current.has(run)) return;
     savedRuns.current.add(run);
     let active = true;
-    setSaveStatus('Saving runâ€¦');
+    setSaveStatus('Saving run…');
     void saveRun(daily.id, run)
       .then(() => {
         if (active)
@@ -110,7 +110,7 @@ function Game({
     puzzle.mode === 'error'
       ? (puzzle.error ?? 'Could not load course')
       : puzzle.mode === 'loading'
-        ? 'Loading courseâ€¦'
+        ? 'Loading course…'
         : puzzle.mode === 'running'
           ? 'Simulation running'
           : puzzle.mode === 'done'
@@ -145,6 +145,8 @@ function Game({
               className={`nav-button ${panel === item.name ? 'active' : ''}`}
               onClick={() => setPanel(item.name)}
               aria-expanded={panel === item.name}
+              aria-label={item.label}
+              title={item.label}
             >
               <Icon name={item.icon} size={23} />
               <span>{item.label}</span>
@@ -304,7 +306,7 @@ function Game({
               Every block costs 1 point. Use fewer to improve your solution.
             </p>
             <div className="tip-card">
-              <span className="tip-icon">âœ¦</span>
+              <span className="tip-icon">✦</span>
               <div>
                 <strong>A little foresight</strong>
                 <p>
