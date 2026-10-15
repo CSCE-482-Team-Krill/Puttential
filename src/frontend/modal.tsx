@@ -1,13 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import type { Dispatch, SetStateAction } from "react";
-import type { Level } from "@game";
-import { Icon } from "./ui-icon";
-import type { RunResult } from "./puzzle";
+import { useEffect, useRef, useState } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
+import type { Level } from '../game';
+import { Icon } from './icon';
+import type { RunResult } from './puzzle';
 
-export type Panel =
-  "archive" | "stats" | "leaderboard" | "settings" | "help" | "result" | null;
+export type Panel = 'archive' | 'stats' | 'leaderboard' | 'settings' | 'help' | 'result' | null;
 
 type Preferences = {
   muteMusic: boolean;
@@ -22,7 +21,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   reducedMotion: false,
   showPreview: true,
 };
-const PREFERENCES_KEY = "puttential-preferences";
+const PREFERENCES_KEY = 'puttential-preferences';
 
 export function usePreferences() {
   const [preferences, setPreferences] = useState(DEFAULT_PREFERENCES);
@@ -30,24 +29,14 @@ export function usePreferences() {
 
   useEffect(() => {
     try {
-      const stored: unknown = JSON.parse(
-        localStorage.getItem(PREFERENCES_KEY) ?? "null",
-      );
-      if (stored && typeof stored === "object") {
+      const stored: unknown = JSON.parse(localStorage.getItem(PREFERENCES_KEY) ?? 'null');
+      if (stored && typeof stored === 'object') {
         const values = stored as Record<string, unknown>;
         setPreferences({
-          muteMusic:
-            typeof values.muteMusic === "boolean" ? values.muteMusic : false,
-          muteEffects:
-            typeof values.muteEffects === "boolean"
-              ? values.muteEffects
-              : false,
-          reducedMotion:
-            typeof values.reducedMotion === "boolean"
-              ? values.reducedMotion
-              : false,
-          showPreview:
-            typeof values.showPreview === "boolean" ? values.showPreview : true,
+          muteMusic: typeof values.muteMusic === 'boolean' ? values.muteMusic : false,
+          muteEffects: typeof values.muteEffects === 'boolean' ? values.muteEffects : false,
+          reducedMotion: typeof values.reducedMotion === 'boolean' ? values.reducedMotion : false,
+          showPreview: typeof values.showPreview === 'boolean' ? values.showPreview : true,
         });
       }
     } catch {
@@ -70,35 +59,35 @@ export function usePreferences() {
 
 const HELP_SECTIONS = [
   {
-    title: "Objective",
+    title: 'Objective',
     content:
-      "Guide the ball (or course object) into the goal and keep it there until the goal fills. Aim for the lowest force cost you can.",
+      'Guide the ball (or course object) into the goal and keep it there until the goal fills. Aim for the lowest force cost you can.',
   },
   {
-    title: "How to play",
+    title: 'How to play',
     content:
-      "Choose a force block from your toolkit, then drag its field into position on the course. The dotted path previews the start of the run. Press Play to lock your layout and watch it move. Use Try again to adjust your plan, or Reset layout to start over.",
+      'Choose a force block from your toolkit, then drag its field into position on the course. The dotted path previews the start of the run. Press Play to lock your layout and watch it move. Use Try again to adjust your plan, or Reset layout to start over.',
   },
   {
-    title: "Scoring",
+    title: 'Scoring',
     content:
-      "Each placed block costs 1 point. Successful solutions rank by force cost, then tile count, attempts to your first solve, simulated completion time, and path length. Fewer points is better.",
+      'Each placed block costs 1 point. Successful solutions rank by force cost, then tile count, attempts to your first solve, simulated completion time, and path length. Fewer points is better.',
   },
   {
-    title: "Daily Challenges",
+    title: 'Daily Challenges',
     content:
-      "Everyone gets the same daily course, starting object, goal, tile inventory, and physics settings. Open Calendar to revisit the available past courses and try another solution.",
+      'Everyone gets the same daily course, starting object, goal, tile inventory, and physics settings. Open Calendar to revisit the available past courses and try another solution.',
   },
 ] as const;
 
 // Profile and leaderboard data remain samples until accounts are connected.
 const RANKINGS = [
-  { rank: 1, name: "birdbrain", force: 2, tiles: 1, time: "4.82s" },
-  { rank: 2, name: "physwiz", force: 3, tiles: 2, time: "3.14s" },
-  { rank: 3, name: "krillking", force: 3, tiles: 2, time: "5.26s" },
-  { rank: 4, name: "greenkeeper", force: 4, tiles: 2, time: "4.67s" },
-  { rank: 5, name: "parfect", force: 4, tiles: 3, time: "5.92s" },
-  { rank: 6, name: "You", force: 5, tiles: 3, time: "6.31s" },
+  { rank: 1, name: 'birdbrain', force: 2, tiles: 1, time: '4.82s' },
+  { rank: 2, name: 'physwiz', force: 3, tiles: 2, time: '3.14s' },
+  { rank: 3, name: 'krillking', force: 3, tiles: 2, time: '5.26s' },
+  { rank: 4, name: 'greenkeeper', force: 4, tiles: 2, time: '4.67s' },
+  { rank: 5, name: 'parfect', force: 4, tiles: 3, time: '5.92s' },
+  { rank: 6, name: 'You', force: 5, tiles: 3, time: '6.31s' },
 ] as const;
 
 type Props = {
@@ -126,7 +115,7 @@ function SettingSwitch({
     <div className="modal-row setting-row">
       <span>{label}</span>
       <button
-        className={`switch ${checked ? "on" : ""}`}
+        className={`switch ${checked ? 'on' : ''}`}
         role="switch"
         aria-checked={checked}
         aria-label={label}
@@ -153,29 +142,27 @@ export function Modal({
   const closeRef = useRef(close);
   closeRef.current = close;
   const titles: Record<Exclude<Panel, null>, string> = {
-    archive: "Calendar",
-    stats: "You",
-    leaderboard: "Leaderboard",
-    settings: "Settings",
-    help: "Help",
-    result: result?.solved === false ? "So close" : "Nice work!",
+    archive: 'Calendar',
+    stats: 'You',
+    leaderboard: 'Leaderboard',
+    settings: 'Settings',
+    help: 'Help',
+    result: result?.solved === false ? 'So close' : 'Nice work!',
   };
 
   useEffect(() => {
     const previousFocus =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    document.body.style.overflow = 'hidden';
     dialogRef.current?.focus();
 
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === 'Escape') {
         event.preventDefault();
         closeRef.current();
       }
-      if (event.key !== "Tab") return;
+      if (event.key !== 'Tab') return;
       const elements = Array.from(
         dialogRef.current?.querySelectorAll<HTMLElement>(
           'button:not(:disabled), summary, a[href], input:not(:disabled), [tabindex="0"]',
@@ -186,23 +173,21 @@ export function Modal({
       if (!first || !last) return;
       if (
         event.shiftKey &&
-        (document.activeElement === first ||
-          document.activeElement === dialogRef.current)
+        (document.activeElement === first || document.activeElement === dialogRef.current)
       ) {
         event.preventDefault();
         last.focus();
       } else if (
         !event.shiftKey &&
-        (document.activeElement === last ||
-          document.activeElement === dialogRef.current)
+        (document.activeElement === last || document.activeElement === dialogRef.current)
       ) {
         event.preventDefault();
         first.focus();
       }
     };
-    window.addEventListener("keydown", onKey);
+    window.addEventListener('keydown', onKey);
     return () => {
-      window.removeEventListener("keydown", onKey);
+      window.removeEventListener('keydown', onKey);
       document.body.style.overflow = previousOverflow;
       previousFocus?.focus();
     };
@@ -229,21 +214,15 @@ export function Modal({
       >
         <div className="modal-header">
           <div>
-            <span className="eyebrow">
-              {panel === "stats" ? "YOUR PROFILE" : "PUTTENTIAL"}
-            </span>
+            <span className="eyebrow">{panel === 'stats' ? 'YOUR PROFILE' : 'PUTTENTIAL'}</span>
             <h2 id="modal-title">{titles[panel]}</h2>
           </div>
-          <button
-            className="icon-button close-button"
-            onClick={close}
-            aria-label="Close panel"
-          >
+          <button className="icon-button close-button" onClick={close} aria-label="Close panel">
             <Icon name="close" />
           </button>
         </div>
 
-        {panel === "help" && (
+        {panel === 'help' && (
           <div className="modal-body modal-stack">
             {HELP_SECTIONS.map(({ title, content }) => (
               <details className="help-section" key={title}>
@@ -257,12 +236,9 @@ export function Modal({
           </div>
         )}
 
-        {panel === "stats" && (
+        {panel === 'stats' && (
           <div className="modal-body modal-stack">
-            <section
-              className="profile-section"
-              aria-labelledby="profile-stats"
-            >
+            <section className="profile-section" aria-labelledby="profile-stats">
               <h3 id="profile-stats" className="modal-section-heading">
                 Stats
               </h3>
@@ -279,10 +255,7 @@ export function Modal({
                 </div>
               </dl>
             </section>
-            <section
-              className="profile-section"
-              aria-labelledby="profile-games"
-            >
+            <section className="profile-section" aria-labelledby="profile-games">
               <h3 id="profile-games" className="modal-section-heading">
                 Games played
               </h3>
@@ -291,10 +264,7 @@ export function Modal({
                 <span>courses played</span>
               </div>
             </section>
-            <section
-              className="profile-section"
-              aria-labelledby="profile-ranking"
-            >
+            <section className="profile-section" aria-labelledby="profile-ranking">
               <h3 id="profile-ranking" className="modal-section-heading">
                 Ranking
               </h3>
@@ -311,32 +281,26 @@ export function Modal({
                 </div>
               </dl>
             </section>
-            <p className="modal-footnote">
-              Sample profile · progress tracking is coming soon.
-            </p>
+            <p className="modal-footnote">Sample profile · progress tracking is coming soon.</p>
           </div>
         )}
 
-        {panel === "leaderboard" && (
+        {panel === 'leaderboard' && (
           <div className="modal-body modal-stack">
             <p className="modal-intro">
               Today&apos;s solutions <span>Lowest force cost wins</span>
             </p>
-            <ol
-              className="modal-stack ranking-list"
-              aria-label="Sample rankings"
-            >
+            <ol className="modal-stack ranking-list" aria-label="Sample rankings">
               {RANKINGS.map((entry) => (
                 <li
-                  className={`modal-row ranking-row ${entry.name === "You" ? "your-row" : ""}`}
+                  className={`modal-row ranking-row ${entry.name === 'You' ? 'your-row' : ''}`}
                   key={entry.rank}
                 >
                   <span className="ranking-number">#{entry.rank}</span>
                   <span className="ranking-player">
                     <strong>{entry.name}</strong>
                     <small>
-                      {entry.tiles} {entry.tiles === 1 ? "tile" : "tiles"} ·{" "}
-                      {entry.time}
+                      {entry.tiles} {entry.tiles === 1 ? 'tile' : 'tiles'} · {entry.time}
                     </small>
                   </span>
                   <span className="ranking-score">
@@ -350,13 +314,13 @@ export function Modal({
               ))}
             </ol>
             <p className="modal-footnote">
-              Sample rankings. Ties use tile count, first-solve attempts,
-              simulation time, then path length.
+              Sample rankings. Ties use tile count, first-solve attempts, simulation time, then path
+              length.
             </p>
           </div>
         )}
 
-        {panel === "archive" && (
+        {panel === 'archive' && (
           <div className="modal-body modal-stack">
             <p className="modal-intro">
               Past levels <span>Find another way to the goal</span>
@@ -364,91 +328,82 @@ export function Modal({
             <div className="modal-stack archive-list">
               {levels.map(({ level, day }, index) => (
                 <button
-                  className={`modal-row archive-row ${level === currentLevel ? "current-course" : ""}`}
+                  className={`modal-row archive-row ${level === currentLevel ? 'current-course' : ''}`}
                   key={level.id}
                   onClick={() => {
                     chooseLevel(level);
                     close();
                   }}
-                  aria-current={level === currentLevel ? "true" : undefined}
+                  aria-current={level === currentLevel ? 'true' : undefined}
                 >
                   <span className="archive-number">#{126 - index}</span>
                   <span className="archive-course">
                     <strong>
                       {level.id
-                        .split("-")
+                        .split('-')
                         .map((word) => word[0]!.toUpperCase() + word.slice(1))
-                        .join(" ")}
+                        .join(' ')}
                     </strong>
                     <small>{day}</small>
                   </span>
                   <span className="row-status">
-                    {level === currentLevel ? "Playing" : "Play"}
+                    {level === currentLevel ? 'Playing' : 'Play'}
                     <Icon name="arrow" size={15} />
                   </span>
                 </button>
               ))}
             </div>
-            <p className="modal-footnote">
-              Choose a course to start a fresh layout.
-            </p>
+            <p className="modal-footnote">Choose a course to start a fresh layout.</p>
           </div>
         )}
 
-        {panel === "settings" && (
+        {panel === 'settings' && (
           <div className="modal-body modal-stack">
-            <section
-              className="settings-section"
-              aria-labelledby="audio-settings"
-            >
+            <section className="settings-section" aria-labelledby="audio-settings">
               <h3 className="modal-section-heading" id="audio-settings">
                 Audio
               </h3>
               <SettingSwitch
                 label="Mute music"
                 checked={preferences.muteMusic}
-                change={() => togglePreference("muteMusic")}
+                change={() => togglePreference('muteMusic')}
               />
               <SettingSwitch
                 label="Mute sound effects"
                 checked={preferences.muteEffects}
-                change={() => togglePreference("muteEffects")}
+                change={() => togglePreference('muteEffects')}
               />
             </section>
-            <section
-              className="settings-section"
-              aria-labelledby="display-settings"
-            >
+            <section className="settings-section" aria-labelledby="display-settings">
               <h3 className="modal-section-heading" id="display-settings">
                 Display
               </h3>
               <SettingSwitch
                 label="Reduced motion"
                 checked={preferences.reducedMotion}
-                change={() => togglePreference("reducedMotion")}
+                change={() => togglePreference('reducedMotion')}
               />
               <SettingSwitch
                 label="Show path preview"
                 checked={preferences.showPreview}
-                change={() => togglePreference("showPreview")}
+                change={() => togglePreference('showPreview')}
               />
             </section>
             <p className="modal-footnote">
-              Preferences are saved on this device. Audio playback is not
-              available yet.
+              Preferences are saved on this device. Audio playback is not available yet.
             </p>
           </div>
         )}
 
-        {panel === "result" && result && (
+        {panel === 'result' && result && (
           <div className="modal-body result-body">
             <div className="result-trophy" aria-hidden="true">
-              <Icon name={result.solved ? "trophy" : "help"} size={48} />
+              <Icon name={result.solved ? 'trophy' : 'help'} size={48} />
             </div>
             <p>
               {result.solved
-                ? "The ball held in the goal."
-                : "The ball stopped short of the goal. Adjust your fields and try again."}
+                ? 'The ball held in the goal.'
+                : 'The ball stopped short of the goal. Adjust your fields and try again.'}
             </p>
             <div className="result-grid">
               <div>
@@ -461,7 +416,7 @@ export function Modal({
               </div>
               <div>
                 <strong>{result.seconds.toFixed(2)}s</strong>
-                <span>{result.solved ? "Ball time" : "Run time"}</span>
+                <span>{result.solved ? 'Ball time' : 'Run time'}</span>
               </div>
             </div>
             <button className="primary-button" onClick={close}>

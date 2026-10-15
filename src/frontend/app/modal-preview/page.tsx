@@ -1,31 +1,31 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import type { Level } from "@game";
-import { Modal, usePreferences } from "../modal";
-import type { Panel } from "../modal";
-import { Icon } from "../ui-icon";
-import type { IconName } from "../ui-icon";
+import { useState } from 'react';
+import type { Level } from '../../../game';
+import { Modal, usePreferences } from '../../modal';
+import type { Panel } from '../../modal';
+import { Icon } from '../../icon';
+import type { IconName } from '../../icon';
 
 // This preview needs course identities only; it does not initialize the engine.
 const courses = [
-  { id: "bar-around-corner", day: "Today" },
-  { id: "radial-relay", day: "Yesterday" },
-  { id: "spin-cycle", day: "Sep 20" },
-  { id: "key-turn", day: "Sep 19" },
-  { id: "corner-pocket", day: "Sep 18" },
+  { id: 'bar-around-corner', day: 'Today' },
+  { id: 'radial-relay', day: 'Yesterday' },
+  { id: 'spin-cycle', day: 'Sep 20' },
+  { id: 'key-turn', day: 'Sep 19' },
+  { id: 'corner-pocket', day: 'Sep 18' },
 ].map(({ id, day }) => ({ level: { id } as Level, day }));
 
 const panels: {
-  panel: Exclude<Panel, "result" | null>;
+  panel: Exclude<Panel, 'result' | null>;
   label: string;
   icon: IconName;
 }[] = [
-  { panel: "help", label: "Help", icon: "help" },
-  { panel: "stats", label: "Profile", icon: "profile" },
-  { panel: "leaderboard", label: "Leaderboard", icon: "trophy" },
-  { panel: "archive", label: "Calendar", icon: "calendar" },
-  { panel: "settings", label: "Settings", icon: "settings" },
+  { panel: 'help', label: 'Help', icon: 'help' },
+  { panel: 'stats', label: 'Profile', icon: 'profile' },
+  { panel: 'leaderboard', label: 'Leaderboard', icon: 'trophy' },
+  { panel: 'archive', label: 'Calendar', icon: 'calendar' },
+  { panel: 'settings', label: 'Settings', icon: 'settings' },
 ];
 
 export default function ModalPreview() {
@@ -34,9 +34,7 @@ export default function ModalPreview() {
   const [preferences, setPreferences] = usePreferences();
 
   return (
-    <div
-      className={`site-wrap ${preferences.reducedMotion ? "reduce-motion" : ""}`}
-    >
+    <div className={`site-wrap ${preferences.reducedMotion ? 'reduce-motion' : ''}`}>
       <header className="site-header">
         <span className="brand">
           Puttential<span className="brand-dot">.</span>
@@ -44,7 +42,7 @@ export default function ModalPreview() {
         <nav className="main-nav" aria-label="Modal preview">
           {panels.map((item) => (
             <button
-              className={`nav-button ${panel === item.panel ? "active" : ""}`}
+              className={`nav-button ${panel === item.panel ? 'active' : ''}`}
               key={item.panel}
               onClick={() => setPanel(item.panel)}
               aria-expanded={panel === item.panel}
@@ -64,9 +62,7 @@ export default function ModalPreview() {
               <p>Open a panel above to review its layout and interactions.</p>
             </div>
           </div>
-          <p className="modal-footnote">
-            Selected course: {level.id.split("-").join(" ")}
-          </p>
+          <p className="modal-footnote">Selected course: {level.id.split('-').join(' ')}</p>
         </section>
       </main>
       {panel && (

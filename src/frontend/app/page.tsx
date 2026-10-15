@@ -1,17 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { starterLevels, levelName } from '@game';
-import type { Bounds, Level } from '@game';
-import { fieldName } from '../../../src/frontend/field-label';
-import { ForceToolkit, PlayButton } from '../../../src/frontend/player-controls';
-import { LevelImport } from '../../../src/frontend/level-import';
-import { CourseCanvas } from './course-canvas';
-import { usePuzzle } from './puzzle';
-import { Icon } from './ui-icon';
-import type { IconName } from './ui-icon';
-import { Modal, usePreferences } from './modal';
-import type { Panel } from './modal';
+import { starterLevels, levelName } from '../../game';
+import type { Bounds, Level } from '../../game';
+import { fieldName } from '../field-label';
+import { ForceToolkit, PlayButton } from '../player-controls';
+import { LevelImport } from '../level-import';
+import { CourseCanvas } from '../course-canvas';
+import { usePuzzle } from '../puzzle';
+import { Icon } from '../icon';
+import type { IconName } from '../icon';
+import { Modal, usePreferences } from '../modal';
+import type { Panel } from '../modal';
 
 /** Today's puzzle first; the archive lists the rest. */
 /** Every tile adds the same amount to a solution's force cost. */
