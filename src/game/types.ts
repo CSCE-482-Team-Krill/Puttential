@@ -36,6 +36,10 @@ export type RenderBody = Readonly<{
   linearVelocity: Vec2;
   angularVelocity: number;
   sleeping: boolean;
+  submerged?: boolean;
+  burnt?: boolean;
+  teleporting?: boolean;
+  destroyed?: 'water' | 'lava';
   pieces: readonly RenderPiece[];
 }>;
 
@@ -61,6 +65,18 @@ export type RenderState = Readonly<{
   fields: readonly RenderField[];
 }>;
 
+export type PendingTeleport = Readonly<{
+  entryId: string;
+  exitId: string;
+  pairId: string;
+  readyTick: number;
+  velocity: Vec2;
+  angle: number;
+  angularVelocity: number;
+  rotationDelta: number;
+  cooldownTicks: number;
+}>;
+
 export type GameSnapshot = Readonly<{
   levelId: string;
   levelVersion: number;
@@ -69,6 +85,11 @@ export type GameSnapshot = Readonly<{
   bodyHandles: Readonly<Record<string, number>>;
   fields: readonly FieldState[];
   queuedCommands: readonly GameCommand[];
+  destroyedBodies?: Readonly<Record<string, 'water' | 'lava'>>;
+  portalLocks?: Readonly<Record<string, string>>;
+  portalCooldowns?: Readonly<Record<string, number>>;
+  pendingTeleports?: Readonly<Record<string, PendingTeleport>>;
+  burntBodies?: readonly string[];
 }>;
 
 export type PredictionSample = Readonly<{

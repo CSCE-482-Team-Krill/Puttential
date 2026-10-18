@@ -25,6 +25,9 @@ export function advanceGoal(previous: GoalProgress, state: RenderState): GoalPro
     b = previous.area;
   const inside =
     !!body &&
+    !body.destroyed &&
+    !body.burnt &&
+    !body.teleporting &&
     body.position.x >= b.minX &&
     body.position.x <= b.maxX &&
     body.position.y >= b.minY &&

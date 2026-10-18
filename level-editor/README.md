@@ -30,6 +30,7 @@ The **Repository library** lists authored levels. **Game starters** loads the bu
 
 - Start a new course, open a game starter, import JSON, or open a saved repository level.
 - Drag a preset from the palette, or select it and click on the course. Use the object list to select overlapping objects, the goal, or disabled fields.
+- Ctrl/Cmd-click objects on the canvas or in the object list to toggle multiple selections. Right-drag a rectangle to select fully enclosed objects; Ctrl/Cmd-right-drag adds a region. Managed walls are excluded. Drag a selected object to move the whole group.
 - Drag objects to move them. Coral handles resize and rotate; green edge handles resize the board. Numeric controls support precise transforms. Board width/height changes are centered; dragging an edge keeps the opposite edge fixed.
 - Use the wheel or +/− controls to zoom, Alt-drag or middle-drag to pan, and **Fit board** to reset. Optional snapping uses a quarter world unit and 15 degrees.
 - Circles use native Rapier ball colliders and exact radius controls; resizing preserves their circular shape. **Shape type** can explicitly convert a piece. Rectangles keep their type until vertex editing converts them to polygons. Fields support rectangles and polygons only.
@@ -44,9 +45,21 @@ Goal completion checks the target body's position against the goal bounds for th
 
 Circle collisions, mass and inertia use the engine's true disc geometry. The engine integrates field loads over an equal-area 32-sided outline; both apps use this same force calculation. This approximation does not change the circular collider or the saved circle shape.
 
-Shortcuts outside text inputs: Ctrl/Cmd+C copies the selected body or field, Ctrl/Cmd+V pastes, Ctrl/Cmd+S saves, Ctrl/Cmd+Z undoes, Shift+Ctrl/Cmd+Z or Ctrl/Cmd+Y redoes, Ctrl/Cmd+D duplicates, Delete removes, and Escape cancels a canvas gesture or placement. A complete drag or paste is one undo entry. History retains the last 100 edits.
+Shortcuts outside text inputs: Ctrl/Cmd+C copies the selected bodies or fields, Ctrl/Cmd+V pastes, Ctrl/Cmd+S saves, Ctrl/Cmd+Z undoes, Shift+Ctrl/Cmd+Z or Ctrl/Cmd+Y redoes, Ctrl/Cmd+D duplicates, Delete removes, and Escape cancels a canvas gesture or placement. A complete drag or paste is one undo entry. History retains the last 100 edits.
+
+Group copy/paste preserves relative positions, assigns fresh object/piece IDs, and gives copied portal ends a new shared pair ID. Copy both ends to keep a working pair; a copied single end stays inactive until linked. Group movement, paste, duplicate and deletion each use one undo entry and reject the entire edit when any member is invalid.
 
 Object copy/paste uses an editor clipboard for the current tab, including between courses opened in that tab. It captures the object when copied and gives each paste new object/piece IDs. The pasted object is selected at its copied position; drag it to separate overlapping copies. Geometry, forces and body properties are preserved, and paste is rejected if the object would extend outside the destination board. Copying the goal target does not change which body the goal tracks. Goals and managed boundary walls cannot be copied. Text fields retain their normal system clipboard behavior; the object clipboard clears on page reload.
+
+## Water, lava and portals
+
+Use **Fields & hazards** in the palette. These objects start enabled and stay fixed during play; they are excluded from the player’s force tile inventory and score.
+
+- **Water** applies heavy drag in proportion to overlap. A fully submerged body sinks once its linear and angular speeds fall below the configured threshold (default `0.06`). Drag defaults to `12`; shallow contact slows the ball without sinking it. The shared canvas uses the supplied blue texture as a repeating surface, with a slight dip and a translucent surface layer over the body.
+- **Lava** instantly zeros linear and angular velocity and chars the body black. The remains stay visible and stationary beneath the repeating orange texture, and remain a solid collider. Rapier shape casts also detect fast crossings. The shot still fails.
+- **Portal pair** places two oval ends, two units apart, in one undo step. Both must fit on the board. Each end shares its partner’s **Portal pair ID**; a pair can have at most two ends. A lone or disabled partner is inactive. A captured body waits at the entry for **Teleport delay (seconds)** (default `0.25`) before emerging. Its incoming linear and angular velocity are preserved; **Rotate velocity with exit** rotates velocity and body angle by the difference between endpoint orientations. This option applies to the selected entry end. After emerging, **Teleport cooldown (seconds)** (default `0.75`) blocks all portals. The body must also leave the pair before it can re-enter it. Timing settings apply to the selected entry end. Each pair has its own color in both apps; selection adds a dashed marker and keeps the ring color.
+
+Hazard failure prevents goal completion and is reported in playtest and the game. Reset restores the ball and portal state. Decorative animation respects Reduced motion.
 
 ## Save and play files
 
@@ -65,7 +78,7 @@ Each file is replaced atomically, with game JSON written last. Metadata is tied 
 
 To reopen a saved course with its name and managed boundaries, use **Repository library → Open**. File import accepts the game `.json` but does not read its adjacent sidecar; `.editor.json` is not a standalone course. Even a whitespace-only edit to game JSON changes its hash and invalidates the sidecar association. Invalid JSON or invalid matching metadata produces a load error.
 
-Older `.puttential.json` documents migrate supported data on load. Saving writes the new pair and preserves the original legacy file (and any old loader). The current engine supports uniform, attractor and repulsor forces; legacy vortex/drag documents produce an explicit error. Old polygon balls stay polygons until deliberately converted with **Shape type**.
+Older `.puttential.json` documents migrate supported data on load. Saving writes the new pair and preserves the original legacy file (and any old loader). The current engine supports uniform, attractor and repulsor forces plus water, lava and portal zones; legacy vortex/drag documents produce an explicit error. Old polygon balls stay polygons until deliberately converted with **Shape type**.
 
 When both `<id>.json` and `<id>.puttential.json` exist, the library opens the new game JSON. Legacy loaders continue to reference their original files; update application imports to the new game JSON when migrating a course.
 

@@ -225,13 +225,13 @@ test('unsupported browser recovery is retained until explicitly discarded', asyn
     original,
   );
   await page.goto('http://127.0.0.1:3001');
-  await expect(page.getByRole('alert')).toContainText('original draft is preserved');
+  await expect(page.locator('.recovery-banner[role=alert]')).toContainText('original draft is preserved');
   const input = page.getByRole('textbox', { name: 'Course name', exact: true });
   await input.fill('New work');
   await input.press('Tab');
   expect(await page.evaluate(() => localStorage.getItem('puttential-editor-v1'))).toBe(original);
   await page.getByRole('button', { name: 'Discard incompatible draft', exact: true }).click();
-  await expect(page.getByRole('alert')).toHaveCount(0);
+  await expect(page.locator('.recovery-banner[role=alert]')).toHaveCount(0);
   await expect
     .poll(() =>
       page.evaluate(() => JSON.parse(localStorage.getItem('puttential-editor-v1')!).editor.name),

@@ -34,3 +34,16 @@ export const shapePresets: readonly { id: string; label: string; pieces: () => P
     ],
   },
 ];
+
+/** Zone defaults use the same editable field shapes as the engine. */
+export const zonePresets = {
+  water: () => ({ kind: 'rectangle' as const, width: 2, height: 2 }),
+  lava: () => ({ kind: 'rectangle' as const, width: 2, height: 2 }),
+  portal: () => ({
+    kind: 'polygon' as const,
+    points: Array.from({ length: 32 }, (_, i) => ({
+      x: 0.6 * Math.cos((i * Math.PI) / 16),
+      y: 0.9 * Math.sin((i * Math.PI) / 16),
+    })),
+  }),
+};

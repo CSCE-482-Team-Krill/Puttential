@@ -1,12 +1,20 @@
 import RAPIER from '@dimforge/rapier2d-compat';
 import { compareCommands, dequantizePosition, validateCommand } from './commands';
+import { PORTAL_DELAY_SECONDS, PORTAL_COOLDOWN_SECONDS, isCourseObject } from './objects/catalog';
+import { zoneContact } from './objects/zones';
+import { boundsOverlap, polygonBounds, transformPolygon } from './geometry/polygon';
 import { triangulateSimplePolygon } from './geometry/polygon';
 import { shapePolygon } from './geometry/shapes';
 import { GEOMETRY_EPSILON } from './geometry/vector';
 import { sortById } from './ids';
 import type { FieldZoneDefinition, Level } from './levels/types';
 import { assertPositiveInteger, parseLevel } from './levels/parse';
-import { buildPhysicsWorld, renderPiece, resolveBodyPieces, staticRenderBodies } from './objects/bodies';
+import {
+  buildPhysicsWorld,
+  renderPiece,
+  resolveBodyPieces,
+  staticRenderBodies,
+} from './objects/bodies';
 import type { ResolvedPiece } from './objects/bodies';
 import { calculateFieldLoad, fieldWorldPolygon, prepareField } from './objects/fields';
 import type { PreparedField } from './objects/fields';
@@ -20,6 +28,7 @@ import type {
   Prediction,
   PredictionOptions,
   PredictionSample,
+  PendingTeleport,
   RenderField,
   RenderState,
   RenderStaticBody,
@@ -28,13 +37,26 @@ import type {
 
 export const FIXED_DT = 1 / 120;
 
-type DynamicBody = Readonly<{ id: string; pieces: readonly ResolvedPiece[] }>;
+type DynamicBody = Readonly<{ id: string; pieces: readonly ResolvedPiece[]; radius: number }>;
 type Field = Readonly<{
   definition: FieldZoneDefinition;
   localTriangles: readonly Vec2[][];
   densityAt: ForceDensity;
 }>;
-type MutableFieldState = { id: string; position: { x: number; y: number }; angle: number; enabled: boolean };
+type Zone = Readonly<{
+  definition: FieldZoneDefinition;
+  state: FieldState;
+  polygon: readonly Vec2[];
+  triangles: readonly (readonly Vec2[])[];
+  sweepShapes: readonly RAPIER.Triangle[];
+  bounds: ReturnType<typeof polygonBounds>;
+}>;
+type MutableFieldState = {
+  id: string;
+  position: { x: number; y: number };
+  angle: number;
+  enabled: boolean;
+};
 
 function copyFieldState(field: FieldState): MutableFieldState {
   return {
@@ -64,6 +86,14 @@ class Simulation implements Game {
   private fieldStates = new Map<string, MutableFieldState>();
   private queuedCommands: GameCommand[] = [];
   private tick = 0;
+  private destroyedBodies: Record<string, 'water' | 'lava'> = {};
+  private portalLocks: Record<string, string> = {};
+  private submergedBodies = new Set<string>();
+  private burntBodies = new Set<string>();
+  private pendingTeleports: Record<string, PendingTeleport> = {};
+  private portalCooldowns: Record<string, number> = {};
+  private preparedZones: readonly Zone[] | undefined;
+  private portalPartners = new Map<string, Zone>();
 
   // Derived from field state; cleared whenever a field moves or toggles.
   private preparedFields: readonly PreparedField[] | undefined;
@@ -73,10 +103,17 @@ class Simulation implements Game {
   constructor(data: Level, snapshot?: GameSnapshot) {
     const level = parseLevel(data);
     this.level = level;
-    this.dynamicBodies = sortById(level.dynamicBodies).map((body) => ({
-      id: body.id,
-      pieces: resolveBodyPieces(body),
-    }));
+    this.dynamicBodies = sortById(level.dynamicBodies).map((body) => {
+      const pieces = resolveBodyPieces(body);
+      const radius = Math.max(
+        ...pieces.map((p) =>
+          p.shape.kind === 'circle'
+            ? p.shape.radius
+            : Math.max(...p.outline.map((v) => Math.hypot(v.x, v.y))),
+        ),
+      );
+      return { id: body.id, pieces, radius };
+    });
     this.staticBodies = staticRenderBodies(level);
     this.fields = sortById(level.fields).map((definition) => ({
       definition,
@@ -91,13 +128,20 @@ class Simulation implements Game {
     const built = buildPhysicsWorld(level, FIXED_DT);
     this.world = built.world;
     this.bodyHandles = { ...built.bodyHandles };
-    this.fieldStates = new Map(this.fields.map(({ definition }) =>
-      [definition.id, copyFieldState(definition)]));
+    this.fieldStates = new Map(
+      this.fields.map(({ definition }) => [definition.id, copyFieldState(definition)]),
+    );
     this.renderState = this.buildRenderState();
   }
 
   queueCommand(command: GameCommand): void {
     validateCommand(command);
+    if (
+      this.fields.some(
+        ({ definition }) => definition.id === command.fieldId && isCourseObject(definition.force),
+      )
+    )
+      throw new Error('Course hazards and portals are fixed during play');
     if (!this.fieldStates.has(command.fieldId)) {
       throw new Error(`unknown field ID: ${command.fieldId}`);
     }
@@ -109,9 +153,24 @@ class Simulation implements Game {
 
   step(): void {
     this.applyQueuedCommands();
+    this.applyZones();
     this.applyFieldLoads();
+    const before = this.zoneGeometry().length
+      ? new Map(
+          this.dynamicBodies
+            .filter(
+              (body) =>
+                !this.destroyedBodies[body.id] &&
+                !this.burntBodies.has(body.id) &&
+                !this.pendingTeleports[body.id],
+            )
+            .map((body) => [body.id, { ...this.rigidBody(body.id).translation() }]),
+        )
+      : undefined;
     this.world.step();
+    if (before) this.applyZones(before);
     this.tick += 1;
+    if (this.releasePortals()) this.applyZones();
     this.renderState = this.buildRenderState();
   }
 
@@ -125,9 +184,16 @@ class Simulation implements Game {
       levelVersion: this.level.version,
       tick: this.tick,
       physics: this.world.takeSnapshot(),
+      destroyedBodies: { ...this.destroyedBodies },
+      portalLocks: { ...this.portalLocks },
+      pendingTeleports: structuredClone(this.pendingTeleports),
+      portalCooldowns: { ...this.portalCooldowns },
+      burntBodies: [...this.burntBodies].sort(),
       bodyHandles: { ...this.bodyHandles },
       fields: [...this.fieldStates.values()].map(copyFieldState),
-      queuedCommands: [...this.queuedCommands].sort(compareCommands).map((command) => ({ ...command })),
+      queuedCommands: [...this.queuedCommands]
+        .sort(compareCommands)
+        .map((command) => ({ ...command })),
     };
   }
 
@@ -143,6 +209,17 @@ class Simulation implements Game {
     this.fieldStates = new Map(snapshot.fields.map((field) => [field.id, copyFieldState(field)]));
     this.queuedCommands = snapshot.queuedCommands.map((command) => ({ ...command }));
     this.tick = snapshot.tick;
+    this.destroyedBodies = { ...snapshot.destroyedBodies };
+    this.portalLocks = { ...snapshot.portalLocks };
+    this.pendingTeleports = structuredClone(snapshot.pendingTeleports ?? {});
+    this.portalCooldowns = { ...snapshot.portalCooldowns };
+    this.burntBodies = new Set(snapshot.burntBodies ?? []);
+    // Older lava snapshots stored disabled bodies as destroyed; keep their remains visible.
+    for (const [id, cause] of Object.entries(this.destroyedBodies))
+      if (cause === 'lava') {
+        delete this.destroyedBodies[id];
+        this.burnBody(id);
+      }
     this.invalidateFields();
     this.renderState = this.buildRenderState();
   }
@@ -164,7 +241,10 @@ class Simulation implements Game {
       let settled = false;
       while (!settled && copy.tick - this.tick < maxTicks) {
         copy.step();
-        settled = copy.renderState.bodies.every((body) => body.sleeping);
+        settled =
+          !!copy.destroyedBodies[this.level.goal.bodyId] ||
+          copy.burntBodies.has(this.level.goal.bodyId) ||
+          copy.renderState.bodies.every((body) => body.sleeping);
         if (settled || (copy.tick - this.tick) % sampleEveryTicks === 0) {
           samples.push(sample(copy.renderState));
         }
@@ -203,39 +283,310 @@ class Simulation implements Game {
   }
 
   private applyFieldLoads(): void {
-    const fields = this.preparedFields ??= this.fields
-      .filter(({ definition }) => this.fieldState(definition.id).enabled)
+    const fields = (this.preparedFields ??= this.fields
+      .filter(
+        ({ definition }) =>
+          this.fieldState(definition.id).enabled &&
+          definition.force.kind !== 'portal' &&
+          definition.force.kind !== 'lava',
+      )
       .map(({ definition, localTriangles, densityAt }) =>
-        prepareField(densityAt, this.fieldState(definition.id), localTriangles));
+        prepareField(densityAt, this.fieldState(definition.id), localTriangles),
+      ));
 
     for (const body of this.dynamicBodies) {
       const rigidBody = this.rigidBody(body.id);
+      if (
+        this.destroyedBodies[body.id] ||
+        this.burntBodies.has(body.id) ||
+        this.pendingTeleports[body.id]
+      )
+        continue;
       rigidBody.resetForces(false);
       rigidBody.resetTorques(false);
       if (fields.length === 0) continue;
 
-      const load = calculateFieldLoad({
-        position: rigidBody.translation(),
-        angle: rigidBody.rotation(),
-        centerOfMass: rigidBody.worldCom(),
-        linearVelocity: rigidBody.linvel(),
-        angularVelocity: rigidBody.angvel(),
-        pieces: body.pieces,
-      }, fields);
-      if (!Number.isFinite(load.force.x) || !Number.isFinite(load.force.y) ||
-        !Number.isFinite(load.torque)) {
+      const load = calculateFieldLoad(
+        {
+          position: rigidBody.translation(),
+          angle: rigidBody.rotation(),
+          centerOfMass: rigidBody.worldCom(),
+          linearVelocity: rigidBody.linvel(),
+          angularVelocity: rigidBody.angvel(),
+          pieces: body.pieces,
+        },
+        fields,
+      );
+      if (
+        !Number.isFinite(load.force.x) ||
+        !Number.isFinite(load.force.y) ||
+        !Number.isFinite(load.torque)
+      ) {
         throw new Error(`field load on body ${body.id} is not finite`);
       }
       // Skip empty loads so fields do not wake sleeping bodies they do not touch.
-      if (Math.abs(load.force.x) > GEOMETRY_EPSILON || Math.abs(load.force.y) > GEOMETRY_EPSILON ||
-        Math.abs(load.torque) > GEOMETRY_EPSILON) {
+      if (
+        Math.abs(load.force.x) > GEOMETRY_EPSILON ||
+        Math.abs(load.force.y) > GEOMETRY_EPSILON ||
+        Math.abs(load.torque) > GEOMETRY_EPSILON
+      ) {
         rigidBody.addForce(load.force, true);
         rigidBody.addTorque(load.torque, true);
       }
     }
   }
 
+  /** Course zones are fixed during play: geometry and Rapier sweep shapes are built once. */
+  private zoneGeometry(): readonly Zone[] {
+    if (this.preparedZones) return this.preparedZones;
+    this.preparedZones = this.fields
+      .filter(
+        ({ definition }) =>
+          isCourseObject(definition.force) && this.fieldState(definition.id).enabled,
+      )
+      .map(({ definition, localTriangles }) => {
+        const state = this.fieldState(definition.id);
+        const polygon = fieldWorldPolygon(definition, state);
+        const triangles = localTriangles.map((t) =>
+          transformPolygon(t, state.position, state.angle),
+        );
+        return {
+          definition,
+          state,
+          polygon,
+          triangles,
+          bounds: polygonBounds(polygon),
+          sweepShapes: triangles.map((t) => new RAPIER.Triangle(t[0]!, t[1]!, t[2]!)),
+        };
+      });
+    const pairs = new Map<string, Zone[]>();
+    this.portalPartners.clear();
+    for (const zone of this.preparedZones)
+      if (zone.definition.force.kind === 'portal') {
+        const pair = pairs.get(zone.definition.force.pairId) ?? [];
+        pair.push(zone);
+        pairs.set(zone.definition.force.pairId, pair);
+      }
+    for (const pair of pairs.values())
+      if (pair.length === 2) {
+        this.portalPartners.set(pair[0]!.definition.id, pair[1]!);
+        this.portalPartners.set(pair[1]!.definition.id, pair[0]!);
+      }
+    return this.preparedZones;
+  }
+
+  private bodyBounds(body: DynamicBody, position: Vec2, start: Vec2 = position) {
+    return {
+      minX: Math.min(start.x, position.x) - body.radius,
+      maxX: Math.max(start.x, position.x) + body.radius,
+      minY: Math.min(start.y, position.y) - body.radius,
+      maxY: Math.max(start.y, position.y) + body.radius,
+    };
+  }
+
+  private updateSubmersion(): void {
+    this.submergedBodies.clear();
+    const liquids = this.zoneGeometry().filter(
+      (z) => z.definition.force.kind === 'water' || z.definition.force.kind === 'lava',
+    );
+    for (const body of this.dynamicBodies) {
+      if (this.destroyedBodies[body.id] || this.pendingTeleports[body.id]) continue;
+      if (this.burntBodies.has(body.id)) {
+        this.submergedBodies.add(body.id);
+        continue;
+      }
+      const rigid = this.rigidBody(body.id),
+        position = rigid.translation();
+      const bounds = this.bodyBounds(body, position);
+      if (
+        liquids.some(
+          (zone) =>
+            boundsOverlap(bounds, zone.bounds) &&
+            zoneContact(body.pieces, position, rigid.rotation(), zone.polygon, zone.triangles)
+              .touching,
+        )
+      )
+        this.submergedBodies.add(body.id);
+    }
+  }
+
+  /** Check nearby zones only; captured, burnt and sunk bodies skip all zone/force work. */
+  private applyZones(before?: Map<string, Vec2>): void {
+    const zones = this.zoneGeometry();
+    if (!zones.length) return;
+    for (const body of this.dynamicBodies) {
+      if (
+        this.destroyedBodies[body.id] ||
+        this.burntBodies.has(body.id) ||
+        this.pendingTeleports[body.id]
+      )
+        continue;
+      const rigid = this.rigidBody(body.id);
+      const position = { ...rigid.translation() },
+        start = before?.get(body.id) ?? position;
+      const sweptBounds = this.bodyBounds(body, position, start);
+      const locked = this.portalLocks[body.id];
+      if (
+        locked &&
+        !zones.some(
+          (z) =>
+            z.definition.force.kind === 'portal' &&
+            z.definition.force.pairId === locked &&
+            boundsOverlap(this.bodyBounds(body, position), z.bounds) &&
+            zoneContact(body.pieces, position, rigid.rotation(), z.polygon, z.triangles).touching,
+        )
+      )
+        delete this.portalLocks[body.id];
+      const canSweep =
+        !!before && Math.hypot(position.x - start.x, position.y - start.y) > GEOMETRY_EPSILON;
+      let shapes: RAPIER.Shape[] | undefined;
+      const contacts = [];
+      for (const zone of zones) {
+        const force = zone.definition.force;
+        if (!boundsOverlap(sweptBounds, zone.bounds)) continue;
+        if (
+          force.kind === 'portal' &&
+          (locked === force.pairId ||
+            this.tick < (this.portalCooldowns[body.id] ?? 0) ||
+            !this.portalPartners.has(zone.definition.id))
+        )
+          continue;
+        const contact = zoneContact(
+          body.pieces,
+          position,
+          rigid.rotation(),
+          zone.polygon,
+          zone.triangles,
+        );
+        let time = contact.touching ? (before ? 1 : 0) : Infinity;
+        if (canSweep && force.kind !== 'water') {
+          shapes ??= Array.from(
+            { length: rigid.numColliders() },
+            (_, i) => rigid.collider(i).shape,
+          );
+          const displacement = { x: position.x - start.x, y: position.y - start.y };
+          for (const shape of shapes)
+            for (const sweep of zone.sweepShapes) {
+              const hit = shape.castShape(
+                start,
+                rigid.rotation(),
+                displacement,
+                sweep,
+                { x: 0, y: 0 },
+                0,
+                { x: 0, y: 0 },
+                0,
+                1,
+                true,
+              );
+              if (hit) time = Math.min(time, hit.time_of_impact);
+            }
+        }
+        if (Number.isFinite(time)) contacts.push({ zone, contact, time });
+      }
+      contacts.sort(
+        (a, b) =>
+          a.time - b.time ||
+          Number(b.zone.definition.force.kind === 'lava') -
+            Number(a.zone.definition.force.kind === 'lava'),
+      );
+      for (const { zone, contact, time } of contacts) {
+        const force = zone.definition.force;
+        if (force.kind === 'water') {
+          const velocity = rigid.linvel();
+          if (
+            contact.submerged &&
+            Math.hypot(velocity.x, velocity.y) <= force.sinkSpeed &&
+            Math.abs(rigid.angvel()) <= force.sinkSpeed
+          ) {
+            this.destroyBody(body.id, 'water');
+            break;
+          }
+        } else if (force.kind === 'lava' || force.kind === 'portal') {
+          // Retain the point of first contact instead of the far end of a fast crossing.
+          if (before)
+            rigid.setTranslation(
+              {
+                x: start.x + (position.x - start.x) * time,
+                y: start.y + (position.y - start.y) * time,
+              },
+              true,
+            );
+          if (force.kind === 'lava') this.burnBody(body.id);
+          else {
+            const exit = this.portalPartners.get(zone.definition.id)!;
+            this.pendingTeleports[body.id] = {
+              entryId: zone.definition.id,
+              exitId: exit.definition.id,
+              pairId: force.pairId,
+              readyTick:
+                this.tick +
+                (before ? 1 : 0) +
+                Math.max(1, Math.ceil((force.delaySeconds ?? PORTAL_DELAY_SECONDS) / FIXED_DT)),
+              velocity: { ...rigid.linvel() },
+              angle: rigid.rotation(),
+              angularVelocity: rigid.angvel(),
+              rotationDelta: force.rotateVelocity ? exit.state.angle - zone.state.angle : 0,
+              cooldownTicks: Math.max(
+                1,
+                Math.ceil((force.cooldownSeconds ?? PORTAL_COOLDOWN_SECONDS) / FIXED_DT),
+              ),
+            };
+            rigid.setEnabled(false);
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  private releasePortals(): boolean {
+    let released = false;
+    for (const body of this.dynamicBodies) {
+      const pending = this.pendingTeleports[body.id];
+      if (!pending || pending.readyTick > this.tick) continue;
+      const exit = this.zoneGeometry().find((z) => z.definition.id === pending.exitId)!;
+      const rigid = this.rigidBody(body.id),
+        c = Math.cos(pending.rotationDelta),
+        s = Math.sin(pending.rotationDelta);
+      rigid.setEnabled(true);
+      rigid.setTranslation(exit.state.position, true);
+      rigid.setLinvel(
+        {
+          x: pending.velocity.x * c - pending.velocity.y * s,
+          y: pending.velocity.x * s + pending.velocity.y * c,
+        },
+        true,
+      );
+      rigid.setRotation(pending.angle + pending.rotationDelta, true);
+      rigid.setAngvel(pending.angularVelocity, true);
+      this.portalLocks[body.id] = pending.pairId;
+      this.portalCooldowns[body.id] = this.tick + pending.cooldownTicks;
+      delete this.pendingTeleports[body.id];
+      released = true;
+    }
+    return released;
+  }
+
+  private burnBody(id: string): void {
+    const rigid = this.rigidBody(id);
+    rigid.setEnabled(true);
+    rigid.resetForces(false);
+    rigid.resetTorques(false);
+    rigid.setLinvel({ x: 0, y: 0 }, false);
+    rigid.setAngvel(0, false);
+    rigid.setBodyType(RAPIER.RigidBodyType.Fixed, false);
+    this.burntBodies.add(id);
+    delete this.pendingTeleports[id];
+  }
+
+  private destroyBody(id: string, cause: 'water' | 'lava'): void {
+    this.destroyedBodies[id] = cause;
+    this.rigidBody(id).setEnabled(false);
+  }
+
   private buildRenderState(): RenderState {
+    this.updateSubmersion();
     const bodies = this.dynamicBodies.map((body) => {
       const rigidBody = this.rigidBody(body.id);
       const translation = rigidBody.translation();
@@ -248,12 +599,20 @@ class Simulation implements Game {
         angle,
         linearVelocity: { x: velocity.x, y: velocity.y },
         angularVelocity: rigidBody.angvel(),
-        sleeping: rigidBody.isSleeping(),
+        sleeping: this.pendingTeleports[body.id]
+          ? false
+          : !!this.destroyedBodies[body.id] ||
+            this.burntBodies.has(body.id) ||
+            rigidBody.isSleeping(),
+        burnt: this.burntBodies.has(body.id),
+        teleporting: !!this.pendingTeleports[body.id],
+        ...(this.destroyedBodies[body.id] ? { destroyed: this.destroyedBodies[body.id]! } : {}),
+        submerged: !this.destroyedBodies[body.id] && this.submergedBodies.has(body.id),
         pieces: body.pieces.map((piece) => renderPiece(piece, position, angle)),
       };
     });
 
-    const fields = this.renderFields ??= this.fields.map(({ definition }) => {
+    const fields = (this.renderFields ??= this.fields.map(({ definition }) => {
       const state = this.fieldState(definition.id);
       return {
         id: definition.id,
@@ -263,7 +622,7 @@ class Simulation implements Game {
         enabled: state.enabled,
         force: definition.force,
       };
-    });
+    }));
 
     return { tick: this.tick, bodies, staticBodies: this.staticBodies, fields };
   }
@@ -271,6 +630,8 @@ class Simulation implements Game {
   private invalidateFields(): void {
     this.preparedFields = undefined;
     this.renderFields = undefined;
+    this.preparedZones = undefined;
+    this.portalPartners.clear();
   }
 
   private rigidBody(id: string): RAPIER.RigidBody {

@@ -1,5 +1,6 @@
 import {
   forceCatalog,
+  isCourseObject,
   shapePresets,
   rectangle,
   shapeOutline,
@@ -15,6 +16,7 @@ import {
 } from '../../src/game';
 import type { LevelDocument, LevelData, Vec2, PieceShape, Bounds } from '../../src/game';
 import { arenaGeometry } from '../../src/game/levels/document';
+import { zonePresets } from '../../src/game/objects/presets';
 const material = { restitution: 0.8 };
 
 export type Kind = 'dynamicBodies' | 'staticBodies' | 'fields';
@@ -161,10 +163,24 @@ export function place(
         id,
         position: { ...position },
         angle: 0,
-        enabled: false,
-        shape: { kind: 'rectangle', width: 2, height: 2 },
-        force: structuredClone(force.create()),
+        enabled: isCourseObject(force),
+        shape:
+          force.kind === 'water' || force.kind === 'lava' || force.kind === 'portal'
+            ? zonePresets[force.kind]()
+            : { kind: 'rectangle', width: 2, height: 2 },
+        force:
+          force.kind === 'portal'
+            ? { ...force.create(), kind: 'portal', pairId: id, rotateVelocity: false }
+            : structuredClone(force.create()),
       });
+      if (force.kind === 'portal') {
+        const first = draft.level.fields[draft.level.fields.length - 1]!;
+        draft.level.fields.push({
+          ...structuredClone(first),
+          id: `${id}-exit`,
+          position: { x: position.x + 2, y: position.y },
+        });
+      }
     } else {
       const pieces = shapePresets
         .find((s) => s.id === preset.shape)!
@@ -238,19 +254,10 @@ export function copyObject(doc: LevelDocument, selected: Selection): CopiedObjec
   return structuredClone({ kind: selected.kind, object }) as CopiedObject;
 }
 export function pasteObject(doc: LevelDocument, copied: CopiedObject) {
-  const id = uniqueId(doc, copied.object.id);
-  const next = edit(doc, (draft) => {
-    const copy = structuredClone(copied.object) as Item;
-    copy.id = id;
-    if ('pieces' in copy)
-      copy.pieces.forEach((p, i) => {
-        p.id = `${id}-piece-${i + 1}`;
-      });
-    // Keep the copied position; validation rejects pasting outside the destination board.
-    (draft.level[copied.kind] as Item[]).push(copy);
-  });
-  return { doc: next, selection: { kind: copied.kind, id } };
+  const result = pasteObjects(doc, [copied]);
+  return { doc: result.doc, selection: result.selections[0]! };
 }
+
 export function duplicate(doc: LevelDocument, selected: Selection) {
   return pasteObject(doc, copyObject(doc, selected));
 }
@@ -337,4 +344,114 @@ export function historyRedo(h: History): History {
   return h.future.length
     ? { past: [...h.past, h.present], present: h.future[0]!, future: h.future.slice(1) }
     : h;
+}
+
+export function sameSelection(a: Selection, b: Selection): boolean {
+  return a.kind === b.kind && a.id === b.id;
+}
+export function toggleSelection(selected: readonly Selection[], value: Selection): Selection[] {
+  return selected.some((s) => sameSelection(s, value))
+    ? selected.filter((s) => !sameSelection(s, value))
+    : [...selected, value];
+}
+export function selectableObjects(doc: LevelDocument): Selection[] {
+  return (['dynamicBodies', 'staticBodies', 'fields'] as const).flatMap((kind) =>
+    doc.level[kind]
+      .filter((o) => !doc.editor.arena.walls.includes(o.id))
+      .map((o) => ({ kind, id: o.id })),
+  );
+}
+/** Region selection includes objects fully enclosed by the rectangle, in either drag direction. */
+export function regionSelection(doc: LevelDocument, start: Vec2, end: Vec2): Selection[] {
+  const region = {
+    minX: Math.min(start.x, end.x),
+    maxX: Math.max(start.x, end.x),
+    minY: Math.min(start.y, end.y),
+    maxY: Math.max(start.y, end.y),
+  };
+  return selectableObjects(doc).filter((s) => {
+    const b = objectBounds(doc, s);
+    return (
+      b.minX >= region.minX &&
+      b.maxX <= region.maxX &&
+      b.minY >= region.minY &&
+      b.maxY <= region.maxY
+    );
+  });
+}
+export function moveObjects(
+  doc: LevelDocument,
+  selected: readonly Selection[],
+  delta: Vec2,
+): LevelDocument {
+  return edit(doc, (draft) => {
+    for (const s of selected) {
+      if (s.kind === 'goal') {
+        draft.level.goal.minX += delta.x;
+        draft.level.goal.maxX += delta.x;
+        draft.level.goal.minY += delta.y;
+        draft.level.goal.maxY += delta.y;
+      } else {
+        const object = mutableItem(draft, s);
+        object.position.x += delta.x;
+        object.position.y += delta.y;
+      }
+    }
+  });
+}
+export function removeObjects(doc: LevelDocument, selected: readonly Selection[]): LevelDocument {
+  for (const s of selected) {
+    if (s.kind === 'goal') throw new Error('A level must have a goal');
+    if (s.kind === 'dynamicBodies' && s.id === doc.level.goal.bodyId)
+      throw new Error('Choose another goal target before deleting this body');
+  }
+  return edit(doc, (draft) => {
+    for (const s of selected) {
+      mutableItem(draft, s);
+      const list = draft.level[s.kind as Kind];
+      list.splice(
+        list.findIndex((o) => o.id === s.id),
+        1,
+      );
+    }
+  });
+}
+
+export function copyObjects(doc: LevelDocument, selected: readonly Selection[]): CopiedObject[] {
+  if (!selected.length) throw new Error('Select objects to copy');
+  return selected.map((s) => copyObject(doc, s));
+}
+/** Allocate every ID before validation so a paste is one all-or-nothing history entry. */
+export function pasteObjects(doc: LevelDocument, copied: readonly CopiedObject[]) {
+  if (!copied.length) throw new Error('Copy objects before pasting');
+  const selections: Selection[] = [];
+  const next = edit(doc, (draft) => {
+    const pairIds = new Set(
+      draft.level.fields.flatMap((f) => (f.force.kind === 'portal' ? [f.force.pairId] : [])),
+    );
+    const pairs = new Map<string, string>();
+    for (const entry of copied) {
+      const object = structuredClone(entry.object) as Item;
+      const id = uniqueId(draft, object.id);
+      object.id = id;
+      if ('pieces' in object)
+        object.pieces.forEach((p, i) => {
+          p.id = `${id}-piece-${i + 1}`;
+        });
+      if ('force' in object && object.force.kind === 'portal') {
+        const oldPair = object.force.pairId;
+        if (!pairs.has(oldPair)) {
+          let i = 1;
+          while (pairIds.has(`${oldPair}-copy-${i}`)) i++;
+          const pair = `${oldPair}-copy-${i}`;
+          pairIds.add(pair);
+          pairs.set(oldPair, pair);
+        }
+        object.force.pairId = pairs.get(oldPair)!;
+      }
+      (draft.level[entry.kind] as Item[]).push(object);
+      selections.push({ kind: entry.kind, id });
+    }
+  });
+  return { doc: next, selections };
 }

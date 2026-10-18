@@ -2,10 +2,15 @@
 import { useMemo, useRef, useState } from 'react';
 import { CourseCanvas, toCanvas, toWorld, polygonPath } from '../../src/frontend/course-canvas';
 import type { View } from '../../src/frontend/course-canvas';
+import { portalPairColors } from '../../src/frontend/portal-colors';
 import { levelFrame } from '../../src/frontend/level-frame';
 import { decodeLevel, pointInPolygon, polygonBounds, resizeArena } from '../../src/game';
 import type { LevelDocument, Vec2 } from '../../src/game';
 import {
+  sameSelection,
+  selectableObjects,
+  regionSelection,
+  moveObjects,
   edit,
   editablePolygon,
   shapes,
@@ -14,7 +19,6 @@ import {
   objectBounds,
   objectContains,
   item,
-  move,
   mutableItem,
   objectPolygons,
   place,
@@ -26,7 +30,9 @@ import type { Selection } from '../editor/model';
 type Props = {
   document: LevelDocument;
   selection: Selection | null;
-  onSelect: (s: Selection | null) => void;
+  selections: Selection[];
+  onSelections: (s: Selection[]) => void;
+  onSelect: (s: Selection | null, additive?: boolean) => void;
   piece: number;
   vertices: boolean;
   preset: string | null;
@@ -39,13 +45,17 @@ type Drag = {
   base: LevelDocument;
   start: Vec2;
   selection: Selection | null;
-  type: 'move' | 'vertex' | 'resize' | 'rotate' | 'edge' | 'pan';
+  selections?: Selection[];
+  end?: Vec2;
+  additive?: boolean;
+  type: 'region' | 'move' | 'vertex' | 'resize' | 'rotate' | 'edge' | 'pan';
   index?: number;
   center?: Vec2;
   cameraCenter?: Vec2;
   pixel?: Vec2;
 };
 export function EditorCanvas(props: Props) {
+  const [marquee, setMarquee] = useState<{ start: Vec2; end: Vec2 } | null>(null);
   const [preview, setPreview] = useState<LevelDocument | null>(null);
   const [zoom, setZoom] = useState(1);
   const [center, setCenter] = useState<Vec2 | null>(null);
@@ -53,6 +63,10 @@ export function EditorCanvas(props: Props) {
     drag = useRef<Drag | null>(null),
     lastPreview = useRef<LevelDocument | null>(null);
   const display = preview ?? props.document;
+  const portalColors = useMemo(
+    () => portalPairColors(display.level.fields),
+    [display.level.fields],
+  );
   const level = useMemo(() => decodeLevel(display.level), [display]);
   const frame = useRef(levelFrame(level));
   frame.current = levelFrame(level);
@@ -125,10 +139,44 @@ export function EditorCanvas(props: Props) {
       ctx.fill();
       ctx.stroke();
     }
+    function selectionColor(selected: Selection) {
+      const object = item(display, selected);
+      return object && 'force' in object && object.force.kind === 'portal'
+        ? portalColors.get(object.force.pairId)!
+        : '#d35a35';
+    }
     edgePoints(display).forEach((p) => handle(p, '#235a2f'));
-    if (props.selection) {
-      const h = handles(display, props.selection, v);
+    for (const selected of props.selections) {
+      ctx.strokeStyle = selectionColor(selected);
+      ctx.lineWidth = 2.5;
+      objectPolygons(display, selected).forEach((p) => ctx.stroke(polygonPath(v, p)));
+      const object = item(display, selected);
+      if (object && 'force' in object && object.force.kind === 'portal') {
+        const b = objectBounds(display, selected),
+          a = toCanvas(v, { x: b.minX, y: b.maxY }),
+          z = toCanvas(v, { x: b.maxX, y: b.minY });
+        ctx.save();
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(a.x - 5, a.y - 5, z.x - a.x + 10, z.y - a.y + 10);
+        ctx.restore();
+      }
+    }
+    if (marquee) {
+      const a = toCanvas(v, marquee.start),
+        b = toCanvas(v, marquee.end);
+      ctx.fillStyle = '#d35a3518';
       ctx.strokeStyle = '#d35a35';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 4]);
+      ctx.fillRect(a.x, a.y, b.x - a.x, b.y - a.y);
+      ctx.strokeRect(a.x, a.y, b.x - a.x, b.y - a.y);
+      ctx.setLineDash([]);
+    }
+    if (props.selection && props.selections.length === 1) {
+      const h = handles(display, props.selection, v);
+      ctx.strokeStyle = selectionColor(props.selection);
       ctx.lineWidth = 2;
       h.polygons.forEach((p) => ctx.stroke(polygonPath(v, p)));
       if (!display.editor.arena.walls.includes(props.selection.id)) {
@@ -171,7 +219,30 @@ export function EditorCanvas(props: Props) {
       event.currentTarget.setPointerCapture(event.pointerId);
       return;
     }
+    if (event.button === 2) {
+      event.preventDefault();
+      drag.current = {
+        base: props.document,
+        start: world,
+        end: world,
+        selection: null,
+        type: 'region',
+        additive: event.ctrlKey || event.metaKey,
+        selections: props.selections,
+      };
+      lastPreview.current = null;
+      setMarquee({ start: world, end: world });
+      event.currentTarget.setPointerCapture(event.pointerId);
+      return;
+    }
     if (event.button !== 0) return;
+    if (event.ctrlKey || event.metaKey) {
+      const selected = selectableObjects(props.document).find((s) =>
+        objectContains(props.document, s, world),
+      );
+      if (selected) props.onSelect(selected, true);
+      return;
+    }
     if (props.preset) {
       drop(props.preset, world);
       return;
@@ -181,7 +252,11 @@ export function EditorCanvas(props: Props) {
       return Math.hypot(p.x - pos.x, p.y - pos.y) < 11;
     };
     let chosen: Drag | null = null;
-    if (props.selection && !props.document.editor.arena.walls.includes(props.selection.id)) {
+    if (
+      props.selection &&
+      props.selections.length === 1 &&
+      !props.document.editor.arena.walls.includes(props.selection.id)
+    ) {
       const h = handles(props.document, props.selection, v);
       if (
         props.vertices &&
@@ -228,9 +303,22 @@ export function EditorCanvas(props: Props) {
         { kind: 'goal', id: 'goal' },
       ];
       const selected = candidates.find((s) => objectContains(props.document, s, world)) ?? null;
-      props.onSelect(selected);
+      const group =
+        selected && props.selections.some((s) => sameSelection(s, selected))
+          ? props.selections
+          : selected
+            ? [selected]
+            : [];
+      if (!selected || !props.selections.some((s) => sameSelection(s, selected)))
+        props.onSelect(selected);
       if (selected)
-        chosen = { base: props.document, start: world, selection: selected, type: 'move' };
+        chosen = {
+          base: props.document,
+          start: world,
+          selection: selected,
+          selections: group,
+          type: 'move',
+        };
     }
     if (chosen) {
       drag.current = chosen;
@@ -244,6 +332,11 @@ export function EditorCanvas(props: Props) {
     if (!d || !v) return;
     const p = pixel(event),
       world = toWorld(v, p);
+    if (d.type === 'region') {
+      d.end = world;
+      setMarquee({ start: d.start, end: world });
+      return;
+    }
     if (d.type === 'pan') {
       setCenter({
         x: d.cameraCenter!.x - (p.x - d.pixel!.x) / v.scale,
@@ -262,9 +355,9 @@ export function EditorCanvas(props: Props) {
         if (d.index === 3) b.maxY = snappedWorld.y;
         next = resizeArena(d.base, b);
       } else if (d.type === 'move')
-        next = move(
+        next = moveObjects(
           d.base,
-          d.selection!,
+          d.selections ?? [d.selection!],
           snapped({ x: world.x - d.start.x, y: world.y - d.start.y }),
         );
       else if (d.type === 'vertex')
@@ -315,6 +408,19 @@ export function EditorCanvas(props: Props) {
     }
   }
   function finish(cancel = false) {
+    const d = drag.current;
+    if (!cancel && d?.type === 'region') {
+      const selected = regionSelection(d.base, d.start, d.end ?? d.start);
+      props.onSelections(
+        d.additive
+          ? [
+              ...(d.selections ?? []),
+              ...selected.filter((s) => !d.selections?.some((old) => sameSelection(s, old))),
+            ]
+          : selected,
+      );
+    }
+    setMarquee(null);
     if (!cancel && lastPreview.current) props.onCommit(lastPreview.current);
     drag.current = null;
     lastPreview.current = null;
@@ -339,7 +445,7 @@ export function EditorCanvas(props: Props) {
         <span>
           {props.preset
             ? 'Click to place · Escape cancels'
-            : 'Drag to move · Alt-drag to pan · Wheel to zoom'}
+            : 'Ctrl-click: multi-select · Right-drag: region · Drag: move · Alt-drag: pan'}
         </span>
         <div className="button-row">
           <button onClick={() => setZoom((z) => Math.max(0.25, z / 1.2))} aria-label="Zoom out">

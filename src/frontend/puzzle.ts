@@ -3,13 +3,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { advanceGoal, initialGoal } from './goal-progress';
 import type { GoalProgress } from './goal-progress';
-import { createGame, FIXED_DT, quantizePosition } from '../game';
+import { isCourseObject, createGame, FIXED_DT, quantizePosition } from '../game';
 import type { Game, GameCommand, GameSnapshot, Level, RenderState, Vec2 } from '../game';
 
 export type Mode = 'loading' | 'setup' | 'running' | 'done' | 'error';
 export type FieldDraft = Readonly<{ position: Vec2; enabled: boolean }>;
 export type Draft = Readonly<Record<string, FieldDraft>>;
-export type RunResult = Readonly<{ solved: boolean; tiles: number; seconds: number }>;
+export type RunResult = Readonly<{
+  solved: boolean;
+  tiles: number;
+  seconds: number;
+  failure?: 'water' | 'lava';
+}>;
 
 /** How much of the run the dotted preview shows. */
 const TRAIL_TICKS = 120;
@@ -18,7 +23,9 @@ const MAX_STEPS_PER_FRAME = 8;
 
 function initialDraft(state: RenderState): Draft {
   return Object.fromEntries(
-    state.fields.map((field) => [field.id, { position: field.position, enabled: field.enabled }]),
+    state.fields
+      .filter((field) => !isCourseObject(field.force))
+      .map((field) => [field.id, { position: field.position, enabled: field.enabled }]),
   );
 }
 
@@ -118,13 +125,18 @@ export function usePuzzle(level: Level) {
       frameRef.current = state;
 
       const goal = goalRef.current;
-      const solved = goal.completedTick !== null;
+      const targetBody = state.bodies.find((body) => body.id === level.goal.bodyId);
+      const failure = targetBody?.burnt ? 'lava' : targetBody?.destroyed;
+      const failed = !!failure;
+      const solved = !failed && goal.completedTick !== null;
       // A body resting inside the goal still has to finish its hold.
       const stopped = state.bodies.every((body) => body.sleeping) && !goal.inside;
-      if (solved || stopped) {
+      if (solved || stopped || failed) {
         setResult({
           solved,
-          tiles: state.fields.filter((field) => field.enabled).length,
+          ...(failure ? { failure } : {}),
+          tiles: state.fields.filter((field) => field.enabled && !isCourseObject(field.force))
+            .length,
           seconds: (goal.completedTick ?? state.tick) * FIXED_DT,
         });
         setMode('done');
