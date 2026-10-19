@@ -291,7 +291,9 @@ export function Inspector({
     <section className="inspector-content">
       <h2>
         {selection.kind === 'fields'
-          ? 'Force field'
+          ? 'force' in object && ['water', 'lava', 'portal'].includes(object.force.kind)
+            ? forceDefinition(object.force.kind).label
+            : 'Force field'
           : selection.kind === 'dynamicBodies'
             ? 'Dynamic body'
             : 'Static body'}
@@ -430,8 +432,36 @@ export function Inspector({
             Enabled at start
           </label>
           <h3>{forceDefinition(object.force.kind).label}</h3>
+          {object.force.kind === 'water' && (
+            <p className="muted">
+              Heavy drag while touching water. A fully submerged body sinks when it comes to rest.
+            </p>
+          )}
+          {object.force.kind === 'lava' && (
+            <p className="muted">
+              Contact stops and chars the ball, leaving blackened remains beneath the surface. The
+              shot fails.
+            </p>
+          )}
+          {object.force.kind === 'portal' && (
+            <p className="muted">
+              Link exactly two enabled ends with the same pair ID. Velocity is preserved after the
+              teleport delay; rotation is optional. A cooldown and exit lock prevent immediate
+              return.{' '}
+              {doc.level.fields.filter(
+                (f) =>
+                  f.force.kind === 'portal' &&
+                  object.force.kind === 'portal' &&
+                  f.force.pairId === object.force.pairId &&
+                  f.enabled,
+              ).length !== 2
+                ? 'This pair is incomplete or disabled and will not teleport.'
+                : 'Both ends are linked.'}
+            </p>
+          )}
           {Object.entries(forceDefinition(object.force.kind).parameters).map(([key, spec]) => {
-            const value = (object.force as unknown as Record<string, FieldParam>)[key]!;
+            const value =
+              (object.force as unknown as Record<string, FieldParam>)[key] ?? spec.default;
             const update = (v: typeof value) =>
               change((o) => {
                 if ('force' in o) (o.force as unknown as Record<string, FieldParam>)[key] = v;

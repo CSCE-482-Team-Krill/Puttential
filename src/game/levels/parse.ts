@@ -34,7 +34,11 @@ function readObject(value: unknown, path: string, keys: readonly string[]): Json
   return object;
 }
 
-function readArray<T>(value: unknown, path: string, readItem: (item: unknown, path: string) => T): T[] {
+function readArray<T>(
+  value: unknown,
+  path: string,
+  readItem: (item: unknown, path: string) => T,
+): T[] {
   if (!Array.isArray(value)) throw new Error(`${path} must be an array`);
   return value.map((item, index) => readItem(item, `${path}[${index}]`));
 }
@@ -69,7 +73,8 @@ function readBoolean(value: unknown, path: string): boolean {
 }
 
 function readId(value: unknown, path: string): string {
-  if (typeof value !== 'string' || value === '') throw new Error(`${path} must be a non-empty string`);
+  if (typeof value !== 'string' || value === '')
+    throw new Error(`${path} must be a non-empty string`);
   return value;
 }
 
@@ -81,7 +86,8 @@ function readVec2(value: unknown, path: string): Vec2 {
 function readMaterial(value: unknown, path: string): SurfaceMaterial {
   const object = readObject(value, path, ['restitution']);
   const restitution = readNumber(object.restitution, `${path}.restitution`);
-  if (restitution < 0 || restitution > 1) throw new Error(`${path}.restitution must be between 0 and 1`);
+  if (restitution < 0 || restitution > 1)
+    throw new Error(`${path}.restitution must be between 0 and 1`);
   return { restitution };
 }
 
@@ -132,7 +138,9 @@ function readPiece(value: unknown, path: string): ConvexPieceDefinition {
   return {
     id: readId(object.id, `${path}.id`),
     shape: readPieceShape(object.shape, `${path}.shape`),
-    ...(object.density !== undefined && { density: readPositive(object.density, `${path}.density`) }),
+    ...(object.density !== undefined && {
+      density: readPositive(object.density, `${path}.density`),
+    }),
   };
 }
 
@@ -145,21 +153,33 @@ function readPieces(value: unknown, path: string): ConvexPieceDefinition[] {
 
 function readDynamicBody(value: unknown, path: string): DynamicBodyDefinition {
   const object = readObject(value, path, [
-    'id', 'position', 'angle', 'linearVelocity', 'angularVelocity',
-    'density', 'material', 'ccd', 'canSleep', 'pieces',
+    'id',
+    'position',
+    'angle',
+    'linearVelocity',
+    'angularVelocity',
+    'density',
+    'material',
+    'ccd',
+    'canSleep',
+    'pieces',
   ]);
   return {
     id: readId(object.id, `${path}.id`),
     position: readVec2(object.position, `${path}.position`),
     angle: readNumber(object.angle, `${path}.angle`),
-    ...(object.linearVelocity !== undefined &&
-      { linearVelocity: readVec2(object.linearVelocity, `${path}.linearVelocity`) }),
-    ...(object.angularVelocity !== undefined &&
-      { angularVelocity: readNumber(object.angularVelocity, `${path}.angularVelocity`) }),
+    ...(object.linearVelocity !== undefined && {
+      linearVelocity: readVec2(object.linearVelocity, `${path}.linearVelocity`),
+    }),
+    ...(object.angularVelocity !== undefined && {
+      angularVelocity: readNumber(object.angularVelocity, `${path}.angularVelocity`),
+    }),
     density: readPositive(object.density, `${path}.density`),
     material: readMaterial(object.material, `${path}.material`),
     ccd: readBoolean(object.ccd, `${path}.ccd`),
-    ...(object.canSleep !== undefined && { canSleep: readBoolean(object.canSleep, `${path}.canSleep`) }),
+    ...(object.canSleep !== undefined && {
+      canSleep: readBoolean(object.canSleep, `${path}.canSleep`),
+    }),
     pieces: readPieces(object.pieces, `${path}.pieces`),
   };
 }
@@ -178,6 +198,37 @@ function readStaticBody(value: unknown, path: string): StaticBodyDefinition {
 function readForce(value: unknown, path: string): FieldForceDefinition {
   const { kind } = asObject(value, path);
   switch (kind) {
+    case 'water': {
+      const object = readObject(value, path, ['kind', 'drag', 'sinkSpeed']);
+      return {
+        kind,
+        drag: readNumber(object.drag, `${path}.drag`),
+        sinkSpeed: readNumber(object.sinkSpeed, `${path}.sinkSpeed`),
+      };
+    }
+    case 'lava':
+      readObject(value, path, ['kind']);
+      return { kind };
+    case 'portal': {
+      const object = readObject(value, path, [
+        'kind',
+        'pairId',
+        'rotateVelocity',
+        'delaySeconds',
+        'cooldownSeconds',
+      ]);
+      return {
+        kind,
+        pairId: readId(object.pairId, `${path}.pairId`),
+        rotateVelocity: readBoolean(object.rotateVelocity, `${path}.rotateVelocity`),
+        ...(object.delaySeconds === undefined
+          ? {}
+          : { delaySeconds: readPositive(object.delaySeconds, `${path}.delaySeconds`) }),
+        ...(object.cooldownSeconds === undefined
+          ? {}
+          : { cooldownSeconds: readPositive(object.cooldownSeconds, `${path}.cooldownSeconds`) }),
+      };
+    }
     case 'uniform': {
       const object = readObject(value, path, ['kind', 'density']);
       return { kind, density: readVec2(object.density, `${path}.density`) };
@@ -192,7 +243,7 @@ function readForce(value: unknown, path: string): FieldForceDefinition {
       };
     }
     default:
-      throw new Error(`${path}.kind must be "uniform", "attractor", or "repulsor"`);
+      throw new Error(`${path}.kind is unsupported`);
   }
 }
 
@@ -245,8 +296,15 @@ function readPrediction(value: unknown, path: string): NonNullable<Level['predic
  */
 export function parseLevel(data: unknown): Level {
   const object = readObject(data, 'level', [
-    'formatVersion', 'id', 'version', 'gravity',
-    'dynamicBodies', 'staticBodies', 'fields', 'goal', 'prediction',
+    'formatVersion',
+    'id',
+    'version',
+    'gravity',
+    'dynamicBodies',
+    'staticBodies',
+    'fields',
+    'goal',
+    'prediction',
   ]);
   if (object.formatVersion !== LEVEL_FORMAT_VERSION) {
     throw new Error(`level.formatVersion must be ${LEVEL_FORMAT_VERSION}`);
@@ -256,6 +314,13 @@ export function parseLevel(data: unknown): Level {
   const fields = readArray(object.fields, 'level.fields', readField);
   // Bodies and fields share one ID namespace so anything can refer to anything by ID.
   assertUniqueIds([...dynamicBodies, ...staticBodies, ...fields], 'level');
+  const portalPairs = new Map<string, number>();
+  for (const field of fields)
+    if (field.force.kind === 'portal') {
+      const count = (portalPairs.get(field.force.pairId) ?? 0) + 1;
+      if (count > 2) throw new Error(`Portal pair ${field.force.pairId} can have at most two ends`);
+      portalPairs.set(field.force.pairId, count);
+    }
   const goal = readGoal(object.goal, 'level.goal');
   if (!dynamicBodies.some((body) => body.id === goal.bodyId)) {
     throw new Error(`level.goal.bodyId must name a dynamic body: ${goal.bodyId}`);
@@ -269,7 +334,8 @@ export function parseLevel(data: unknown): Level {
     staticBodies,
     fields,
     goal,
-    ...(object.prediction !== undefined &&
-      { prediction: readPrediction(object.prediction, 'level.prediction') }),
+    ...(object.prediction !== undefined && {
+      prediction: readPrediction(object.prediction, 'level.prediction'),
+    }),
   };
 }

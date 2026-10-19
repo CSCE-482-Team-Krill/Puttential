@@ -51,8 +51,14 @@ export function Playtest({ document, onClose }: { document: LevelDocument; onClo
         </button>
         {puzzle.result && (
           <p role="status">
-            {puzzle.result.solved ? 'Goal reached' : 'Run finished'} ·{' '}
-            {puzzle.result.seconds.toFixed(2)} seconds · {puzzle.result.tiles} tiles
+            {puzzle.result.solved
+              ? 'Goal reached'
+              : puzzle.result.failure === 'water'
+                ? 'Ball sank in water'
+                : puzzle.result.failure === 'lava'
+                  ? 'Ball burnt by lava'
+                  : 'Run finished'}{' '}
+            · {puzzle.result.seconds.toFixed(2)} seconds · {puzzle.result.tiles} tiles
           </p>
         )}
         <p className="muted">

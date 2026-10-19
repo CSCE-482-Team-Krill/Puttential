@@ -154,7 +154,7 @@ test('native circle uses Rapier ball geometry, disc mass, render data, exact bou
 test('all upstream force kinds supply data, palette and property controls', () => {
   assert.deepEqual(
     forceCatalog.map((f) => f.kind),
-    ['uniform', 'attractor', 'repulsor'],
+    ['uniform', 'attractor', 'repulsor', 'water', 'lava', 'portal'],
   );
   assert.deepEqual(
     presets.filter((p) => p.category === 'fields').map((p) => p.force),
