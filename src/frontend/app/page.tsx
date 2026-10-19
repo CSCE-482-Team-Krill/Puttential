@@ -178,7 +178,7 @@ function Game({
                     : isDaily
                       ? 'Daily challenge'
                       : 'Practice challenge'}{' '}
-                  {isDaily && <b>{daily.date}</b>}
+                  {isDaily && <b>{daily?.date}</b>}
                 </span>
                 <span className={`course-status ${puzzle.mode === 'running' ? 'running' : ''}`}>
                   <i />{' '}
