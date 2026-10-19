@@ -1,5 +1,6 @@
 import { prisma } from "../prisma";
 import type {CreateAttemptRequest, CreateAttemptResponse,} from "../types";
+import { NotFoundError, ValidationError } from "../errors";
 
 /**
  * Checks whether an optional numeric metric is valid.
@@ -13,7 +14,7 @@ function validateOptionalNonNegativeNumber( value: number | null | undefined, fi
     }
 
     if (!Number.isFinite(value) || value < 0) {
-        throw new Error(`${fieldName} must be a non-negative finite number.`);
+        throw new ValidationError(`${fieldName} must be a non-negative finite number.`);
     }
 }
 
@@ -29,7 +30,7 @@ function validateOptionalNonNegativeInteger(value: number | null | undefined,fie
     }
 
     if (!Number.isSafeInteger(value) || value < 0) {
-        throw new Error(`${fieldName} must be a non-negative integer.`);
+        throw new ValidationError(`${fieldName} must be a non-negative integer.`);
     }
 }
 
@@ -45,7 +46,7 @@ function validateOptionalNonNegativeInteger(value: number | null | undefined,fie
 export async function createAttempt(input: CreateAttemptRequest): Promise<CreateAttemptResponse> {
   // A puzzle is required for every attempt.
     if (!input.puzzleId || input.puzzleId.trim().length === 0) {
-        throw new Error("puzzleId is required.");
+        throw new ValidationError("puzzleId is required.");
     }
 
     // Validate optional physics/scoring metrics before sending them
@@ -87,7 +88,7 @@ export async function createAttempt(input: CreateAttemptRequest): Promise<Create
     });
 
     if (!puzzle) {
-        throw new Error(`Puzzle not found: ${input.puzzleId}`);
+        throw new NotFoundError(`Puzzle not found: ${input.puzzleId}`);
     }
 
     /**
@@ -107,7 +108,7 @@ export async function createAttempt(input: CreateAttemptRequest): Promise<Create
         });
 
         if (!user) {
-        throw new Error(`User not found: ${input.userId}`);
+        throw new NotFoundError(`User not found: ${input.userId}`);
         }
     }
 
