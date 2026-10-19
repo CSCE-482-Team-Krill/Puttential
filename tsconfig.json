@@ -23,6 +23,9 @@
     "src/**/*.tsx"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/frontend/.next",
+    "src/frontend/next-env.d.ts",
+    "src/frontend/next.config.ts"
   ]
 }
