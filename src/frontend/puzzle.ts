@@ -126,31 +126,32 @@ export function usePuzzle(level: Level) {
       previous = now;
       while (accumulator >= FIXED_DT) {
         game.step();
-        goalRef.current = advanceGoal(goalRef.current, game.getRenderState());
+        const state = game.getRenderState();
+        goalRef.current = advanceGoal(goalRef.current, state);
+        frameRef.current = state;
         accumulator -= FIXED_DT;
-      }
-      const state = game.getRenderState();
-      frameRef.current = state;
 
-      const goal = goalRef.current;
-      const targetBody = state.bodies.find((body) => body.id === level.goal.bodyId);
-      const failure = targetBody?.burnt ? 'lava' : targetBody?.destroyed;
-      const failed = !!failure;
-      const solved = !failed && goal.completedTick !== null;
-      // A body resting inside the goal still has to finish its hold.
-      const stopped = state.bodies.every((body) => body.sleeping) && !goal.inside;
-      if (solved || stopped || failed) {
-        const finished: RunResult = {
-          solved,
-          ...(failure ? { failure } : {}),
-          tiles: state.fields.filter((field) => field.enabled && !isCourseObject(field.force))
-            .length,
-          seconds: (goal.completedTick ?? state.tick) * FIXED_DT,
-        };
-        setResult(finished);
-        if (runRef.current) setCompletedRun({ ...runRef.current, result: finished });
-        setMode('done');
-        return;
+        // Stop on the first terminal tick, before another catch-up step can change the result.
+        const goal = goalRef.current;
+        const targetBody = state.bodies.find((body) => body.id === level.goal.bodyId);
+        const failure = targetBody?.burnt ? 'lava' : targetBody?.destroyed;
+        const failed = !!failure;
+        const solved = !failed && goal.completedTick !== null;
+        // A body resting inside the goal still has to finish its hold.
+        const stopped = state.bodies.every((body) => body.sleeping) && !goal.inside;
+        if (solved || stopped || failed) {
+          const finished: RunResult = {
+            solved,
+            ...(failure ? { failure } : {}),
+            tiles: state.fields.filter((field) => field.enabled && !isCourseObject(field.force))
+              .length,
+            seconds: (goal.completedTick ?? state.tick) * FIXED_DT,
+          };
+          setResult(finished);
+          if (runRef.current) setCompletedRun({ ...runRef.current, result: finished });
+          setMode('done');
+          return;
+        }
       }
       frame = requestAnimationFrame(loop);
     });
