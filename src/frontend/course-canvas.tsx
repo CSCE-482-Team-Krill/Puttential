@@ -2,7 +2,9 @@
 
 import { useEffect, useRef } from 'react';
 import type { RefObject } from 'react';
-import { polygonBounds, shapePolygon, forceDensity, levelBounds } from '../game';
+import { drawZone, drawLiquid } from './zone-drawing';
+import { portalPairColors } from './portal-colors';
+import { isCourseObject, polygonBounds, shapePolygon, forceDensity, levelBounds } from '../game';
 import type {
   FieldZoneDefinition,
   Level,
@@ -102,6 +104,7 @@ function visibleFields(state: RenderState, draft: Draft, mode: Mode): RenderFiel
 }
 
 function displayedField(field: RenderField, draft: Draft, mode: Mode): RenderField {
+  if (isCourseObject(field.force)) return field;
   const planned = draft[field.id];
   if (mode !== 'setup' || planned === undefined) return field;
   const dx = planned.position.x - field.position.x;
@@ -235,12 +238,29 @@ function draw(
   context.lineTo(flagX + 1.5, flagY - 20);
   context.fill();
 
-  // Fields.
-  for (const field of props.showAllFields
+  const animate =
+    !window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
+    !document.querySelector('.reduce-motion');
+  const time = animate ? performance.now() / 1000 : 0;
+  const colors = portalPairColors(props.level.fields);
+  const fieldsToDraw = props.showAllFields
     ? state.fields
-    : visibleFields(state, props.draft, props.mode)) {
+    : visibleFields(state, props.draft, props.mode);
+  // Fields.
+  for (const field of fieldsToDraw) {
     const definition = definitions.get(field.id);
     const path = polygonPath(view, field.worldPolygon);
+    if (
+      drawZone(
+        context,
+        view,
+        field,
+        path,
+        time,
+        field.force.kind === 'portal' ? colors.get(field.force.pairId)! : '#5ba9df',
+      )
+    )
+      continue;
     context.save();
     context.globalAlpha = field.enabled || !props.showAllFields ? 1 : 0.5;
     context.fillStyle = '#ffffff80';
@@ -298,6 +318,17 @@ function draw(
   context.strokeStyle = '#ffffff';
   context.lineWidth = 1.5;
   for (const body of state.bodies) {
+    if (body.destroyed) continue;
+    context.save();
+    if (body.burnt) context.shadowColor = '#00000044';
+    if (body.teleporting) context.globalAlpha = 0.45;
+    if (body.submerged) {
+      const c = toCanvas(view, body.position);
+      context.translate(c.x, c.y + 2);
+      context.scale(0.88, 0.88);
+      context.translate(-c.x, -c.y);
+      context.globalAlpha = body.burnt ? 1 : 0.8;
+    }
     for (const piece of body.pieces) {
       const bounds =
         piece.kind === 'circle'
@@ -316,9 +347,10 @@ function draw(
         bottomRight.x,
         bottomRight.y,
       );
-      gradient.addColorStop(0, '#ffffff');
-      gradient.addColorStop(0.5, '#f1fcf1');
-      gradient.addColorStop(1, '#a9dcaa');
+      gradient.addColorStop(0, body.burnt ? '#303030' : '#ffffff');
+      gradient.addColorStop(0.5, body.burnt ? '#161616' : '#f1fcf1');
+      gradient.addColorStop(1, body.burnt ? '#050505' : '#a9dcaa');
+      context.strokeStyle = body.burnt ? '#151515' : '#ffffff';
       context.fillStyle = gradient;
       const path = piecePath(view, piece);
       context.fill(path);
@@ -328,7 +360,7 @@ function draw(
           length = piece.radius * view.scale * 0.7;
         context.save();
         context.shadowColor = 'transparent';
-        context.strokeStyle = '#45834a88';
+        context.strokeStyle = body.burnt ? '#454545' : '#45834a88';
         context.lineWidth = 2;
         context.beginPath();
         context.moveTo(center.x, center.y);
@@ -340,8 +372,14 @@ function draw(
         context.restore();
       }
     }
+    context.restore();
   }
   context.restore();
+  // Surface tint clips to the liquid outline, leaving the submerged object visible underneath.
+  for (const field of fieldsToDraw)
+    if (field.enabled && (field.force.kind === 'water' || field.force.kind === 'lava')) {
+      drawLiquid(context, view, field, polygonPath(view, field.worldPolygon), time, true);
+    }
 }
 
 export function CourseCanvas(props: Props) {
@@ -397,6 +435,7 @@ export function CourseCanvas(props: Props) {
     context.setTransform(1, 0, 0, 1, 0, 0);
     return (
       visibleFields(state, draft, mode)
+        .filter((field) => !isCourseObject(field.force))
         .reverse()
         .find((field) =>
           context.isPointInPath(polygonPath(view, field.worldPolygon), point.x, point.y),

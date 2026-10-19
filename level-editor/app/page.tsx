@@ -13,17 +13,18 @@ import { EditorCanvas } from '../components/editor-canvas';
 import { Inspector, NumberInput } from '../components/inspector';
 import { Playtest } from '../components/playtest';
 import {
-  copyObject,
-  duplicate,
+  sameSelection,
+  toggleSelection,
+  removeObjects,
+  copyObjects,
   edit,
   freshDocument,
   historyCommit,
   historyRedo,
   historyUndo,
   mutableItem,
-  pasteObject,
+  pasteObjects,
   presets,
-  remove,
 } from '../editor/model';
 import type { CopiedObject, History, Selection } from '../editor/model';
 
@@ -37,8 +38,9 @@ export default function Editor() {
     future: [],
   }));
   const doc = history.present;
-  const [selection, setSelection] = useState<Selection | null>(null),
-    [piece, setPiece] = useState(0),
+  const [selections, setSelections] = useState<Selection[]>([]);
+  const selection = selections[selections.length - 1] ?? null;
+  const [piece, setPiece] = useState(0),
     [vertices, setVertices] = useState(false);
   const [preset, setPreset] = useState<string | null>(null),
     [snap, setSnap] = useState(true);
@@ -53,7 +55,7 @@ export default function Editor() {
   const [recoveryError, setRecoveryError] = useState('');
   const [playtest, setPlaytest] = useState<LevelDocument | null>(null);
   const file = useRef<HTMLInputElement | null>(null);
-  const clipboard = useRef<CopiedObject | null>(null);
+  const clipboard = useRef<CopiedObject[] | null>(null);
   const inspectorPane = useRef<HTMLElement | null>(null);
   useEffect(() => {
     inspectorPane.current?.scrollTo({ top: 0 });
@@ -71,8 +73,10 @@ export default function Editor() {
       setError(message(cause));
     }
   };
-  const select = (value: Selection | null) => {
-    setSelection(value);
+  const select = (value: Selection | null, additive = false) => {
+    setSelections((current) =>
+      value ? (additive ? toggleSelection(current, value) : [value]) : [],
+    );
     setPiece(0);
   };
   async function refreshLibrary() {
@@ -197,7 +201,7 @@ export default function Editor() {
   function deleteSelection() {
     if (selection) {
       try {
-        commit(remove(doc, selection));
+        commit(removeObjects(doc, selections));
         select(null);
       } catch (cause) {
         setError(message(cause));
@@ -207,9 +211,9 @@ export default function Editor() {
   function duplicateSelection() {
     if (selection) {
       try {
-        const result = duplicate(doc, selection);
+        const result = pasteObjects(doc, copyObjects(doc, selections));
         commit(result.doc);
-        select(result.selection);
+        setSelections(result.selections);
       } catch (cause) {
         setError(message(cause));
       }
@@ -218,9 +222,11 @@ export default function Editor() {
   function copySelection() {
     if (!selection) return;
     try {
-      clipboard.current = copyObject(doc, selection);
+      clipboard.current = copyObjects(doc, selections);
       setError('');
-      setNotice(`Copied ${selection.id}. Paste to create a separate object.`);
+      setNotice(
+        `Copied ${selections.length === 1 ? selection.id : `${selections.length} objects`}. Paste to create separate objects.`,
+      );
     } catch (cause) {
       setError(message(cause));
     }
@@ -228,11 +234,13 @@ export default function Editor() {
   function pasteSelection() {
     if (!clipboard.current) return;
     try {
-      const result = pasteObject(doc, clipboard.current);
+      const result = pasteObjects(doc, clipboard.current);
       commit(result.doc);
-      select(result.selection);
+      setSelections(result.selections);
       setPreset(null);
-      setNotice(`Pasted ${result.selection.id} at the copied position. Drag it to move it.`);
+      setNotice(
+        `Pasted ${result.selections.length === 1 ? result.selections[0]!.id : `${result.selections.length} objects`} at the copied position. Drag to move.`,
+      );
     } catch (cause) {
       setError(message(cause));
     }
@@ -279,10 +287,10 @@ export default function Editor() {
   const categories = [
     ['staticBodies', 'Obstacles'],
     ['dynamicBodies', 'Moving bodies'],
-    ['fields', 'Force fields'],
+    ['fields', 'Fields & hazards'],
   ] as const;
   return (
-    <div className="site-wrap editor-wrap reduce-motion">
+    <div className="site-wrap editor-wrap">
       <header className="site-header editor-header">
         <a className="brand" href="/">
           Puttential<span className="brand-dot">.</span>
@@ -367,6 +375,15 @@ export default function Editor() {
               </button>
               <button disabled={!history.future.length} onClick={redo}>
                 Redo
+              </button>
+              <button
+                disabled={!selection || selections.some((s) => s.kind === 'goal')}
+                onClick={copySelection}
+              >
+                Copy
+              </button>
+              <button disabled={!clipboard.current} onClick={pasteSelection}>
+                Paste
               </button>
               <button
                 disabled={!selection || selection.kind === 'goal'}
@@ -523,6 +540,8 @@ export default function Editor() {
                 key={doc.level.id}
                 document={doc}
                 selection={selection}
+                selections={selections}
+                onSelections={setSelections}
                 onSelect={select}
                 piece={piece}
                 vertices={vertices}
@@ -534,30 +553,43 @@ export default function Editor() {
               />
             </section>
             <aside ref={inspectorPane} className="editor-sidebar inspector">
-              <Inspector
-                document={doc}
-                selection={selection}
-                apply={apply}
-                piece={piece}
-                setPiece={setPiece}
-                vertices={vertices}
-                setVertices={setVertices}
-                onRename={(id) => {
-                  if (!selection) return;
-                  try {
-                    const previous = selection.id;
-                    const next = edit(doc, (d) => {
-                      mutableItem(d, selection).id = id;
-                      if (selection.kind === 'dynamicBodies' && d.level.goal.bodyId === previous)
-                        d.level.goal.bodyId = id;
-                    });
-                    commit(next);
-                    select({ ...selection, id });
-                  } catch (cause) {
-                    setError(message(cause));
-                  }
-                }}
-              />
+              {selections.length > 1 ? (
+                <section aria-label="Multiple selection">
+                  <h2>{selections.length} objects selected</h2>
+                  <p className="muted">
+                    Drag a selected object to move the group. Ctrl-click toggles selection.
+                    Right-drag encloses objects.
+                  </p>
+                  <p className="muted">
+                    Ctrl+C copies · Ctrl+V pastes · Delete removes · Ctrl+Z undoes.
+                  </p>
+                </section>
+              ) : (
+                <Inspector
+                  document={doc}
+                  selection={selection}
+                  apply={apply}
+                  piece={piece}
+                  setPiece={setPiece}
+                  vertices={vertices}
+                  setVertices={setVertices}
+                  onRename={(id) => {
+                    if (!selection) return;
+                    try {
+                      const previous = selection.id;
+                      const next = edit(doc, (d) => {
+                        mutableItem(d, selection).id = id;
+                        if (selection.kind === 'dynamicBodies' && d.level.goal.bodyId === previous)
+                          d.level.goal.bodyId = id;
+                      });
+                      commit(next);
+                      select({ ...selection, id });
+                    } catch (cause) {
+                      setError(message(cause));
+                    }
+                  }}
+                />
+              )}
               <section className="object-list">
                 <h3>Course objects</h3>
                 <button aria-pressed={!selection} onClick={() => select(null)}>
@@ -575,8 +607,10 @@ export default function Editor() {
                     {doc.level[kind].map((object) => (
                       <button
                         key={object.id}
-                        aria-pressed={selection?.kind === kind && selection.id === object.id}
-                        onClick={() => select({ kind, id: object.id })}
+                        aria-pressed={selections.some((s) =>
+                          sameSelection(s, { kind, id: object.id }),
+                        )}
+                        onClick={(e) => select({ kind, id: object.id }, e.ctrlKey || e.metaKey)}
                       >
                         {object.id}
                         {doc.editor.arena.walls.includes(object.id) ? ' · boundary' : ''}
