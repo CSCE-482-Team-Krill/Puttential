@@ -1,16 +1,42 @@
-@import '../game.css';
-
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap');
 
+/* Frontend-only theme. The editor continues to own its game.css import. */
 :root {
-  --ink: #2d3a3a;
-  --muted: #5e835f;
-  --line: #ffffffa8;
-  --surface: #ffffffb8;
-  --canvas: #dff3d9;
-  --accent: #2e7d32;
-  --accent-deep: #25682a;
-  --glass-shadow: 0 18px 48px #439c451b, 0 3px 12px #4b974c0c;
+  --ui-page: #f7f5ed;
+  --ui-paper: #fcfbf6;
+  --ui-white: #ffffff;
+  --ui-ink: #24362f;
+  --ui-muted: #53675b;
+  --ui-green: #246b45;
+  --ui-green-strong: #1c5436;
+  --ui-turf: #dceacb;
+  --ui-turf-soft: #edf0e6;
+  --ui-line: #d8e4d6;
+  --ui-yellow: #f5d476;
+  --ui-water: #4a90ab;
+  --ui-warning: #b75638;
+  --ui-disabled: #e6e9e2;
+  --ui-overlay: rgba(25, 40, 32, 0.54);
+  --ui-r-sm: 6px;
+  --ui-r-md: 10px;
+  --ui-r-lg: 14px;
+  --ui-shadow-frame: 0 5px 18px rgba(22, 54, 37, 0.065);
+  --ui-shadow-modal: 0 22px 64px rgba(18, 43, 27, 0.25);
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 20px;
+  --ui-space-6: 24px;
+  --ui-space-8: 32px;
+  --ink: var(--ui-ink);
+  --muted: var(--ui-muted);
+  --line: var(--ui-line);
+  --surface: var(--ui-paper);
+  --canvas: var(--ui-turf);
+  --accent: var(--ui-green);
+  --accent-deep: var(--ui-green-strong);
+  --glass-shadow: var(--ui-shadow-frame);
 }
 
 * {
@@ -18,27 +44,34 @@
 }
 html {
   font-family: 'Noto Sans', Arial, sans-serif;
-  color: var(--ink);
-  background: var(--canvas);
+  color: var(--ui-ink);
+  background: var(--ui-page);
+  line-height: 1.5;
 }
 body {
   margin: 0;
-  min-width: 320px;
+  min-width: 0;
 }
 button {
   font: inherit;
   cursor: pointer;
 }
-button:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 4px;
+button svg {
+  flex-shrink: 0;
+}
+button,
+summary {
+  -webkit-tap-highlight-color: transparent;
+}
+:is(button, summary, a, input):focus-visible {
+  outline: 3px solid var(--ui-green);
+  outline-offset: 2px;
 }
 button:disabled {
   cursor: default;
-  opacity: 0.6;
-}
-button svg {
-  flex-shrink: 0;
+  color: var(--ui-muted);
+  background: var(--ui-disabled);
+  opacity: 1;
 }
 
 .site-wrap {
