@@ -677,3 +677,149 @@ test('integrated import rejects corrupt/oversize data, retains pending file inpu
   await expect(page.getByRole('dialog', { name: 'So close' })).toBeVisible();
   expect(posts).toBe(0);
 });
+
+test('zoom-equivalent reflow, enlarged text and task-oriented tab order', async ({ page }) => {
+  await openLevel(page, inventoryLevel(1, { long: true }));
+  // 1280 at 200% and 400% = effective layout widths 640 and 320 CSS px.
+  // This measures reflow, not native browser chrome zoom.
+  for (const width of [640, 320, 256]) {
+    await page.setViewportSize({ width, height: 900 });
+    await noOverflow(page);
+    await page.addStyleTag({ content: 'html { font-size: 20px; }' });
+    await noOverflow(page);
+    await expect(page.locator('.tile-info strong')).toContainText('carefully positioned');
+  }
+  await page.locator('.play-button').focus();
+  await page.keyboard.press('Tab');
+  await expect(page.locator('.tile-option')).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(page.getByRole('button', { name: 'How to play', exact: true })).toBeFocused();
+});
+
+test('rendered text and essential control colors retain contrast in each UI state', async ({
+  page,
+}) => {
+  await openLevel(page, inventoryLevel(1));
+  const rows: {
+    label: string;
+    foreground: number[];
+    background: number[];
+    ratio: number;
+    minimum: number;
+  }[] = [];
+  function luminance(rgb: number[]) {
+    const [r, g, b] = rgb.map((value) => {
+      const v = value / 255;
+      return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+    });
+    return r! * 0.2126 + g! * 0.7152 + b! * 0.0722;
+  }
+  async function measure(label: string, selector: string, property = 'color', minimum = 4.5) {
+    const colors = await page
+      .locator(selector)
+      .first()
+      .evaluate((element, property) => {
+        const rgba = (value: string) => {
+          const parts = value.match(/[\d.]+/g)!.map(Number);
+          return [parts[0]!, parts[1]!, parts[2]!, parts[3] ?? 1];
+        };
+        const ancestors: Element[] = [];
+        for (let parent: Element | null = element; parent; parent = parent.parentElement)
+          ancestors.unshift(parent);
+        let background = [255, 255, 255];
+        for (const ancestor of ancestors) {
+          if (ancestor === element && property === 'background-color') continue;
+          const color = rgba(getComputedStyle(ancestor).backgroundColor),
+            alpha = color[3]!;
+          background = background.map((channel, i) => color[i]! * alpha + channel * (1 - alpha));
+        }
+        const color = rgba(getComputedStyle(element).getPropertyValue(property)),
+          alpha = color[3]!;
+        const foreground = background.map(
+          (channel, i) => color[i]! * alpha + channel * (1 - alpha),
+        );
+        return { foreground, background };
+      }, property);
+    const a = luminance(colors.foreground),
+      b = luminance(colors.background);
+    const ratio = (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    rows.push({ label, ...colors, ratio, minimum });
+    expect(ratio, label).toBeGreaterThanOrEqual(minimum);
+  }
+  await measure('Body instruction', '.course-identity p');
+  await measure('Course label', '.challenge-label');
+  await measure('Muted metric label', '.run-metrics dt');
+  await measure('Nav default', '.nav-button');
+  await measure('Play default', '.play-button');
+  await page.locator('.play-button').hover();
+  await measure('Play hover', '.play-button');
+  await measure('OFF field name', '.tile-info strong');
+  await measure('OFF field state', '.tile-info small');
+  await page.locator('.tile-option').hover();
+  await measure('OFF hover state', '.tile-info small');
+  await page.locator('.tile-option').click();
+  await page.mouse.move(0, 0);
+  await measure('ON field state', '.tile-info small');
+  await measure('Selected border', '.tile-option', 'border-top-color', 3);
+  await page.locator('.tile-option').focus();
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  await measure('Focus indicator', '.tile-option', 'outline-color', 3);
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await measure('Disabled ON field name', '.tile-info strong');
+  await measure('Disabled ON field state', '.tile-info small');
+  expect(await page.locator('.tile-option').evaluate((e) => getComputedStyle(e).opacity)).toBe('1');
+  await page.getByRole('button', { name: 'Stop', exact: true }).click();
+  await page.getByRole('button', { name: 'Open local course', exact: true }).focus();
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'invalid.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from('{broken'),
+  });
+  await measure('Import warning', '.local-level-import [role=alert]');
+  await page.getByRole('button', { name: 'Profile', exact: true }).click();
+  await measure('Modal heading', '.modal-header h2');
+  await measure('Modal unavailable text', '.unavailable-state');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await measure('OFF switch thumb', '.switch span', 'background-color', 3);
+  await page.getByRole('switch', { name: 'Mute music' }).click();
+  await measure('ON switch thumb', '.switch.on span', 'background-color', 3);
+  const table = [
+    '# Rendered UI contrast audit',
+    '',
+    'Chromium, Windows, device scale 1. Colors measured from computed styles with ancestor alpha compositing. Ratios use WCAG relative luminance. Canvas paints are unchanged and are not included in this DOM text audit.',
+    '',
+    '| State | Foreground RGB | Background RGB | Ratio | Minimum |',
+    '| --- | --- | --- | --- | --- |',
+    ...rows.map(
+      (row) =>
+        `| ${row.label} | ${row.foreground.join(', ')} | ${row.background.join(', ')} | ${row.ratio.toFixed(2)}:1 | ${row.minimum}:1 |`,
+    ),
+    '',
+    'Palette tokens were not altered. The API notice uses paper behind warning text; warning on turf-soft would fall below 4.5:1. Existing canvas field-placement keyboard limitations prevent a whole-game accessibility certification.',
+  ];
+  await writeFile(`${artifacts}/contrast-audit.md`, table.join('\n') + '\n');
+});
+
+test('OS and saved reduced motion suppress UI transitions while gameplay still runs', async ({
+  page,
+}) => {
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
+  await openLevel(page, inventoryLevel(1));
+  expect(
+    await page.locator('.play-button').evaluate((e) => getComputedStyle(e).transitionDuration),
+  ).toBe('0s');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await page.getByRole('switch', { name: 'Reduced motion' }).click();
+  await page.keyboard.press('Escape');
+  expect(
+    await page.locator('.play-button').evaluate((e) => getComputedStyle(e).transitionDuration),
+  ).toContain('0.14s');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(
+    await page.locator('.play-button').evaluate((e) => getComputedStyle(e).transitionDuration),
+  ).toBe('0s');
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'So close' })).toBeVisible();
+});
