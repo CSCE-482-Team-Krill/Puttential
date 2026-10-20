@@ -80,14 +80,14 @@ const HELP_SECTIONS = [
   },
 ] as const;
 
-// Profile and leaderboard data remain samples until accounts are connected.
+// Display-only fixtures, rendered exclusively by the development preview.
 const RANKINGS = [
-  { rank: 1, name: 'birdbrain', force: 2, tiles: 1, time: '4.82s' },
-  { rank: 2, name: 'physwiz', force: 3, tiles: 2, time: '3.14s' },
-  { rank: 3, name: 'krillking', force: 3, tiles: 2, time: '5.26s' },
-  { rank: 4, name: 'greenkeeper', force: 4, tiles: 2, time: '4.67s' },
-  { rank: 5, name: 'parfect', force: 4, tiles: 3, time: '5.92s' },
-  { rank: 6, name: 'You', force: 5, tiles: 3, time: '6.31s' },
+  { rank: 1, name: 'Example player 1', tiles: 1, time: '4.82s' },
+  { rank: 2, name: 'Example player 2', tiles: 2, time: '3.14s' },
+  { rank: 3, name: 'Example player 3', tiles: 2, time: '5.26s' },
+  { rank: 4, name: 'Example player 4', tiles: 3, time: '4.67s' },
+  { rank: 5, name: 'Example player 5', tiles: 3, time: '5.92s' },
+  { rank: 6, name: 'Example player 6', tiles: 4, time: '6.31s' },
 ] as const;
 
 type Props = {
@@ -100,6 +100,7 @@ type Props = {
   currentLevel: Level;
   chooseLevel: (level: Level) => void;
   tileCost: number;
+  previewMode?: boolean;
 };
 
 function SettingSwitch({
@@ -137,6 +138,7 @@ export function Modal({
   currentLevel,
   chooseLevel,
   tileCost,
+  previewMode = false,
 }: Props) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef(close);
@@ -256,36 +258,34 @@ export function Modal({
 
         {panel === 'leaderboard' && (
           <div className="modal-body modal-stack">
-            <p className="modal-intro">
-              Today&apos;s solutions <span>Lowest force cost wins</span>
-            </p>
-            <ol className="modal-stack ranking-list" aria-label="Sample rankings">
-              {RANKINGS.map((entry) => (
-                <li
-                  className={`modal-row ranking-row ${entry.name === 'You' ? 'your-row' : ''}`}
-                  key={entry.rank}
-                >
-                  <span className="ranking-number">#{entry.rank}</span>
-                  <span className="ranking-player">
-                    <strong>{entry.name}</strong>
-                    <small>
-                      {entry.tiles} {entry.tiles === 1 ? 'tile' : 'tiles'} · {entry.time}
-                    </small>
-                  </span>
-                  <span className="ranking-score">
-                    {entry.force}
-                    <small>pt</small>
-                  </span>
-                  <span className="player-avatar" aria-hidden="true">
-                    {entry.name.slice(0, 1).toUpperCase()}
-                  </span>
-                </li>
-              ))}
-            </ol>
-            <p className="modal-footnote">
-              Sample rankings. Ties use tile count, first-solve attempts, simulation time, then path
-              length.
-            </p>
+            {previewMode ? (
+              <>
+                <p className="modal-intro">EXAMPLE RANKINGS — PREVIEW ONLY</p>
+                <ol className="modal-stack ranking-list" aria-label="Sample rankings">
+                  {RANKINGS.map((entry) => (
+                    <li className="modal-row ranking-row" key={entry.rank}>
+                      <span className="ranking-number">#{entry.rank}</span>
+                      <span className="ranking-player">
+                        <strong>{entry.name}</strong>
+                        <small>
+                          {entry.tiles} {entry.tiles === 1 ? 'tile' : 'tiles'} · {entry.time}
+                        </small>
+                      </span>
+                      <span className="ranking-score">
+                        {entry.tiles * tileCost}
+                        <small>pt</small>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="modal-footnote">
+                  Example rankings. Ties use tile count, first-solve attempts, simulation time, then
+                  path length.
+                </p>
+              </>
+            ) : (
+              <p className="unavailable-state">Leaderboard is not available yet.</p>
+            )}
           </div>
         )}
 
