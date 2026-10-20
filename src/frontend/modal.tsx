@@ -67,7 +67,7 @@ const HELP_SECTIONS = [
   {
     title: 'How to play',
     content:
-      'Choose a force block from your toolkit, then drag its field into position on the course. The dotted path previews the start of the run. Press Play to lock your layout and watch it move. Use Try again to adjust your plan, or Reset layout to start over.',
+      'Turn a block ON in your toolkit, then drag its field on the course. The cards themselves do not drag. The dotted path previews the start of the run. Press Play to lock your layout and watch it move. Use Try again to adjust your plan, or Reset layout to start over.',
   },
   {
     title: 'Scoring',
@@ -366,14 +366,20 @@ export function Modal({
 
         {panel === 'result' && result && (
           <div className="modal-body result-body">
-            <div className="result-trophy" aria-hidden="true">
-              <Icon name={result.solved ? 'trophy' : 'help'} size={48} />
+            <div className="result-mark brand-mark" aria-hidden="true">
+              <span className="brand-ball" />
+              <span className="brand-flag" />
             </div>
             <p>
               {result.solved
                 ? 'The ball held in the goal.'
                 : 'The ball stopped short of the goal. Adjust your fields and try again.'}
             </p>
+            {!result.solved && (
+              <p className="result-helper">
+                Close this panel, then choose Try again to adjust your fields.
+              </p>
+            )}
             <div className="result-grid">
               <div>
                 <strong>{result.tiles * tileCost}</strong>
