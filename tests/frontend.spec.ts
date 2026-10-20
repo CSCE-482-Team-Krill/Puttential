@@ -5,7 +5,7 @@ test('migrated Figma modals retain focus, keyboard controls and preferences', as
   await page.goto('http://127.0.0.1:3000/modal-preview');
   for (const [button, title] of [
     ['Help', 'Help'],
-    ['Profile', 'You'],
+    ['Profile', 'Profile'],
     ['Leaderboard', 'Leaderboard'],
     ['Calendar', 'Calendar'],
     ['Settings', 'Settings'],

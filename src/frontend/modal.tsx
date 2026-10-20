@@ -143,7 +143,7 @@ export function Modal({
   closeRef.current = close;
   const titles: Record<Exclude<Panel, null>, string> = {
     archive: 'Calendar',
-    stats: 'You',
+    stats: 'Profile',
     leaderboard: 'Leaderboard',
     settings: 'Settings',
     help: 'Help',
@@ -238,50 +238,19 @@ export function Modal({
 
         {panel === 'stats' && (
           <div className="modal-body modal-stack">
-            <section className="profile-section" aria-labelledby="profile-stats">
-              <h3 id="profile-stats" className="modal-section-heading">
-                Stats
-              </h3>
-              <dl className="profile-metrics">
-                <div>
-                  <dt>Current streak</dt>
-                  <dd>
-                    14 <small>days</small>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Average attempts</dt>
-                  <dd>4.2</dd>
-                </div>
-              </dl>
-            </section>
-            <section className="profile-section" aria-labelledby="profile-games">
-              <h3 id="profile-games" className="modal-section-heading">
-                Games played
-              </h3>
-              <div className="profile-summary">
-                <strong>87</strong>
-                <span>courses played</span>
-              </div>
-            </section>
-            <section className="profile-section" aria-labelledby="profile-ranking">
-              <h3 id="profile-ranking" className="modal-section-heading">
-                Ranking
-              </h3>
-              <dl className="profile-metrics">
-                <div>
-                  <dt>Today&apos;s position</dt>
-                  <dd>#6</dd>
-                </div>
-                <div>
-                  <dt>Average percentile</dt>
-                  <dd>
-                    78<small>%</small>
-                  </dd>
-                </div>
-              </dl>
-            </section>
-            <p className="modal-footnote">Sample profile · progress tracking is coming soon.</p>
+            <p className="modal-intro">Profile statistics are not connected.</p>
+            {[
+              ['stats', 'Stats'],
+              ['games', 'Games played'],
+              ['ranking', 'Ranking'],
+            ].map(([id, title]) => (
+              <section className="profile-section" aria-labelledby={`profile-${id}`} key={id}>
+                <h3 id={`profile-${id}`} className="modal-section-heading">
+                  {title}
+                </h3>
+                <p className="unavailable-state">No recorded data available</p>
+              </section>
+            ))}
           </div>
         )}
 
