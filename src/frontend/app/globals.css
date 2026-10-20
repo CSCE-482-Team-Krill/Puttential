@@ -503,174 +503,151 @@ button:disabled {
 }
 
 .control-column {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  padding: 24px 17px 19px;
-}
-.control-heading {
-  padding: 0 5px;
+  grid-area: toolkit;
+  align-self: start;
+  padding: 20px 16px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-md);
+  background: var(--ui-paper);
 }
 .toolkit-title {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-top: 7px;
+  margin-top: 8px;
 }
 .toolkit-title h2 {
   margin: 0;
-  font-size: 23px;
-  letter-spacing: -0.7px;
+  font-size: 1.3125rem;
+  font-weight: 700;
+  line-height: 1.2;
 }
 .inventory-count {
   display: grid;
   place-items: center;
-  min-width: 26px;
-  height: 26px;
-  padding: 0 6px;
-  border: 1px solid #fff;
-  border-radius: 8px;
-  background: #dff9e0;
-  color: var(--accent);
-  font-size: 11px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 4px 8px;
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-turf-soft);
+  color: var(--ui-green);
+  font-size: 0.78125rem;
   font-weight: 700;
 }
 .control-heading p {
-  margin: 10px 0 23px;
-  color: #5e835f;
-  font-size: 11px;
-  line-height: 1.7;
+  margin: 12px 0 0;
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
 .tile-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: 12px;
 }
 .tile-option {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   width: 100%;
-  min-height: 102px;
-  padding: 12px 10px;
+  min-height: 80px;
+  padding: 12px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-md);
+  background: var(--ui-white);
+  color: var(--ui-ink);
   text-align: left;
-  border: 1px solid #ffffffea;
-  border-radius: 13px;
-  background: #ffffff8c;
-  color: #2d622e;
-  box-shadow:
-    inset 0 1px 0 #fff,
-    0 4px 12px #50a6520f;
-  transition:
-    background 0.2s,
-    box-shadow 0.2s;
 }
 .tile-option:hover:enabled {
-  background: #ffffffdb;
-  box-shadow: 0 8px 18px #50a65225;
+  border-color: var(--ui-green);
+  background: var(--ui-turf-soft);
 }
 .tile-option.selected {
-  background: linear-gradient(125deg, #f1fdf1, #e0fce0d6);
-  border-color: #69b96c;
-  box-shadow:
-    0 0 0 2px #bff3c14d,
-    inset 0 1px 0 #fff;
+  padding: 11px;
+  border: 2px solid var(--ui-green);
+  background: var(--ui-turf);
+}
+.tile-option:disabled {
+  color: var(--ui-ink);
+  background: var(--ui-disabled);
+}
+.tile-option.selected:disabled {
+  background: var(--ui-turf);
 }
 .tile-arrows {
   display: grid;
   place-items: center;
-  flex-shrink: 0;
-  width: 56px;
-  height: 65px;
-  border: 1px solid #fff;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #bbf3bc, #dbfbdc);
-  color: #41a843;
-  font-size: 30px;
-  font-weight: 600;
+  flex: 0 0 50px;
+  width: 50px;
+  min-height: 50px;
+  padding: 4px;
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-turf-soft);
+  color: var(--ui-green);
+  font-size: 1.75rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 .tile-info {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: 4px;
-  flex: 1;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 .tile-info strong {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
+  line-height: 1.4;
 }
-.tile-info small {
-  color: #5e835f;
-  font-size: 9px;
-  line-height: 1.5;
-}
-.tile-state {
-  color: #5e835f;
-  font-size: 8px;
-  line-height: 1.5;
-}
-.selected .tile-state {
-  color: var(--accent);
-  font-weight: 700;
+.tile-info small,
+.tile-cost {
+  color: var(--ui-muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 .tile-cost {
   align-self: flex-start;
   flex-shrink: 0;
-  padding-top: 7px;
-  color: #5e835f;
-  font-size: 9px;
-  font-weight: 600;
+  padding-top: 4px;
   white-space: nowrap;
+  font-weight: 600;
 }
-.toolkit-note {
-  margin: 17px 5px 24px;
-  color: #5e835f;
-  font-size: 10px;
-  line-height: 1.65;
+.toolkit-note,
+.empty-inventory {
+  margin: 16px 0 0;
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
 }
-.tip-card {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 15px 12px;
-  margin-top: auto;
-  border: 1px solid #fff;
-  border-radius: 12px;
-  background: #ffffff6b;
-}
-.tip-icon {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 29px;
-  height: 29px;
-  border-radius: 8px;
-  background: #fff0c5aa;
-  color: #bc8b25;
-  font-size: 18px;
-}
-.tip-card strong {
-  font-size: 11px;
-}
-.tip-card p {
-  margin: 5px 0 0;
-  color: #5e835f;
-  font-size: 10px;
-  line-height: 1.75;
-}
-.toolkit-footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding-top: 20px;
-  color: #5e835f;
-  font-size: 10px;
+.empty-inventory {
+  margin: 0;
 }
 
-/* Figma's stacked partitions, expressed in the workspace's green glass palette. */
+.loading-region {
+  display: grid;
+  place-items: center;
+  min-height: min(56vh, 420px);
+  padding: 24px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-md);
+  background: var(--ui-turf-soft);
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+}
+.course-details {
+  padding: 20px 24px;
+  background: var(--ui-paper);
+}
+.preview-banner {
+  margin: 12px 0 !important;
+  color: var(--ui-warning) !important;
+  font-weight: 700;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
