@@ -37,6 +37,8 @@ type Drag = Readonly<{
   start: Vec2;
   fieldStart: Vec2;
   extents: Bounds;
+  width: number;
+  height: number;
 }>;
 
 const ARROW_SPACING = 0.6;
@@ -351,6 +353,15 @@ export function CourseCanvas(props: Props) {
   const dragRef = useRef<Drag | null>(null);
   propsRef.current = props;
 
+  /** A changed canvas size invalidates the gesture's original world projection. */
+  function endDrag(canvas: HTMLCanvasElement) {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    if (drag && canvas.hasPointerCapture(drag.pointerId)) {
+      canvas.releasePointerCapture(drag.pointerId);
+    }
+  }
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext('2d');
@@ -360,6 +371,7 @@ export function CourseCanvas(props: Props) {
       const width = Math.round(canvas.clientWidth * ratio),
         height = Math.round(canvas.clientHeight * ratio);
       if (canvas.width !== width || canvas.height !== height) {
+        endDrag(canvas);
         canvas.width = width;
         canvas.height = height;
       }
@@ -411,6 +423,14 @@ export function CourseCanvas(props: Props) {
       aria-label="Puzzle course. Drag force fields to move them before pressing Play."
       onPointerDown={(event) => {
         if (propsRef.current.mode !== 'setup' || viewRef.current === null) return;
+        const canvas = event.currentTarget;
+        const ratio = window.devicePixelRatio || 1;
+        // Wait for a fresh view if a pointer event arrives before the resize frame.
+        if (
+          canvas.width !== Math.round(canvas.clientWidth * ratio) ||
+          canvas.height !== Math.round(canvas.clientHeight * ratio)
+        )
+          return;
         const point = pointerPosition(event);
         const field = fieldAt(point);
         if (field === null) return;
@@ -426,12 +446,22 @@ export function CourseCanvas(props: Props) {
               y: point.y - field.position.y,
             })),
           ),
+          width: canvas.clientWidth,
+          height: canvas.clientHeight,
         };
       }}
       onPointerMove={(event) => {
         const drag = dragRef.current,
           view = viewRef.current;
         if (drag === null || view === null || drag.pointerId !== event.pointerId) return;
+        // Pointer events can precede the next render, so also cancel here.
+        if (
+          event.currentTarget.clientWidth !== drag.width ||
+          event.currentTarget.clientHeight !== drag.height
+        ) {
+          endDrag(event.currentTarget);
+          return;
+        }
         const world = toWorld(view, pointerPosition(event));
         const { bounds } = view;
         propsRef.current.onMoveField(drag.id, {
@@ -445,12 +475,9 @@ export function CourseCanvas(props: Props) {
           ),
         });
       }}
-      onPointerUp={() => {
-        dragRef.current = null;
-      }}
-      onPointerCancel={() => {
-        dragRef.current = null;
-      }}
+      onPointerUp={(event) => endDrag(event.currentTarget)}
+      onPointerCancel={(event) => endDrag(event.currentTarget)}
+      onLostPointerCapture={(event) => endDrag(event.currentTarget)}
     />
   );
 }
