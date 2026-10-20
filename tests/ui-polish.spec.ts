@@ -410,3 +410,105 @@ for (const [from, to] of [
     });
   });
 }
+
+test('running simulation and a pending daily save keep nodes, attempts and one quantized replay', async ({
+  page,
+}) => {
+  const level = { ...successLevel, goal: { ...successLevel.goal, holdSeconds: 0.6 } };
+  await page.setViewportSize({ width: 959, height: 900 });
+  const attempts: unknown[] = [],
+    solutions: { placementData: { commands: unknown[] } }[] = [];
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/attempts', async (route) => {
+    attempts.push(route.request().postDataJSON());
+    await gate;
+    await route.fulfill({ status: 201, json: { attemptId: 'polish-attempt' } });
+  });
+  await page.route('**/api/solutions', async (route) => {
+    solutions.push(route.request().postDataJSON());
+    await route.fulfill({ status: 201, json: { solutionId: 'polish-solution' } });
+  });
+  await openLevel(page, level);
+  // This success fixture has two fields. Store the four unique core nodes.
+  await page.evaluate(() =>
+    Object.assign(window, {
+      runNodes: ['canvas', '.play-button', '.local-level-import input', '.tile-list'].map((s) =>
+        document.querySelector(s),
+      ),
+    }),
+  );
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 960, height: 900 });
+  await expect(page.locator('.run-metrics dd').last()).toHaveText('1');
+  await expect(page.getByRole('dialog', { name: 'Nice work!' })).toBeVisible();
+  await expect(page.getByText('Saving run…', { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 959, height: 900 });
+  release();
+  await expect(page.getByText('Attempt and solution saved.', { exact: true })).toBeVisible();
+  expect(attempts).toHaveLength(1);
+  expect(solutions).toHaveLength(1);
+  const commands = level.fields.flatMap((field, index) => [
+    {
+      type: 'move-field',
+      fieldId: field.id,
+      xQ: quantizePosition(field.position.x),
+      yQ: quantizePosition(field.position.y),
+      sequence: index * 2,
+    },
+    {
+      type: 'set-field-enabled',
+      fieldId: field.id,
+      enabled: field.enabled,
+      sequence: index * 2 + 1,
+    },
+  ]);
+  expect(solutions[0]!.placementData.commands).toEqual(commands);
+  expect(
+    await page.evaluate(() => {
+      const stored = (window as unknown as { runNodes: Element[] }).runNodes;
+      return ['canvas', '.play-button', '.local-level-import input', '.tile-list'].every(
+        (s, i) => stored[i] === document.querySelector(s),
+      );
+    }),
+  ).toBe(true);
+  await screenshot(page, 'result-success');
+  await page.getByRole('button', { name: 'Back to course' }).click();
+  await expect(page.locator('canvas')).not.toHaveClass(/editable/);
+  await page.getByRole('button', { name: 'Try again', exact: true }).click();
+  await expect(page.locator('canvas')).toHaveClass(/editable/);
+  expect(attempts).toHaveLength(1);
+});
+
+test('failure saves an attempt only and explains close versus retry; POST failures stay honest', async ({
+  page,
+}) => {
+  let attempts = 0,
+    solutions = 0;
+  await page.route('**/api/attempts', (route) => {
+    attempts++;
+    return route.fulfill({ status: 500, json: { error: 'Offline' } });
+  });
+  await page.route('**/api/solutions', (route) => {
+    solutions++;
+    return route.fulfill({ status: 500 });
+  });
+  await openLevel(page, inventoryLevel(1));
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'So close' });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText(
+    'Close this panel, then choose Try again to adjust your fields.',
+  );
+  await expect(page.locator('.save-status')).toContainText('could not be fully saved');
+  await screenshot(page, 'result-failure');
+  await dialog.getByRole('button', { name: 'Back to course' }).click();
+  await expect(page.locator('.tile-option')).toBeDisabled();
+  await page.getByRole('button', { name: 'Try again', exact: true }).click();
+  await expect(page.locator('.tile-option')).toBeEnabled();
+  expect(attempts).toBe(1);
+  expect(solutions).toBe(0);
+});
