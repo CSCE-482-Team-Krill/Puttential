@@ -512,3 +512,92 @@ test('failure saves an attempt only and explains close versus retry; POST failur
   expect(attempts).toBe(1);
   expect(solutions).toBe(0);
 });
+
+test('production data stays unavailable; development preview has six labeled examples', async ({
+  page,
+}) => {
+  await openLevel(page, inventoryLevel(1));
+  for (const [name, file] of [
+    ['Help', 'help'],
+    ['Profile', 'profile'],
+    ['Leaderboard', 'leaderboard-unavailable-production'],
+    ['Calendar', 'calendar'],
+    ['Settings', 'settings'],
+  ]) {
+    const trigger = page.getByRole('button', { name: name!, exact: true });
+    await trigger.click();
+    const dialog = page.getByRole('dialog', { name: name! });
+    await expect(dialog).toBeVisible();
+    if (name === 'Help')
+      await expect(dialog.locator('summary')).toHaveText([
+        'Objective',
+        'How to play',
+        'Scoring',
+        'Daily Challenges',
+      ]);
+    if (name === 'Profile') {
+      await expect(dialog.locator('h3')).toHaveText(['Stats', 'Games played', 'Ranking']);
+      await expect(dialog.locator('.unavailable-state')).toHaveCount(3);
+      await expect(dialog).toContainText('Profile statistics are not connected.');
+    }
+    if (name === 'Leaderboard') {
+      await expect(dialog).toContainText('Leaderboard is not available yet.');
+      await expect(dialog.locator('.ranking-row')).toHaveCount(0);
+    }
+    if (name === 'Calendar') {
+      await expect(dialog.locator('.archive-row')).toHaveCount(3);
+      await expect(dialog.locator('.archive-row').first()).toContainText('2026-10-15');
+      await expect(dialog.locator('.archive-row').nth(1)).toContainText('Practice course');
+    }
+    await screenshot(page, `modals-${file}`);
+    await page.keyboard.press('Escape');
+    await expect(trigger).toBeFocused();
+  }
+  const response = await page.goto(`${URL}modal-preview`);
+  expect(response?.status()).toBe(200);
+  await expect(
+    page.getByText('Preview only — example courses and dates.', { exact: true }),
+  ).toBeVisible();
+  await screenshot(page, 'preview-fixture-label');
+  await page.getByRole('button', { name: 'Leaderboard', exact: true }).click();
+  await expect(page.getByRole('dialog')).toContainText('EXAMPLE RANKINGS — PREVIEW ONLY');
+  await expect(page.locator('.ranking-row')).toHaveCount(6);
+  await expect(page.locator('.your-row')).toHaveCount(0);
+  await screenshot(page, 'modals-leaderboard-six-example-rows-preview');
+});
+
+test('short dialogs scroll, trap Tab both ways, close on backdrop and retain preferences', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 320, height: 568 });
+  await openLevel(page, inventoryLevel(1));
+  await page.getByRole('button', { name: 'Help', exact: true }).click();
+  for (const summary of await page.locator('summary').all()) await summary.click();
+  expect(await page.locator('.modal-body').evaluate((e) => e.scrollHeight > e.clientHeight)).toBe(
+    true,
+  );
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const close = page.getByRole('button', { name: 'Close panel' });
+  await page.keyboard.press('Tab');
+  await expect(close).toBeFocused();
+  await page.keyboard.press('Shift+Tab');
+  await expect(page.getByRole('switch', { name: 'Show path preview' })).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(close).toBeFocused();
+  await page.getByRole('switch', { name: 'Show path preview' }).click();
+  await page.getByRole('switch', { name: 'Mute music' }).click();
+  await page.mouse.click(2, 2);
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.reload();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  await expect(page.getByRole('switch', { name: 'Show path preview' })).toHaveAttribute(
+    'aria-checked',
+    'false',
+  );
+  await expect(page.getByRole('switch', { name: 'Mute music' })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await expect(page.getByRole('dialog')).toContainText('Audio playback is not available yet.');
+});
