@@ -601,3 +601,79 @@ test('short dialogs scroll, trap Tab both ways, close on backdrop and retain pre
   );
   await expect(page.getByRole('dialog')).toContainText('Audio playback is not available yet.');
 });
+
+test('integrated import rejects corrupt/oversize data, retains pending file input across resize and respects camera bounds', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 959, height: 900 });
+  await openLevel(page, inventoryLevel(1));
+  const input = page.locator('.secondary-course-actions input[type=file]');
+  await expect(input).toHaveCount(1);
+  for (const [name, content, error] of [
+    ['invalid.json', '{broken', /JSON|property name/i],
+    ['oversize.json', ' '.repeat(2_000_001), /too large/],
+  ] as const) {
+    await input.setInputFiles({ name, mimeType: 'application/json', buffer: Buffer.from(content) });
+    await expect(page.locator('.local-level-import [role=alert]')).toContainText(error);
+  }
+  const doc = documentFromLevel({ ...inventoryLevel(1), id: 'imported-polish-course' });
+  doc.editor.arena.bounds = { minX: -12, maxX: 12, minY: -8, maxY: 8 };
+  await page.evaluate(() => {
+    const original = File.prototype.text;
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    Object.assign(window, { releaseImport: release, importReads: 0 });
+    File.prototype.text = async function () {
+      const state = window as unknown as { importReads: number };
+      state.importReads++;
+      await gate;
+      return original.call(this);
+    };
+  });
+  await rememberNodes(page);
+  await input.setInputFiles({
+    name: 'course.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(doc)),
+  });
+  await page.setViewportSize({ width: 960, height: 900 });
+  await sameNodes(page);
+  await page.setViewportSize({ width: 959, height: 900 });
+  await sameNodes(page);
+  await page.evaluate(() => (window as unknown as { releaseImport: () => void }).releaseImport());
+  await expect(page.locator('h1')).toHaveText('Imported Polish Course');
+  await expect(page.locator('.challenge-label')).toHaveText('Local course');
+  await expect(page.locator('.local-level-import [role=alert]')).toHaveCount(0);
+  expect(
+    await page.evaluate(() => (window as unknown as { importReads: number }).importReads),
+  ).toBe(1);
+  await sameNodes(page);
+  await page.locator('.tile-option').click();
+  await page.mouse.move(0, 0);
+  // Imported bounds must frame the field using the editor camera, not levelBounds.
+  await expect
+    .poll(async () =>
+      page.locator('canvas').evaluate((e) => {
+        const ctx = e.getContext('2d')!,
+          scale = Math.min(e.clientWidth / 24.3, e.clientHeight / 16.3);
+        const x = Math.round(e.clientWidth / 2 - 3 * scale),
+          y = Math.round(e.clientHeight / 2 - 0.6 * scale);
+        const data = ctx.getImageData(x, y - 2, 1, 5).data;
+        return Array.from(
+          { length: 5 },
+          (_, i) => data[i * 4 + 3]! > 220 && data[i * 4]! > 240,
+        ).some(Boolean);
+      }),
+    )
+    .toBe(true);
+  let posts = 0;
+  await page.route('**/api/attempts', (route) => {
+    posts++;
+    return route.fulfill({ status: 500 });
+  });
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'So close' })).toBeVisible();
+  expect(posts).toBe(0);
+});
