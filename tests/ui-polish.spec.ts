@@ -334,3 +334,79 @@ test('all responsive widths retain course framing, direct nav targets and no pag
     }
   }
 });
+
+for (const width of [390, 959, 960, 1050, 1440]) {
+  test(`canvas movement has correct rendered displacement and clamps at bounds at ${width}`, async ({
+    page,
+  }) => {
+    const level = inventoryLevel(1, { enabled: true });
+    await page.setViewportSize({ width, height: 900 });
+    await openLevel(page, level);
+    await expectField(page, level, { x: -3, y: 0 });
+    await page.locator('canvas').screenshot({ path: `${artifacts}/pointer-${width}-before.png` });
+    await dragField(page, level, { x: -3, y: 0 }, { x: -2, y: -0.5 });
+    expect(await fieldEdge(page, level, { x: -3, y: 0 })).toBeLessThan(0.2);
+    await page.locator('canvas').screenshot({ path: `${artifacts}/pointer-${width}-after.png` });
+    const p = await projection(page, level, { x: -2, y: -0.5 });
+    await page.mouse.move(p.clientX, p.clientY);
+    await page.mouse.down();
+    await page.mouse.move(p.clientX, p.box.y + p.box.height + 200, { steps: 8 });
+    await page.mouse.up();
+    await expectField(page, level, { x: -2, y: levelBounds(level).minY + 0.6 });
+  });
+}
+
+test('completed moves, fresh hit targets, mounted nodes and keyboard focus survive 959↔960', async ({
+  page,
+}) => {
+  const level = inventoryLevel(1, { enabled: true });
+  await page.setViewportSize({ width: 959, height: 1000 });
+  await openLevel(page, level);
+  await dragField(page, level, { x: -3, y: 0 }, { x: -2, y: -0.5 });
+  await rememberNodes(page);
+  await page.locator('.tile-option').focus();
+  for (const width of [960, 959]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await sameNodes(page);
+    await expect(page.locator('.tile-option')).toBeFocused();
+    await expectField(page, level, { x: -2, y: -0.5 });
+    await expect(page.locator('.run-metrics dd').last()).toHaveText('0');
+  }
+  await dragField(page, level, { x: -2, y: -0.5 }, { x: -1, y: -1 });
+  await page.setViewportSize({ width: 960, height: 1000 });
+  await sameNodes(page);
+  await expectField(page, level, { x: -1, y: -1 });
+});
+
+for (const [from, to] of [
+  [959, 960],
+  [960, 959],
+]) {
+  test(`active pointer resize ${from}→${to} safely cancels without a jump`, async ({
+    page,
+  }, testInfo) => {
+    const level = inventoryLevel(1, { enabled: true });
+    await page.setViewportSize({ width: from!, height: 1000 });
+    await openLevel(page, level);
+    const p = await projection(page, level, { x: -3, y: 0 });
+    await page.mouse.move(p.clientX, p.clientY);
+    await page.mouse.down();
+    await page.mouse.move(p.clientX + p.scale * 0.5, p.clientY, { steps: 5 });
+    await expectField(page, level, { x: -2.5, y: 0 });
+    const held = { x: p.clientX + p.scale * 0.5, y: p.clientY };
+    await page.setViewportSize({ width: to!, height: 1000 });
+    // Continue moving in screen coordinates, as a real held pointer does.
+    // The old projection must not move the field after the layout changes.
+    await page.mouse.move(held.x + 1, held.y);
+    await expectField(page, level, { x: -2.5, y: 0 });
+    await page.mouse.up();
+    await expectField(page, level, { x: -2.5, y: 0 });
+    await page.locator('canvas').screenshot({ path: `${artifacts}/active-drag-${from}-fixed.png` });
+    await dragField(page, level, { x: -2.5, y: 0 }, { x: -2, y: -0.5 });
+    testInfo.annotations.push({
+      type: 'active-gesture',
+      description:
+        'Approved safe cancellation: a held pointer moved after resize does not jump; committed movement survives and a fresh drag aligns.',
+    });
+  });
+}
