@@ -16,9 +16,12 @@ import type { TodayPuzzleResponse } from '../../backend/types';
 import { loadDailyPuzzle, saveRun } from '../api';
 import type { CompletedRun } from '../puzzle';
 
-/** Today's puzzle first; the archive lists the rest. */
-/** Every tile adds the same amount to a solution's force cost. */
-const TILE_COST = 1;
+import {
+  displayedForceCost,
+  selectableFields,
+  selectedFieldCount,
+  TILE_COST,
+} from '../score-display';
 
 const PRACTICE_LEVELS = starterLevels.map((level) => ({
   level,
@@ -103,7 +106,8 @@ function Game({
     if (puzzle.result !== null) setPanel('result');
   }, [puzzle.result]);
 
-  const placedTiles = Object.values(puzzle.draft).filter((field) => field.enabled).length;
+  const placedTiles = selectedFieldCount(level, puzzle.draft);
+  const inventoryCount = selectableFields(level).length;
   const levelIndex = levels.findIndex((entry) => entry.level === level);
   const isDaily = daily?.configuration === level;
   const status =
@@ -246,7 +250,7 @@ function Game({
                   <div>
                     <dt>Force cost</dt>
                     <dd>
-                      {placedTiles * TILE_COST}
+                      {displayedForceCost(level, puzzle.draft)}
                       <small>pt</small>
                     </dd>
                   </div>
@@ -254,7 +258,7 @@ function Game({
                     <dt>Blocks placed</dt>
                     <dd>
                       {placedTiles}
-                      <small>/ {level.fields.length}</small>
+                      <small>/ {inventoryCount}</small>
                     </dd>
                   </div>
                   <div>
@@ -297,7 +301,7 @@ function Game({
               <span className="section-kicker">YOUR TOOLKIT</span>
               <div className="toolkit-title">
                 <h2 id="toolkit-title">Force blocks</h2>
-                <span className="inventory-count">{level.fields.length}</span>
+                <span className="inventory-count">{inventoryCount}</span>
               </div>
               <p>Choose a block, then drag its field into position on the course.</p>
             </div>

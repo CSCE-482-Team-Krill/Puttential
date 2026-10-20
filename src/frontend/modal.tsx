@@ -5,6 +5,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import type { Level } from '../game';
 import { Icon } from './icon';
 import type { RunResult } from './puzzle';
+import { TILE_COST } from './score-display';
 
 export type Panel = 'archive' | 'stats' | 'leaderboard' | 'settings' | 'help' | 'result' | null;
 
@@ -70,8 +71,7 @@ const HELP_SECTIONS = [
   },
   {
     title: 'Scoring',
-    content:
-      'Each placed block costs 1 point. Successful solutions rank by force cost, then tile count, attempts to your first solve, simulated completion time, and path length. Fewer points is better.',
+    content: `Each placed block costs ${TILE_COST} point. Successful solutions rank by force cost, then tile count, attempts to your first solve, simulated completion time, and path length. Fewer points is better.`,
   },
   {
     title: 'Daily Challenges',
