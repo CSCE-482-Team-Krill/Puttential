@@ -29,14 +29,6 @@
   --ui-space-5: 20px;
   --ui-space-6: 24px;
   --ui-space-8: 32px;
-  --ink: var(--ui-ink);
-  --muted: var(--ui-muted);
-  --line: var(--ui-line);
-  --surface: var(--ui-paper);
-  --canvas: var(--ui-turf);
-  --accent: var(--ui-green);
-  --accent-deep: var(--ui-green-strong);
-  --glass-shadow: var(--ui-shadow-frame);
 }
 
 * {
@@ -965,13 +957,12 @@ button:disabled {
   font-size: 0.78125rem;
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+:is(button, summary) {
+  transition:
+    background-color 140ms ease-out,
+    border-color 140ms ease-out,
+    color 140ms ease-out,
+    transform 140ms ease-out;
 }
 .reduce-motion *,
 .reduce-motion *::before,
@@ -989,309 +980,160 @@ button:disabled {
     scroll-behavior: auto !important;
   }
 }
-
 @media (min-width: 1550px) {
   .site-wrap {
     padding: 32px;
   }
-  .course {
-    aspect-ratio: 1.85;
-  }
 }
-
-@media (max-width: 1150px) {
+@media (max-width: 959px) {
   .site-wrap {
     padding: 16px;
   }
   .game-layout {
-    grid-template-columns: minmax(0, 1fr) 280px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-template-areas: 'meta' 'identity' 'stage' 'primary' 'toolkit' 'secondary';
+  }
+  .course-identity {
+    margin-block: 4px 8px;
+    padding: 12px 16px;
+  }
+  .course-meta {
+    border: 1px solid var(--ui-line);
+    border-radius: var(--ui-r-sm);
+  }
+  .course-stage {
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid var(--ui-line);
+    border-radius: var(--ui-r-md);
   }
   .course {
-    min-height: 360px;
+    aspect-ratio: 1.6;
   }
-  .course-details {
-    padding: 20px 18px 16px;
-  }
-  .run-controls {
-    flex-wrap: wrap;
-    gap: 18px;
-  }
-  .run-actions {
-    margin-left: auto;
-  }
-  .game-toolbar {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-  .demo-note {
-    text-align: left;
-  }
-  .tile-arrows {
-    width: 46px;
-    height: 58px;
-  }
-  .tile-info strong {
-    font-size: 13px;
-  }
-}
-
-@media (max-width: 850px) {
-  .site-header {
-    padding: 15px 18px;
-    gap: 16px;
-  }
-  .brand {
-    font-size: 25px;
-  }
-  .brand-mark {
-    width: 34px;
-    height: 34px;
-  }
-  .brand-ball {
-    left: 6px;
-    top: 14px;
-    width: 13px;
-    height: 13px;
-  }
-  .brand-flag {
-    left: 23px;
-    top: 1px;
-    height: 20px;
-  }
-  .main-nav {
-    gap: 6px;
-  }
-  .nav-button {
-    min-width: 58px;
-    min-height: 59px;
-    padding: 9px 7px;
-    font-size: 9px;
-  }
-  .game-layout {
-    grid-template-columns: minmax(0, 1fr) 250px;
+  .primary-controls {
+    margin-bottom: 12px;
+    padding: 12px 16px;
+    background: var(--ui-turf-soft);
+    border-radius: var(--ui-r-md);
   }
   .control-column {
-    padding: 20px 12px 16px;
+    margin-bottom: 12px;
   }
-  .toolkit-title h2 {
-    font-size: 21px;
-  }
-  .tile-option {
-    gap: 8px;
-    padding: 10px 8px;
-  }
-  .tile-arrows {
-    width: 38px;
-    height: 54px;
-    font-size: 25px;
-  }
-  .run-metrics {
-    gap: 18px;
-  }
-  .run-metrics > div + div {
-    padding-left: 18px;
-  }
-  .how-button {
-    padding: 8px;
-  }
-  .how-button span {
-    display: none;
+  .secondary-course-actions {
+    padding: 4px 16px 16px;
   }
 }
-
-@media (max-width: 700px) {
+@media (max-width: 699px) {
   .site-wrap {
     padding: 12px;
   }
   .site-header {
-    min-height: 76px;
-    padding: 12px 14px;
-    gap: 10px;
-    border-radius: 20px 20px 0 0;
+    padding: 12px 16px;
   }
   .brand {
-    font-size: 23px;
+    font-size: 1.25rem;
   }
   .main-nav {
-    gap: 4px;
+    flex-basis: 100%;
   }
   .nav-button {
-    width: clamp(28px, 6vw, 42px);
-    min-width: 28px;
-    min-height: 36px;
-    padding: 6px;
-    border-radius: 10px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 8px;
   }
   .nav-button span {
     display: none;
   }
-  .nav-button svg {
-    width: clamp(16px, 3vw, 21px);
-    height: clamp(16px, 3vw, 21px);
-  }
-  .dashboard {
-    padding: 8px;
-    border-radius: 0 0 20px 20px;
-  }
-  .game-layout {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .play-column {
-    gap: 8px;
-  }
-  .course-stage {
-    padding: 10px;
-    border-radius: 13px;
-  }
-  .course-heading {
-    padding: 2px 1px 12px;
-  }
-  .challenge-label {
-    font-size: 10px;
-    gap: 5px;
-  }
-  .course-status {
-    font-size: 9px;
-  }
   .course {
-    min-height: 0;
-    aspect-ratio: 1.4;
+    aspect-ratio: 1.55;
   }
-  .course-grid {
-    background-size: 35px 35px;
-  }
-  .course-details {
-    padding: 18px 15px 15px;
-    border-radius: 13px;
-  }
-  .details-heading h1 {
-    font-size: 23px;
-  }
-  .details-heading p {
-    font-size: 11px;
-  }
-  .run-controls {
-    margin: 20px 0 16px;
+  .course-identity h1 {
+    font-size: 1.4375rem;
   }
   .run-metrics {
-    width: 100%;
+    flex: 1 1 100%;
     justify-content: space-between;
+    gap: 8px;
   }
-  .run-metrics > div {
-    flex: 1;
+  .run-metrics > div + div {
+    padding-left: 12px;
   }
   .run-metrics dd {
-    font-size: 23px;
-  }
-  .run-actions {
-    width: 100%;
-    justify-content: space-between;
-    gap: 12px;
+    font-size: 1.4375rem;
   }
   .play-button {
     flex: 1;
-    max-width: 190px;
-  }
-  .text-button {
-    padding: 10px 4px;
-  }
-  .game-toolbar {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .course-legend {
-    gap: 20px;
-  }
-  .control-column {
-    padding: 20px 15px 17px;
-    border-radius: 13px;
-  }
-  .control-heading p {
-    margin-bottom: 18px;
-  }
-  .tile-option {
-    min-height: 92px;
-    padding: 12px;
-    gap: 14px;
-  }
-  .tile-arrows {
-    width: 60px;
-    height: 60px;
-    font-size: 30px;
-  }
-  .tile-info strong {
-    font-size: 15px;
-  }
-  .tile-info small,
-  .tile-state,
-  .tile-cost {
-    font-size: 10px;
-  }
-  .toolkit-note {
-    margin-bottom: 18px;
-  }
-  .toolkit-footer {
-    padding-top: 16px;
   }
   .modal-backdrop {
     padding: 12px;
   }
   .modal {
     max-height: calc(100dvh - 24px);
-    border-radius: 17px;
   }
   .modal-header {
-    padding: 17px 14px;
+    padding: 16px;
   }
   .modal-header h2 {
-    font-size: 21px;
-  }
-  .archive-row {
-    gap: 8px;
-    padding: 13px 10px;
-    grid-template-columns: 36px minmax(0, 1fr) auto;
+    font-size: 1.25rem;
   }
 }
-
 @media (max-width: 480px) {
+  .site-wrap {
+    padding: 8px;
+  }
   .site-header {
-    padding-right: 8px;
-    padding-left: 8px;
     gap: 8px;
-  }
-  .brand {
-    font-size: 20px;
-    letter-spacing: -1px;
-    gap: 6px;
-  }
-  .brand-mark {
-    width: 28px;
-    height: 28px;
-  }
-  .brand-ball {
-    left: 4px;
-    top: 12px;
-    width: 11px;
-    height: 11px;
-  }
-  .brand-flag {
-    left: 18px;
-    height: 18px;
+    padding: 12px;
   }
   .main-nav {
-    gap: 3px;
+    gap: 4px;
+  }
+  .dashboard {
+    padding: 8px;
+  }
+  .course {
+    aspect-ratio: 1.4;
+  }
+  .course-heading {
+    padding: 8px;
+  }
+  .course-stage {
+    padding: 8px;
+  }
+  .course-identity {
+    padding: 12px 8px;
+  }
+  .primary-controls {
+    padding: 12px;
+  }
+  .control-column {
+    padding: 16px 12px;
+  }
+  .tile-option {
+    min-height: 76px;
+  }
+  .tile-arrows {
+    flex-basis: 42px;
+    width: 42px;
+    min-height: 42px;
+  }
+  .secondary-course-actions {
+    padding: 4px 8px 16px;
+  }
+  .modal-body {
+    padding: 12px;
   }
 }
-
 @media (max-width: 380px) {
   .brand {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
-  .brand-mark {
+  .brand > .brand-mark {
     display: none;
   }
-  .main-nav {
-    gap: 2px;
+  .nav-button {
+    min-width: 40px;
+    min-height: 40px;
   }
 }
