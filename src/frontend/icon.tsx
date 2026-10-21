@@ -1,7 +1,10 @@
+import type { ReactNode } from 'react';
+
 export type IconName =
   | 'home'
   | 'calendar'
   | 'stats'
+  | 'profile'
   | 'trophy'
   | 'settings'
   | 'help'
@@ -23,7 +26,7 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     strokeLinejoin: 'round' as const,
     'aria-hidden': true as const,
   };
-  const paths: Record<IconName, React.ReactNode> = {
+  const paths: Record<IconName, ReactNode> = {
     home: (
       <>
         <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" />
@@ -40,6 +43,12 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
         <rect x="3" y="13" width="4" height="8" rx="1" />
         <rect x="10" y="8" width="4" height="13" rx="1" />
         <rect x="17" y="3" width="4" height="18" rx="1" />
+      </>
+    ),
+    profile: (
+      <>
+        <circle cx="12" cy="8" r="4" />
+        <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
       </>
     ),
     trophy: (

@@ -49,7 +49,7 @@ DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/puttential"
 4. Generate Prisma Client
 
 ```bash
-npx prisma generate
+npm run db:generate
 ```
 
 5. Apply database migrations

@@ -1,30 +1,65 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { starterLevels, levelName } from '@game';
-import type { Bounds, Level } from '@game';
-import { fieldName } from '../../../src/frontend/field-label';
-import { ForceToolkit, PlayButton } from '../../../src/frontend/player-controls';
-import { LevelImport } from '../../../src/frontend/level-import';
-import { CourseCanvas } from './course-canvas';
-import { usePuzzle } from './puzzle';
-import { Icon } from './ui-icon';
-import type { IconName } from './ui-icon';
-import { Modal, usePreferences } from './modal';
-import type { Panel } from './modal';
+import { useEffect, useRef, useState } from 'react';
+import { starterLevels, levelName } from '../../game';
+import type { Bounds, Level } from '../../game';
+import { fieldName } from '../field-label';
+import { ForceToolkit, PlayButton } from '../player-controls';
+import { LevelImport } from '../level-import';
+import { CourseCanvas } from '../course-canvas';
+import { usePuzzle } from '../puzzle';
+import { Icon } from '../icon';
+import type { IconName } from '../icon';
+import { Modal, usePreferences } from '../modal';
+import type { Panel } from '../modal';
+import type { TodayPuzzleResponse } from '../../backend/types';
+import { loadDailyPuzzle, saveRun } from '../api';
+import type { CompletedRun } from '../puzzle';
 
 /** Today's puzzle first; the archive lists the rest. */
 /** Every tile adds the same amount to a solution's force cost. */
 const TILE_COST = 1;
 
-const LEVELS = starterLevels.map((level, index) => ({
+const PRACTICE_LEVELS = starterLevels.map((level) => ({
   level,
-  day: ['Today', 'Yesterday'][index]!,
+  day: 'Practice course',
 }));
 
 export default function Home() {
+  const [daily, setDaily] = useState<TodayPuzzleResponse | null | undefined>(undefined);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    loadDailyPuzzle(controller.signal)
+      .then(setDaily)
+      .catch((cause: unknown) => {
+        if (controller.signal.aborted) return;
+        setError(cause instanceof Error ? cause.message : 'Could not load the daily puzzle.');
+        setDaily(null);
+      });
+    return () => controller.abort();
+  }, []);
+  if (daily === undefined)
+    return (
+      <main className="site-wrap" role="status">
+        Loading daily course…
+      </main>
+    );
+  return <Game daily={daily} loadError={error} />;
+}
+
+function Game({
+  daily,
+  loadError,
+}: {
+  daily: TodayPuzzleResponse | null;
+  loadError: string | null;
+}) {
+  const levels = daily
+    ? [{ level: daily.configuration, day: daily.date }, ...PRACTICE_LEVELS]
+    : PRACTICE_LEVELS;
   const [panel, setPanel] = useState<Panel>(null);
-  const [level, setLevel] = useState<Level>(LEVELS[0]!.level);
+  const [level, setLevel] = useState<Level>(levels[0]!.level);
   const [importBounds, setImportBounds] = useState<Bounds | null>(null);
   function loadCourse(next: Level, bounds?: Bounds) {
     setLevel(next);
@@ -32,6 +67,30 @@ export default function Home() {
   }
   const [preferences, setPreferences] = usePreferences();
   const puzzle = usePuzzle(level);
+  const savedRuns = useRef(new WeakSet<CompletedRun>());
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  useEffect(() => {
+    const run = puzzle.completedRun;
+    if (!run || !daily || run.level !== daily.configuration || savedRuns.current.has(run)) return;
+    savedRuns.current.add(run);
+    let active = true;
+    setSaveStatus('Saving run…');
+    void saveRun(daily.id, run)
+      .then(() => {
+        if (active)
+          setSaveStatus(run.result.solved ? 'Attempt and solution saved.' : 'Attempt saved.');
+      })
+      .catch(() => {
+        if (active)
+          setSaveStatus('Your run could not be fully saved. Please check the connection.');
+      });
+    return () => {
+      active = false;
+    };
+  }, [daily, puzzle.completedRun]);
+  useEffect(() => {
+    setSaveStatus(null);
+  }, [level, puzzle.attempts]);
   const nav: { name: Exclude<Panel, 'result' | null>; label: string; icon: IconName }[] = [
     { name: 'archive', label: 'Calendar', icon: 'calendar' },
     { name: 'leaderboard', label: 'Leaderboard', icon: 'trophy' },
@@ -45,7 +104,8 @@ export default function Home() {
   }, [puzzle.result]);
 
   const placedTiles = Object.values(puzzle.draft).filter((field) => field.enabled).length;
-  const levelIndex = LEVELS.findIndex((entry) => entry.level === level);
+  const levelIndex = levels.findIndex((entry) => entry.level === level);
+  const isDaily = daily?.configuration === level;
   const status =
     puzzle.mode === 'error'
       ? (puzzle.error ?? 'Could not load course')
@@ -65,7 +125,7 @@ export default function Home() {
         <button
           className="brand"
           onClick={() => {
-            loadCourse(LEVELS[0]!.level);
+            loadCourse(levels[0]!.level);
             setPanel(null);
           }}
           aria-label="Puttential home"
@@ -85,6 +145,8 @@ export default function Home() {
               className={`nav-button ${panel === item.name ? 'active' : ''}`}
               onClick={() => setPanel(item.name)}
               aria-expanded={panel === item.name}
+              aria-label={item.label}
+              title={item.label}
             >
               <Icon name={item.icon} size={23} />
               <span>{item.label}</span>
@@ -94,6 +156,16 @@ export default function Home() {
       </header>
 
       <main className="dashboard">
+        {loadError && (
+          <p className="course-details" role="status">
+            {loadError} You can play a practice course below. Practice runs are not saved.
+          </p>
+        )}
+        {saveStatus && (
+          <p className="demo-note" role="status">
+            {saveStatus}
+          </p>
+        )}
         <LevelImport onLoad={loadCourse} />
         <div className="game-layout">
           <section className="play-column" aria-labelledby="course-title">
@@ -103,10 +175,10 @@ export default function Home() {
                   <Icon name="calendar" size={16} />{' '}
                   {levelIndex < 0
                     ? 'Local course'
-                    : levelIndex === 0
+                    : isDaily
                       ? 'Daily challenge'
-                      : 'Archive challenge'}{' '}
-                  {levelIndex >= 0 && <b>#{126 - levelIndex}</b>}
+                      : 'Practice challenge'}{' '}
+                  {isDaily && <b>{daily?.date}</b>}
                 </span>
                 <span className={`course-status ${puzzle.mode === 'running' ? 'running' : ''}`}>
                   <i />{' '}
@@ -153,9 +225,9 @@ export default function Home() {
                   <span className="section-kicker">
                     {levelIndex < 0
                       ? 'LOCAL COURSE'
-                      : levelIndex === 0
+                      : isDaily
                         ? "TODAY'S COURSE"
-                        : 'FROM THE ARCHIVE'}
+                        : 'PRACTICE COURSE'}
                   </span>
                   <h1 id="course-title">{levelName(level)}</h1>
                   <p>One course. Your own way to the goal.</p>
@@ -258,7 +330,7 @@ export default function Home() {
           preferences={preferences}
           setPreferences={setPreferences}
           result={puzzle.result}
-          levels={LEVELS}
+          levels={levels}
           currentLevel={level}
           chooseLevel={loadCourse}
           tileCost={TILE_COST}

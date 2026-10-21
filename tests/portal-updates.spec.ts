@@ -20,13 +20,11 @@ function fixture() {
 async function open(page: Page, doc = fixture()) {
   await page.goto('http://127.0.0.1:3001');
   page.on('dialog', (d) => d.accept());
-  await page
-    .locator('input[type=file]')
-    .setInputFiles({
-      name: 'portal-textures.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(JSON.stringify(doc.level)),
-    });
+  await page.locator('input[type=file]').setInputFiles({
+    name: 'portal-textures.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(doc.level)),
+  });
   await expect(
     page.locator('.object-list').getByRole('button', { name: 'portal-2-exit', exact: true }),
   ).toBeVisible();
@@ -58,7 +56,7 @@ async function colorAt(
 
 test('selected portal retains its partner color, multiple pairs differ, and timing is editable', async ({
   page,
-}) => {
+}, testInfo) => {
   await open(page);
   const objects = page.locator('.object-list');
   await objects.getByRole('button', { name: 'portal-1', exact: true }).click();
@@ -79,7 +77,10 @@ test('selected portal retains its partner color, multiple pairs differ, and timi
   await expect(delay).toHaveValue('0.25');
   await objects.getByRole('button', { name: 'portal-1', exact: true }).click();
   await expect(delay).toHaveValue('0.4');
-  await page.screenshot({ path: '/tmp/puttential-portal-textures-editor.png', fullPage: true });
+  await page.screenshot({
+    path: testInfo.outputPath('puttential-portal-textures-editor.png'),
+    fullPage: true,
+  });
 });
 
 test('shared textures load and lava leaves a black stationary object visible beneath the surface', async ({
@@ -107,13 +108,16 @@ test('shared textures load and lava leaves a black stationary object visible ben
   await page.getByRole('button', { name: 'Playtest', exact: true }).click();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('status')).toContainText('Ball burnt by lava');
-  const rgb = (await colorAt(page, 3, -1.5, undefined, '.playtest-course canvas')) as number[];
-  expect(rgb[0]).toBeLessThan(150);
-  expect(rgb[1]).toBeLessThan(95);
-  expect(rgb[2]).toBeLessThan(90);
-  await page.screenshot({ path: '/tmp/puttential-lava-charred.png', fullPage: true });
+  await expect
+    .poll(async () => {
+      const rgb = (await colorAt(page, 3, -1.5, undefined, '.playtest-course canvas')) as number[];
+      return rgb[0]! < 150 && rgb[1]! < 95 && rgb[2]! < 90;
+    })
+    .toBe(true);
+  const screenshot = testInfo.outputPath('puttential-lava-charred.png');
+  await page.screenshot({ path: screenshot, fullPage: true });
   await testInfo.attach('Charred ball and submerged water ball', {
-    path: '/tmp/puttential-lava-charred.png',
+    path: screenshot,
     contentType: 'image/png',
   });
   expect(errors).toEqual([]);

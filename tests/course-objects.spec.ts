@@ -55,9 +55,10 @@ test('portal pairs and simple hazard graphics are available in the editor', asyn
   await expect(list.getByRole('button', { name: 'portal-1', exact: true })).toBeVisible();
   await expect(list.getByRole('button', { name: 'portal-1-exit', exact: true })).toBeVisible();
   await expect(page.getByText('Both ends are linked.', { exact: false })).toBeVisible();
-  await page.screenshot({ path: '/tmp/puttential-course-objects.png', fullPage: true });
+  const screenshot = testInfo.outputPath('puttential-course-objects.png');
+  await page.screenshot({ path: screenshot, fullPage: true });
   await testInfo.attach('Course objects', {
-    path: '/tmp/puttential-course-objects.png',
+    path: screenshot,
     contentType: 'image/png',
   });
   await list

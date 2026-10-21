@@ -15,6 +15,11 @@ export type RunResult = Readonly<{
   seconds: number;
   failure?: 'water' | 'lava';
 }>;
+export type CompletedRun = Readonly<{
+  level: Level;
+  result: RunResult;
+  commands: GameCommand[];
+}>;
 
 /** How much of the run the dotted preview shows. */
 const TRAIL_TICKS = 120;
@@ -53,6 +58,8 @@ export function usePuzzle(level: Level) {
   const [draft, setDraft] = useState<Draft>({});
   const [trail, setTrail] = useState<readonly Vec2[]>([]);
   const [result, setResult] = useState<RunResult | null>(null);
+  const [completedRun, setCompletedRun] = useState<CompletedRun | null>(null);
+  const runRef = useRef<{ level: Level; commands: GameCommand[] } | null>(null);
   const [attempts, setAttempts] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,6 +71,7 @@ export function usePuzzle(level: Level) {
     setError(null);
     setTrail([]);
     setResult(null);
+    setCompletedRun(null);
     setAttempts(0);
     void createGame(level)
       .then((created) => {
@@ -118,29 +126,32 @@ export function usePuzzle(level: Level) {
       previous = now;
       while (accumulator >= FIXED_DT) {
         game.step();
-        goalRef.current = advanceGoal(goalRef.current, game.getRenderState());
+        const state = game.getRenderState();
+        goalRef.current = advanceGoal(goalRef.current, state);
+        frameRef.current = state;
         accumulator -= FIXED_DT;
-      }
-      const state = game.getRenderState();
-      frameRef.current = state;
 
-      const goal = goalRef.current;
-      const targetBody = state.bodies.find((body) => body.id === level.goal.bodyId);
-      const failure = targetBody?.burnt ? 'lava' : targetBody?.destroyed;
-      const failed = !!failure;
-      const solved = !failed && goal.completedTick !== null;
-      // A body resting inside the goal still has to finish its hold.
-      const stopped = state.bodies.every((body) => body.sleeping) && !goal.inside;
-      if (solved || stopped || failed) {
-        setResult({
-          solved,
-          ...(failure ? { failure } : {}),
-          tiles: state.fields.filter((field) => field.enabled && !isCourseObject(field.force))
-            .length,
-          seconds: (goal.completedTick ?? state.tick) * FIXED_DT,
-        });
-        setMode('done');
-        return;
+        // Stop on the first terminal tick, before another catch-up step can change the result.
+        const goal = goalRef.current;
+        const targetBody = state.bodies.find((body) => body.id === level.goal.bodyId);
+        const failure = targetBody?.burnt ? 'lava' : targetBody?.destroyed;
+        const failed = !!failure;
+        const solved = !failed && goal.completedTick !== null;
+        // A body resting inside the goal still has to finish its hold.
+        const stopped = state.bodies.every((body) => body.sleeping) && !goal.inside;
+        if (solved || stopped || failed) {
+          const finished: RunResult = {
+            solved,
+            ...(failure ? { failure } : {}),
+            tiles: state.fields.filter((field) => field.enabled && !isCourseObject(field.force))
+              .length,
+            seconds: (goal.completedTick ?? state.tick) * FIXED_DT,
+          };
+          setResult(finished);
+          if (runRef.current) setCompletedRun({ ...runRef.current, result: finished });
+          setMode('done');
+          return;
+        }
       }
       frame = requestAnimationFrame(loop);
     });
@@ -153,9 +164,12 @@ export function usePuzzle(level: Level) {
     if (game === null || setup === null) return;
     game.restore(setup);
     goalRef.current = initialGoal(level.goal);
-    for (const command of layoutCommands(draft)) game.queueCommand(command);
+    const commands = layoutCommands(draft);
+    runRef.current = { level, commands };
+    for (const command of commands) game.queueCommand(command);
     setAttempts((count) => count + 1);
     setResult(null);
+    setCompletedRun(null);
     setMode('running');
   }, [draft, level]);
 
@@ -168,6 +182,7 @@ export function usePuzzle(level: Level) {
     goalRef.current = initialGoal(level.goal);
     frameRef.current = game.getRenderState();
     setResult(null);
+    setCompletedRun(null);
     setMode('setup');
   }, [level]);
 
@@ -191,6 +206,7 @@ export function usePuzzle(level: Level) {
     draft,
     trail,
     result,
+    completedRun,
     attempts,
     frameRef,
     goalRef,

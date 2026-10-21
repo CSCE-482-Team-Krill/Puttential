@@ -3,12 +3,16 @@
     "editor": "npm run dev --workspace=puttential-level-editor",
     "editor:build": "npm run build --workspace=puttential-level-editor",
     "editor:start": "npm run start --workspace=puttential-level-editor",
-    "game": "npm run dev --workspace=puttential-design-c -- --hostname 127.0.0.1",
-    "game:build": "npm run build --workspace=puttential-design-c",
+    "game": "npm run dev --workspace=puttential-frontend -- --hostname 127.0.0.1",
+    "game:build": "npm run build --workspace=puttential-frontend",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "format": "prettier --write level-editor src/frontend src/game/levels/codec.ts src/game/objects/catalog.ts tests",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "game:start": "npm run start --workspace=puttential-frontend -- --hostname 127.0.0.1",
+    "db:generate": "prisma generate --config prisma7.config.ts",
+    "db:migrate": "prisma migrate deploy --config prisma7.config.ts",
+    "db:seed": "tsx src/backend/seed.ts"
   },
   "devDependencies": {
     "typescript": "^5.7.3",
@@ -33,7 +37,7 @@
   "private": true,
   "workspaces": [
     "level-editor",
-    "ui_ux_research/design_c"
+    "src/frontend"
   ],
   "engines": {
     "node": ">=22.12"
