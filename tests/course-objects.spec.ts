@@ -75,3 +75,30 @@ test('portal pairs and simple hazard graphics are available in the editor', asyn
   await expect(page.getByText('Both ends are linked.', { exact: false })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('a lava rim graze remains playable until the center enters the surface', async ({ page }) => {
+  const { freshDocument, place, presets, edit } = await import('../level-editor/editor/model');
+  const placed = place(
+    freshDocument(),
+    presets.find((p) => p.id === 'fields:lava')!,
+    { x: -2.8, y: 0 },
+  );
+  const doc = edit(placed.doc, (d) => {
+    d.level.dynamicBodies[0]!.linearVelocity = { x: 0.2, y: 0 };
+  });
+  page.on('dialog', (d) => d.accept());
+  await page.goto('http://127.0.0.1:3001');
+  await page
+    .locator('input[type=file]')
+    .setInputFiles({
+      name: 'lava-center-entry.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(doc.level)),
+    });
+  await page.getByRole('button', { name: 'Playtest', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  // The ball's rim already overlaps the lava at launch; its center takes one second to enter.
+  await expect(page.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
+  await expect(page.getByRole('status')).toHaveCount(0);
+  await expect(page.getByRole('status')).toContainText('Ball burnt by lava');
+});

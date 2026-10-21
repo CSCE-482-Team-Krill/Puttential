@@ -1,8 +1,8 @@
 import RAPIER from '@dimforge/rapier2d-compat';
 import { compareCommands, dequantizePosition, validateCommand } from './commands';
 import { PORTAL_DELAY_SECONDS, PORTAL_COOLDOWN_SECONDS, isCourseObject } from './objects/catalog';
-import { zoneContact } from './objects/zones';
-import { boundsOverlap, polygonBounds, transformPolygon } from './geometry/polygon';
+import { centerZoneEntry, zoneContact } from './objects/zones';
+import { boundsOverlap, pointInPolygon, polygonBounds, transformPolygon } from './geometry/polygon';
 import { triangulateSimplePolygon } from './geometry/polygon';
 import { shapePolygon } from './geometry/shapes';
 import { GEOMETRY_EPSILON } from './geometry/vector';
@@ -36,6 +36,8 @@ import type {
 } from './types';
 
 export const FIXED_DT = 1 / 120;
+
+type BodyPose = Readonly<{ position: Vec2; centerOfMass: Vec2 }>;
 
 type DynamicBody = Readonly<{ id: string; pieces: readonly ResolvedPiece[]; radius: number }>;
 type Field = Readonly<{
@@ -96,7 +98,7 @@ class Simulation implements Game {
   private portalPartners = new Map<string, Zone>();
 
   // Derived from field state; cleared whenever a field moves or toggles.
-  private preparedFields: readonly PreparedField[] | undefined;
+  private preparedFields: readonly (PreparedField & { centerRequired: boolean })[] | undefined;
   private renderFields: readonly RenderField[] | undefined;
   private renderState!: RenderState;
 
@@ -164,7 +166,13 @@ class Simulation implements Game {
                 !this.burntBodies.has(body.id) &&
                 !this.pendingTeleports[body.id],
             )
-            .map((body) => [body.id, { ...this.rigidBody(body.id).translation() }]),
+            .map((body) => [
+              body.id,
+              {
+                position: { ...this.rigidBody(body.id).translation() },
+                centerOfMass: { ...this.rigidBody(body.id).worldCom() },
+              },
+            ]),
         )
       : undefined;
     this.world.step();
@@ -290,9 +298,10 @@ class Simulation implements Game {
           definition.force.kind !== 'portal' &&
           definition.force.kind !== 'lava',
       )
-      .map(({ definition, localTriangles, densityAt }) =>
-        prepareField(densityAt, this.fieldState(definition.id), localTriangles),
-      ));
+      .map(({ definition, localTriangles, densityAt }) => ({
+        ...prepareField(densityAt, this.fieldState(definition.id), localTriangles),
+        centerRequired: definition.force.kind === 'water',
+      })));
 
     for (const body of this.dynamicBodies) {
       const rigidBody = this.rigidBody(body.id);
@@ -306,16 +315,23 @@ class Simulation implements Game {
       rigidBody.resetTorques(false);
       if (fields.length === 0) continue;
 
+      const centerOfMass = rigidBody.worldCom();
+      const activeFields = fields.filter(
+        (field) =>
+          !field.centerRequired ||
+          field.triangles.some((triangle) => pointInPolygon(centerOfMass, triangle)),
+      );
+      if (!activeFields.length) continue;
       const load = calculateFieldLoad(
         {
           position: rigidBody.translation(),
           angle: rigidBody.rotation(),
-          centerOfMass: rigidBody.worldCom(),
+          centerOfMass,
           linearVelocity: rigidBody.linvel(),
           angularVelocity: rigidBody.angvel(),
           pieces: body.pieces,
         },
-        fields,
+        activeFields,
       );
       if (
         !Number.isFinite(load.force.x) ||
@@ -401,9 +417,7 @@ class Simulation implements Game {
       if (
         liquids.some(
           (zone) =>
-            boundsOverlap(bounds, zone.bounds) &&
-            zoneContact(body.pieces, position, rigid.rotation(), zone.polygon, zone.triangles)
-              .touching,
+            boundsOverlap(bounds, zone.bounds) && pointInPolygon(rigid.worldCom(), zone.polygon),
         )
       )
         this.submergedBodies.add(body.id);
@@ -411,7 +425,7 @@ class Simulation implements Game {
   }
 
   /** Check nearby zones only; captured, burnt and sunk bodies skip all zone/force work. */
-  private applyZones(before?: Map<string, Vec2>): void {
+  private applyZones(before?: Map<string, BodyPose>): void {
     const zones = this.zoneGeometry();
     if (!zones.length) return;
     for (const body of this.dynamicBodies) {
@@ -423,7 +437,9 @@ class Simulation implements Game {
         continue;
       const rigid = this.rigidBody(body.id);
       const position = { ...rigid.translation() },
-        start = before?.get(body.id) ?? position;
+        start = before?.get(body.id)?.position ?? position;
+      const center = rigid.worldCom(),
+        startCenter = before?.get(body.id)?.centerOfMass ?? center;
       const sweptBounds = this.bodyBounds(body, position, start);
       const locked = this.portalLocks[body.id];
       if (
@@ -451,15 +467,16 @@ class Simulation implements Game {
             !this.portalPartners.has(zone.definition.id))
         )
           continue;
-        const contact = zoneContact(
-          body.pieces,
-          position,
-          rigid.rotation(),
-          zone.polygon,
-          zone.triangles,
-        );
+        const centerInside = pointInPolygon(center, zone.polygon);
+        if (force.kind === 'water' && !centerInside) continue;
+        const contact =
+          force.kind === 'lava'
+            ? { touching: centerInside, submerged: false }
+            : zoneContact(body.pieces, position, rigid.rotation(), zone.polygon, zone.triangles);
         let time = contact.touching ? (before ? 1 : 0) : Infinity;
-        if (canSweep && force.kind !== 'water') {
+        if (force.kind === 'lava')
+          time = centerZoneEntry(startCenter, center, zone.polygon) ?? Infinity;
+        if (canSweep && force.kind === 'portal') {
           shapes ??= Array.from(
             { length: rigid.numColliders() },
             (_, i) => rigid.collider(i).shape,
@@ -503,15 +520,20 @@ class Simulation implements Game {
             break;
           }
         } else if (force.kind === 'lava' || force.kind === 'portal') {
-          // Retain the point of first contact instead of the far end of a fast crossing.
-          if (before)
-            rigid.setTranslation(
-              {
-                x: start.x + (position.x - start.x) * time,
-                y: start.y + (position.y - start.y) * time,
-              },
-              true,
-            );
+          // Lava waits for center entry; portals still capture on collider contact.
+          if (before) {
+            const impact =
+              force.kind === 'lava'
+                ? {
+                    x: startCenter.x + (center.x - startCenter.x) * time - (center.x - position.x),
+                    y: startCenter.y + (center.y - startCenter.y) * time - (center.y - position.y),
+                  }
+                : {
+                    x: start.x + (position.x - start.x) * time,
+                    y: start.y + (position.y - start.y) * time,
+                  };
+            rigid.setTranslation(impact, true);
+          }
           if (force.kind === 'lava') this.burnBody(body.id);
           else {
             const exit = this.portalPartners.get(zone.definition.id)!;
