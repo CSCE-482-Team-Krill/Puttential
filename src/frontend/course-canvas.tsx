@@ -228,7 +228,7 @@ function draw(
   context.setLineDash([]);
   const flagX = topLeft.x + goalWidth / 2,
     flagY = topLeft.y + goalHeight / 2 + 14;
-  context.fillStyle = '#39853b';
+  context.fillStyle = '#2d3a3a';
   context.fillRect(flagX - 1.5, flagY - 34, 3, 34);
   context.fillStyle = '#ff6b6b';
   context.beginPath();
@@ -260,10 +260,7 @@ function draw(
   }
 
   // Walls.
-  context.fillStyle = '#3f9441';
-  context.shadowColor = '#2e7d3255';
-  context.shadowOffsetX = 3;
-  context.shadowOffsetY = 4;
+  context.fillStyle = '#2e7d32';
   for (const body of state.staticBodies) {
     for (const piece of body.pieces) context.fill(piecePath(view, piece));
   }
@@ -271,7 +268,7 @@ function draw(
 
   // Predicted path for the start of the run.
   if (props.mode === 'setup') {
-    context.fillStyle = '#1f5f23cc';
+    context.fillStyle = '#25682acc';
     const points = props.trail.map((point) => toCanvas(view, point));
     let untilNextDot = TRAIL_DOT_SPACING;
     for (let i = 1; i < points.length; i += 1) {
@@ -291,37 +288,16 @@ function draw(
     }
   }
 
-  // Bodies, shaded across each piece's extent so any shape reads as solid.
+  // Ivory bodies with a charcoal edge remain distinct from turf and force fields.
   context.save();
-  context.shadowColor = '#32863477';
-  context.shadowBlur = 10;
-  context.shadowOffsetX = 3;
-  context.shadowOffsetY = 5;
-  context.strokeStyle = '#ffffff';
+  context.shadowColor = '#2d3a3a26';
+  context.shadowBlur = 3;
+  context.shadowOffsetY = 2;
+  context.strokeStyle = '#2d3a3a';
+  context.fillStyle = '#f8f9f4';
   context.lineWidth = 1.5;
   for (const body of state.bodies) {
     for (const piece of body.pieces) {
-      const bounds =
-        piece.kind === 'circle'
-          ? {
-              minX: piece.center.x - piece.radius,
-              maxX: piece.center.x + piece.radius,
-              minY: piece.center.y - piece.radius,
-              maxY: piece.center.y + piece.radius,
-            }
-          : polygonBounds(piece.worldPolygon);
-      const topLeft = toCanvas(view, { x: bounds.minX, y: bounds.maxY }),
-        bottomRight = toCanvas(view, { x: bounds.maxX, y: bounds.minY });
-      const gradient = context.createLinearGradient(
-        topLeft.x,
-        topLeft.y,
-        bottomRight.x,
-        bottomRight.y,
-      );
-      gradient.addColorStop(0, '#ffffff');
-      gradient.addColorStop(0.5, '#f1fcf1');
-      gradient.addColorStop(1, '#a9dcaa');
-      context.fillStyle = gradient;
       const path = piecePath(view, piece);
       context.fill(path);
       context.stroke(path);
@@ -330,7 +306,7 @@ function draw(
           length = piece.radius * view.scale * 0.7;
         context.save();
         context.shadowColor = 'transparent';
-        context.strokeStyle = '#45834a88';
+        context.strokeStyle = '#566768';
         context.lineWidth = 2;
         context.beginPath();
         context.moveTo(center.x, center.y);

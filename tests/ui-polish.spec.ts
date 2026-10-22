@@ -788,7 +788,7 @@ test('rendered text and essential control colors retain contrast in each UI stat
   const table = [
     '# Rendered UI contrast audit',
     '',
-    'Chromium, Windows, device scale 1. Colors measured from computed styles with ancestor alpha compositing. Ratios use WCAG relative luminance. Canvas paints are unchanged and are not included in this DOM text audit.',
+    'Chromium, Windows, device scale 1. Colors measured from computed styles with ancestor alpha compositing. Ratios use WCAG relative luminance. Canvas paints are not included in this DOM text audit.',
     '',
     '| State | Foreground RGB | Background RGB | Ratio | Minimum |',
     '| --- | --- | --- | --- | --- |',
@@ -797,7 +797,7 @@ test('rendered text and essential control colors retain contrast in each UI stat
         `| ${row.label} | ${row.foreground.join(', ')} | ${row.background.join(', ')} | ${row.ratio.toFixed(2)}:1 | ${row.minimum}:1 |`,
     ),
     '',
-    'Palette tokens were not altered. The API notice uses paper behind warning text; warning on turf-soft would fall below 4.5:1. Existing canvas field-placement keyboard limitations prevent a whole-game accessibility certification.',
+    'The reference palette uses darker muted and coral companions for readable text. Existing canvas field-placement keyboard limitations prevent a whole-game accessibility certification.',
   ];
   await writeFile(`${artifacts}/contrast-audit.md`, table.join('\n') + '\n');
 });

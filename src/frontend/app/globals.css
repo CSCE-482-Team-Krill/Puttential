@@ -2,26 +2,29 @@
 
 /* Frontend-only theme. The editor continues to own its game.css import. */
 :root {
-  --ui-page: #f7f5ed;
-  --ui-paper: #fcfbf6;
+  /* Reference palette, with darker companions for readable text and controls. */
+  --ui-page: #dff3d9;
+  --ui-paper: #f8f9f4;
   --ui-white: #ffffff;
-  --ui-ink: #24362f;
-  --ui-muted: #53675b;
-  --ui-green: #246b45;
-  --ui-green-strong: #1c5436;
-  --ui-turf: #dceacb;
-  --ui-turf-soft: #edf0e6;
-  --ui-line: #d8e4d6;
-  --ui-yellow: #f5d476;
-  --ui-water: #4a90ab;
-  --ui-warning: #b75638;
-  --ui-disabled: #e6e9e2;
-  --ui-overlay: rgba(25, 40, 32, 0.54);
+  --ui-ink: #2d3a3a;
+  --ui-muted: #566768;
+  --ui-green: #2e7d32;
+  --ui-green-strong: #25682a;
+  --ui-secondary: #7bc67b;
+  --ui-turf: #dff3d9;
+  --ui-turf-soft: #eef2eb;
+  --ui-line: #cdd8cc;
+  --ui-yellow: #ffd166;
+  --ui-accent: #ff6b6b;
+  --ui-muted-decoration: #8a9ba0;
+  --ui-warning: #a63f3f;
+  --ui-disabled: #e4e9e2;
+  --ui-overlay: rgba(45, 58, 58, 0.54);
   --ui-r-sm: 6px;
   --ui-r-md: 10px;
   --ui-r-lg: 14px;
-  --ui-shadow-frame: 0 5px 18px rgba(22, 54, 37, 0.065);
-  --ui-shadow-modal: 0 22px 64px rgba(18, 43, 27, 0.25);
+  --ui-shadow-frame: 0 2px 6px rgba(45, 58, 58, 0.04);
+  --ui-shadow-modal: 0 16px 48px rgba(45, 58, 58, 0.2);
   --ui-space-1: 4px;
   --ui-space-2: 8px;
   --ui-space-3: 12px;
@@ -129,8 +132,8 @@ button:disabled {
   top: 5px;
   width: 5px;
   height: 5px;
-  border-left: 1px solid var(--ui-muted);
-  border-top: 1px solid var(--ui-muted);
+  border-left: 1px solid var(--ui-muted-decoration);
+  border-top: 1px solid var(--ui-muted-decoration);
   border-radius: 50%;
 }
 .brand-flag {
@@ -148,7 +151,7 @@ button:disabled {
   top: 0;
   border-top: 6px solid transparent;
   border-bottom: 6px solid transparent;
-  border-left: 12px solid var(--ui-yellow);
+  border-left: 12px solid var(--ui-accent);
 }
 .main-nav {
   display: flex;
@@ -255,7 +258,7 @@ button:disabled {
   background: var(--ui-green);
 }
 .course-status.running i {
-  background: var(--ui-warning);
+  background: var(--ui-accent);
 }
 .course-stage {
   grid-area: stage;
@@ -471,7 +474,7 @@ button:disabled {
 }
 .legend-field {
   border: 1px solid var(--ui-green);
-  background: var(--ui-turf);
+  background: var(--ui-secondary);
 }
 .legend-goal {
   border: 1px dashed var(--ui-green);
@@ -500,7 +503,7 @@ button:disabled {
   padding: 20px 16px;
   border: 1px solid var(--ui-line);
   border-radius: var(--ui-r-md);
-  background: var(--ui-paper);
+  background: var(--ui-turf-soft);
 }
 .toolkit-title {
   display: flex;
@@ -522,8 +525,8 @@ button:disabled {
   min-height: 28px;
   padding: 4px 8px;
   border-radius: var(--ui-r-sm);
-  background: var(--ui-turf-soft);
-  color: var(--ui-green);
+  background: var(--ui-yellow);
+  color: var(--ui-ink);
   font-size: 0.78125rem;
   font-weight: 700;
 }
@@ -560,6 +563,10 @@ button:disabled {
   padding: 11px;
   border: 2px solid var(--ui-green);
   background: var(--ui-turf);
+}
+.tile-option.selected .tile-arrows {
+  background: var(--ui-secondary);
+  color: var(--ui-ink);
 }
 .tile-option:disabled {
   color: var(--ui-ink);
@@ -615,6 +622,10 @@ button:disabled {
   font-size: 0.875rem;
   line-height: 1.5;
 }
+.toolkit-note {
+  padding-top: 16px;
+  border-top: 1px solid var(--ui-line);
+}
 .empty-inventory {
   margin: 0;
 }
@@ -652,7 +663,7 @@ button:disabled {
 .modal {
   display: flex;
   flex-direction: column;
-  width: min(100%, 430px);
+  width: min(100%, 420px);
   max-height: calc(100dvh - 48px);
   overflow: hidden;
   border: 1px solid var(--ui-line);
@@ -667,13 +678,13 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 20px;
+  padding: 16px;
   border-bottom: 1px solid var(--ui-line);
   background: var(--ui-turf-soft);
 }
 .modal-header h2 {
   margin: 4px 0 0;
-  font-size: 1.3125rem;
+  font-size: 1.375rem;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -713,7 +724,7 @@ button:disabled {
   background: var(--ui-paper);
 }
 .modal-row {
-  min-height: 58px;
+  min-height: 56px;
   padding: 12px;
 }
 .modal-intro {
@@ -738,7 +749,7 @@ button:disabled {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 50px;
+  min-height: 48px;
   padding: 12px 16px;
   color: var(--ui-ink);
   font-size: 0.875rem;
@@ -869,6 +880,9 @@ button:disabled {
 .archive-row.current-course {
   background: var(--ui-turf-soft);
 }
+.archive-row.current-course {
+  border-color: var(--ui-green);
+}
 .row-status {
   display: inline-flex;
   align-items: center;
@@ -893,6 +907,9 @@ button:disabled {
   border-radius: 0;
   background: transparent;
   font-size: 0.875rem;
+}
+.setting-row + .setting-row {
+  border-top: 1px solid var(--ui-line);
 }
 .switch {
   display: block;
