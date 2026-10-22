@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction, ReactNode } from 'react';
 import type { Level } from '../game';
 import { Icon } from './icon';
 import type { RunResult } from './puzzle';
@@ -101,6 +101,7 @@ type Props = {
   chooseLevel: (level: Level) => void;
   tileCost: number;
   previewMode?: boolean;
+  courseImport?: ReactNode;
 };
 
 function SettingSwitch({
@@ -139,6 +140,7 @@ export function Modal({
   chooseLevel,
   tileCost,
   previewMode = false,
+  courseImport,
 }: Props) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef(close);
@@ -169,7 +171,7 @@ export function Modal({
         dialogRef.current?.querySelectorAll<HTMLElement>(
           'button:not(:disabled), summary, a[href], input:not(:disabled), [tabindex="0"]',
         ) ?? [],
-      );
+      ).filter((element) => element.getClientRects().length > 0);
       const first = elements[0];
       const last = elements[elements.length - 1];
       if (!first || !last) return;
@@ -358,6 +360,14 @@ export function Modal({
                 change={() => togglePreference('showPreview')}
               />
             </section>
+            {courseImport && (
+              <section className="settings-section" aria-labelledby="local-course-settings">
+                <h3 className="modal-section-heading" id="local-course-settings">
+                  Local courses
+                </h3>
+                {courseImport}
+              </section>
+            )}
             <p className="modal-footnote">
               Preferences are saved on this device. Audio playback is not available yet.
             </p>

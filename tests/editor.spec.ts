@@ -108,6 +108,7 @@ test('author, constrain, save, reopen and play the same course in both apps', as
     await game.goto('http://127.0.0.1:3000');
     await expect(game.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
     await game.screenshot({ path: 'level-editor/screenshots/game.png', fullPage: true });
+    await game.getByRole('button', { name: 'Settings', exact: true }).click();
     await game.getByLabel('Open local course').setInputFiles(file);
     await expect(
       game.getByRole('heading', {

@@ -135,7 +135,7 @@ async function dragField(
 
 const stableSelectors = [
   '.course-canvas',
-  '.local-level-import input',
+  '.run-controls',
   '.play-button',
   '.tile-list',
   '.tile-option',
@@ -500,7 +500,7 @@ test('running simulation and a pending daily save keep nodes, attempts and one q
   // This success fixture has two fields. Store the four unique core nodes.
   await page.evaluate(() =>
     Object.assign(window, {
-      runNodes: ['canvas', '.play-button', '.local-level-import input', '.tile-list'].map((s) =>
+      runNodes: ['canvas', '.play-button', '.run-controls', '.tile-list'].map((s) =>
         document.querySelector(s),
       ),
     }),
@@ -535,7 +535,7 @@ test('running simulation and a pending daily save keep nodes, attempts and one q
   expect(
     await page.evaluate(() => {
       const stored = (window as unknown as { runNodes: Element[] }).runNodes;
-      return ['canvas', '.play-button', '.local-level-import input', '.tile-list'].every(
+      return ['canvas', '.play-button', '.run-controls', '.tile-list'].every(
         (s, i) => stored[i] === document.querySelector(s),
       );
     }),
@@ -647,7 +647,7 @@ test('short dialogs scroll, trap Tab both ways, close on backdrop and retain pre
   await page.keyboard.press('Tab');
   await expect(close).toBeFocused();
   await page.keyboard.press('Shift+Tab');
-  await expect(page.getByRole('switch', { name: 'Show path preview' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Open local course', exact: true })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(close).toBeFocused();
   await page.getByRole('switch', { name: 'Show path preview' }).click();
@@ -672,7 +672,8 @@ test('integrated import rejects corrupt/oversize data, retains pending file inpu
 }) => {
   await page.setViewportSize({ width: 959, height: 900 });
   await openLevel(page, inventoryLevel(1));
-  const input = page.locator('.secondary-course-actions input[type=file]');
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
+  const input = page.locator('.modal input[type=file]');
   await expect(input).toHaveCount(1);
   for (const [name, content, error] of [
     ['invalid.json', '{broken', /JSON|property name/i],
@@ -835,6 +836,7 @@ test('rendered text and essential control colors retain contrast in each UI stat
   await measure('Disabled ON field state', '.tile-info small');
   expect(await page.locator('.tile-option').evaluate((e) => getComputedStyle(e).opacity)).toBe('1');
   await page.getByRole('button', { name: 'Stop', exact: true }).click();
+  await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await page.getByRole('button', { name: 'Open local course', exact: true }).focus();
   await page.locator('input[type=file]').setInputFiles({
     name: 'invalid.json',
@@ -842,6 +844,7 @@ test('rendered text and essential control colors retain contrast in each UI stat
     buffer: Buffer.from('{broken'),
   });
   await measure('Import warning', '.local-level-import [role=alert]');
+  await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Profile', exact: true }).click();
   await measure('Modal heading', '.modal-header h2');
   await measure('Modal unavailable text', '.unavailable-state');

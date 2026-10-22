@@ -282,7 +282,6 @@ function Game({
               <button className="text-button" disabled={!ready} onClick={puzzle.resetLayout}>
                 <Icon name="reset" size={17} /> Reset layout
               </button>
-              <LevelImport onLoad={loadCourse} />
             </div>
             <div className="game-toolbar">
               <div className="course-legend">
@@ -320,6 +319,14 @@ function Game({
           currentLevel={level}
           chooseLevel={loadCourse}
           tileCost={TILE_COST}
+          courseImport={
+            <LevelImport
+              onLoad={(nextLevel, bounds) => {
+                loadCourse(nextLevel, bounds);
+                setPanel(null);
+              }}
+            />
+          }
         />
       )}
     </div>
