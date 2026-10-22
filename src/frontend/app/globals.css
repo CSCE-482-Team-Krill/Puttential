@@ -204,12 +204,12 @@ button:disabled {
   box-shadow: var(--ui-shadow-frame);
 }
 
-/* Single mounted tree: content tracks keep a tall spanning tray out of left gaps. */
+/* Keep the course mounted while the sidebar changes position across breakpoints. */
 .game-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
-  grid-template-areas: 'meta toolkit' 'stage toolkit' 'identity toolkit' 'primary toolkit' 'secondary toolkit';
-  grid-template-rows: max-content max-content max-content max-content minmax(max-content, 1fr);
+  grid-template-areas: 'meta toolkit' 'stage toolkit';
+  grid-template-rows: max-content minmax(0, 1fr);
   column-gap: 16px;
   row-gap: 0;
   align-items: start;
@@ -298,11 +298,21 @@ button:disabled {
   cursor: grabbing;
 }
 .course-identity {
-  grid-area: identity;
-  padding: 20px 24px 8px;
-  background: var(--ui-paper);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  min-width: 0;
 }
-.course-identity h1,
+.course-identity h1 {
+  margin: 0;
+  font-family: 'Trebuchet MS', 'Noto Sans', Arial, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
 .details-heading h1 {
   margin: 4px 0 8px;
   font-family: 'Trebuchet MS', 'Noto Sans', Arial, sans-serif;
@@ -312,7 +322,6 @@ button:disabled {
   letter-spacing: -0.025em;
   overflow-wrap: anywhere;
 }
-.course-identity p,
 .details-heading p {
   margin: 0;
   color: var(--ui-muted);
@@ -327,45 +336,18 @@ button:disabled {
   line-height: 1.3;
   letter-spacing: 0.07em;
 }
-.primary-controls {
-  grid-area: primary;
-  padding: 12px 24px;
-  background: var(--ui-paper);
-}
 .run-controls {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px 24px;
-  margin: 0;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--ui-line);
 }
-.run-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  margin: 0;
-}
-.run-metrics > div + div {
-  padding-left: 24px;
-  border-left: 1px solid var(--ui-line);
-}
-.run-metrics dt {
-  color: var(--ui-muted);
-  font-size: 0.78125rem;
-}
-.run-metrics dd {
-  margin: 4px 0 0;
-  font-size: 1.5625rem;
-  font-weight: 800;
-  line-height: 1.1;
-  font-variant-numeric: tabular-nums;
-}
-.run-metrics small {
-  margin-left: 4px;
-  color: var(--ui-muted);
-  font-size: 0.78125rem;
-  font-weight: 500;
+.run-controls > button {
+  width: 100%;
+  min-height: 44px;
 }
 .primary-button {
   display: inline-flex;
@@ -419,19 +401,6 @@ button:disabled {
   color: var(--ui-green-strong);
   background: var(--ui-turf-soft);
 }
-.secondary-course-actions {
-  grid-area: secondary;
-  align-self: start;
-  padding: 4px 24px 20px;
-  background: var(--ui-paper);
-}
-.secondary-action-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 8px;
-  padding-bottom: 16px;
-}
 .local-level-import {
   display: flex;
   flex-direction: column;
@@ -440,58 +409,22 @@ button:disabled {
   max-width: 100%;
 }
 .local-level-import p,
-.primary-controls > [role='alert'] {
+.run-controls > [role='alert'] {
   margin: 8px 0 0;
   color: var(--ui-warning);
   font-size: 0.875rem;
   overflow-wrap: anywhere;
 }
-.game-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--ui-line);
-}
-.course-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  color: var(--ui-muted);
-  font-size: 0.75rem;
-}
-.course-legend span {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.course-legend i {
-  display: block;
-  width: 10px;
-  height: 10px;
-}
-.legend-ball {
-  border: 1px solid var(--ui-ink);
-  border-radius: 50%;
-  background: var(--ui-white);
-}
-.legend-field {
-  border: 1px solid var(--ui-green);
-  background: var(--ui-secondary);
-}
-.legend-goal {
-  border: 1px dashed var(--ui-green);
-}
-.demo-note,
-.save-status {
-  color: var(--ui-muted);
-  font-size: 0.78125rem;
-  overflow-wrap: anywhere;
-}
-.save-status {
-  margin: 12px 0 0;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 .api-notice {
   margin: 0 0 16px;
@@ -503,6 +436,8 @@ button:disabled {
 }
 
 .control-column {
+  display: flex;
+  flex-direction: column;
   grid-area: toolkit;
   align-self: start;
   padding: 20px 16px;
@@ -1002,8 +937,7 @@ button:disabled {
     scroll-behavior: auto !important;
   }
 }
-/* Reserve the landscape viewport for the course. The title and run controls
-   share a compact row; the camera fits the course into the remaining space. */
+/* The course fills the landscape viewport; only the inventory scrolls. */
 @media (min-width: 960px) and (orientation: landscape) {
   html,
   body {
@@ -1062,9 +996,9 @@ button:disabled {
   .game-layout {
     flex: 1;
     min-height: 0;
-    grid-template-columns: minmax(0, 1fr) max-content clamp(240px, 21vw, 280px);
-    grid-template-areas: 'meta meta toolkit' 'stage stage toolkit' 'identity primary toolkit' 'secondary secondary toolkit';
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) clamp(240px, 21vw, 280px);
+    grid-template-areas: 'meta toolkit' 'stage toolkit';
+    grid-template-rows: auto minmax(0, 1fr);
     column-gap: 0;
     align-items: stretch;
   }
@@ -1072,103 +1006,17 @@ button:disabled {
     min-height: 0;
   }
   .course-heading {
-    padding: 4px 8px;
+    padding: 8px 12px;
     margin-right: 8px;
   }
   .course-stage {
     display: flex;
     padding: 0 6px 6px;
-    margin: 0 8px 6px 0;
+    margin: 0 8px 0 0;
   }
   .course {
     height: 100%;
     aspect-ratio: auto;
-  }
-  .course-identity {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 8px 12px;
-    border: 1px solid var(--ui-line);
-    border-bottom: 0;
-    border-right: 0;
-    border-radius: var(--ui-r-md) 0 0 0;
-  }
-  .course-identity .section-kicker {
-    display: none;
-  }
-  .course-identity h1 {
-    margin: 0 0 4px;
-    font-size: 1.125rem;
-  }
-  .course-identity p {
-    font-size: 0.8125rem;
-  }
-  .primary-controls {
-    margin-right: 8px;
-    padding: 8px 12px;
-    border: 1px solid var(--ui-line);
-    border-bottom: 0;
-    border-left: 0;
-    border-radius: 0 var(--ui-r-md) 0 0;
-  }
-  .run-controls,
-  .run-metrics {
-    flex-wrap: nowrap;
-    gap: 12px;
-  }
-  .run-metrics > div + div {
-    padding-left: 12px;
-  }
-  .run-metrics dt {
-    font-size: 0.75rem;
-  }
-  .run-metrics dd {
-    margin-top: 2px;
-    font-size: 1.125rem;
-  }
-  .play-button {
-    min-width: 104px;
-    min-height: 40px;
-    padding: 8px 12px;
-  }
-  .secondary-course-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 4px 12px;
-    align-self: stretch;
-    margin-right: 8px;
-    padding: 4px 12px 8px;
-    border: 1px solid var(--ui-line);
-    border-top: 0;
-    border-radius: 0 0 var(--ui-r-md) var(--ui-r-md);
-  }
-  .secondary-action-row {
-    gap: 4px;
-    padding-bottom: 0;
-  }
-  .secondary-action-row :is(.how-button, .text-button) {
-    min-height: 36px;
-    padding: 6px 8px;
-    font-size: 0.75rem;
-  }
-  .game-toolbar {
-    gap: 4px 12px;
-    padding-top: 0;
-    border-top: 0;
-  }
-  .course-legend {
-    gap: 8px;
-    font-size: 0.6875rem;
-  }
-  .demo-note {
-    font-size: 0.75rem;
-  }
-  .save-status {
-    flex-basis: 100%;
-    margin: 0;
   }
   .control-column {
     display: flex;
@@ -1177,6 +1025,11 @@ button:disabled {
     min-height: 0;
     padding: 12px;
     overflow: hidden;
+  }
+  .run-controls {
+    gap: 4px;
+    margin-top: 8px;
+    padding-top: 8px;
   }
   .control-heading,
   .toolkit-note {
@@ -1243,36 +1096,17 @@ button:disabled {
   .game-layout {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: none;
-    grid-template-areas: 'meta' 'identity' 'stage' 'primary' 'toolkit' 'secondary';
-  }
-  .course-identity {
-    margin-block: 4px 8px;
-    padding: 12px 16px;
-  }
-  .course-meta {
-    border: 1px solid var(--ui-line);
-    border-radius: var(--ui-r-sm);
+    grid-template-areas: 'meta' 'stage' 'toolkit';
   }
   .course-stage {
     padding: 12px;
     margin-bottom: 12px;
-    border: 1px solid var(--ui-line);
-    border-radius: var(--ui-r-md);
   }
   .course {
     aspect-ratio: 1.6;
   }
-  .primary-controls {
-    margin-bottom: 12px;
-    padding: 12px 16px;
-    background: var(--ui-turf-soft);
-    border-radius: var(--ui-r-md);
-  }
   .control-column {
     margin-bottom: 12px;
-  }
-  .secondary-course-actions {
-    padding: 4px 16px 16px;
   }
 }
 @media (max-width: 699px) {
@@ -1300,21 +1134,7 @@ button:disabled {
     aspect-ratio: 1.55;
   }
   .course-identity h1 {
-    font-size: 1.4375rem;
-  }
-  .run-metrics {
-    flex: 1 1 100%;
-    justify-content: space-between;
-    gap: 8px;
-  }
-  .run-metrics > div + div {
-    padding-left: 12px;
-  }
-  .run-metrics dd {
-    font-size: 1.4375rem;
-  }
-  .play-button {
-    flex: 1;
+    font-size: 1.125rem;
   }
   .modal-backdrop {
     padding: 12px;
@@ -1352,12 +1172,6 @@ button:disabled {
   .course-stage {
     padding: 8px;
   }
-  .course-identity {
-    padding: 12px 8px;
-  }
-  .primary-controls {
-    padding: 12px;
-  }
   .control-column {
     padding: 16px 12px;
   }
@@ -1368,9 +1182,6 @@ button:disabled {
     flex-basis: 42px;
     width: 42px;
     min-height: 42px;
-  }
-  .secondary-course-actions {
-    padding: 4px 8px 16px;
   }
   .modal-body {
     padding: 12px;

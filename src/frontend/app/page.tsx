@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { starterLevels, levelName } from '../../game';
 import type { Bounds, Level } from '../../game';
-import { fieldName } from '../field-label';
 import { ForceToolkit, PlayButton } from '../player-controls';
 import { LevelImport } from '../level-import';
 import { CourseCanvas } from '../course-canvas';
@@ -16,12 +15,7 @@ import type { Panel } from '../modal';
 import type { TodayPuzzleResponse } from '../../backend/types';
 import { loadDailyPuzzle, saveRun } from '../api';
 import type { CompletedRun } from '../puzzle';
-import {
-  displayedForceCost,
-  selectableFields,
-  selectedFieldCount,
-  TILE_COST,
-} from '../score-display';
+import { selectableFields, selectedFieldCount, TILE_COST } from '../score-display';
 
 const PRACTICE_LEVELS = starterLevels.map((level) => ({
   level,
@@ -173,11 +167,18 @@ function Game({
         )}
         <div className="game-layout">
           <div className="course-meta course-heading">
-            <span className="challenge-label">
-              <Icon name="calendar" size={16} />{' '}
-              {levelIndex < 0 ? 'Local course' : isDaily ? 'Daily challenge' : 'Practice challenge'}{' '}
-              {isDaily && <b>{daily.date}</b>}
-            </span>
+            <div className="course-identity">
+              <h1 id="course-title">{levelName(level)}</h1>
+              <span className="challenge-label">
+                <Icon name="calendar" size={16} />{' '}
+                {levelIndex < 0
+                  ? 'Local course'
+                  : isDaily
+                    ? 'Daily challenge'
+                    : 'Practice challenge'}{' '}
+                {isDaily && <b>{daily.date}</b>}
+              </span>
+            </div>
             <span className={`course-status ${puzzle.mode === 'running' ? 'running' : ''}`}>
               <i aria-hidden="true" />{' '}
               {puzzle.mode === 'setup'
@@ -190,17 +191,6 @@ function Game({
                       ? 'Error'
                       : 'Loading'}
             </span>
-          </div>
-          <div className="course-identity">
-            <span className="section-kicker">
-              {levelIndex < 0 ? 'LOCAL COURSE' : isDaily ? "TODAY'S COURSE" : 'PRACTICE COURSE'}
-            </span>
-            <h1 id="course-title">{levelName(level)}</h1>
-            <p>
-              {inventoryCount
-                ? 'Place a force block. Guide the ball home.'
-                : 'Press Play to watch the course unfold.'}
-            </p>
           </div>
           <section className="course-stage" aria-labelledby="course-title">
             <div className="course">
@@ -227,29 +217,6 @@ function Game({
               />
             </div>
           </section>
-          <section className="primary-controls run-controls" aria-label="Run controls">
-            <dl className="run-metrics" aria-label="Current solution">
-              <div>
-                <dt>Force cost</dt>
-                <dd>
-                  {ready ? displayedForceCost(level, puzzle.draft) : '—'}
-                  <small>pt</small>
-                </dd>
-              </div>
-              <div>
-                <dt>Blocks placed</dt>
-                <dd>
-                  {ready ? placedTiles : '—'}
-                  <small>/ {inventoryCount}</small>
-                </dd>
-              </div>
-              <div>
-                <dt>Attempts</dt>
-                <dd>{puzzle.attempts}</dd>
-              </div>
-            </dl>
-            <PlayButton puzzle={puzzle} />
-          </section>
           <aside className="control-column" aria-labelledby="toolkit-title">
             <div className="control-heading">
               <span className="section-kicker">YOUR TOOLKIT</span>
@@ -268,43 +235,21 @@ function Game({
             <p className="toolkit-note">
               Every active block adds {TILE_COST} point. Use fewer to improve your solution.
             </p>
-          </aside>
-          <div className="secondary-course-actions">
-            <div className="secondary-action-row">
-              <button
-                className="how-button"
-                onClick={() => setPanel('help')}
-                aria-label="How to play"
-              >
-                <Icon name="help" size={17} />
-                <span>How to play</span>
-              </button>
+            <section className="run-controls" aria-label="Run controls">
+              <PlayButton puzzle={puzzle} />
               <button className="text-button" disabled={!ready} onClick={puzzle.resetLayout}>
                 <Icon name="reset" size={17} /> Reset layout
               </button>
-            </div>
-            <div className="game-toolbar">
-              <div className="course-legend">
-                <span>
-                  <i className="legend-ball" /> {fieldName(level.goal.bodyId)}
-                </span>
-                <span>
-                  <i className="legend-field" /> Force field
-                </span>
-                <span>
-                  <i className="legend-goal" /> Goal
-                </span>
-              </div>
-              <span className="demo-note" role="status">
-                {status}
-              </span>
-            </div>
-            {saveStatus && (
-              <p className="save-status" role="status">
-                {saveStatus}
-              </p>
-            )}
-          </div>
+            </section>
+          </aside>
+          <span className="sr-only" role="status">
+            {status}
+          </span>
+          {saveStatus && (
+            <p className="save-status sr-only" role="status">
+              {saveStatus}
+            </p>
+          )}
         </div>
       </main>
       {panel && (

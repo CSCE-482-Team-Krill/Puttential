@@ -4,7 +4,7 @@ import { documentFromLevel, levelBounds, quantizePosition, type Level } from '..
 import { dailyFixture, inventoryLevel, successLevel } from './ui-polish-fixtures';
 
 const URL = 'http://127.0.0.1:3000/';
-const artifacts = 'artifacts/ui-polish';
+const artifacts = process.env.PUTTENTIAL_REVIEW_ARTIFACTS ?? 'artifacts/ui-polish';
 test.use({
   deviceScaleFactor: 1,
   reducedMotion: 'reduce',
@@ -209,7 +209,7 @@ test('desktop regions fit the viewport with empty, three, twelve or long invento
     await page.unroute('**/api/puzzles/today');
     await openLevel(page, inventoryLevel(count, { long }));
     const r = await regions(page);
-    const chain = ['course-meta', 'course-stage', 'course-identity', 'secondary-course-actions'];
+    const chain = ['course-meta', 'course-stage'];
     const gaps = chain.slice(1).map((key, i) => r[key]!.y - r[chain[i]!]!.bottom);
     gaps.forEach((gap, index) => {
       expect(gap).toBeGreaterThanOrEqual(-1);
@@ -217,10 +217,11 @@ test('desktop regions fit the viewport with empty, three, twelve or long invento
     });
     expect(r['control-column']!.x).toBeGreaterThan(r['course-stage']!.right);
     expect(r['course-stage']!.width / r['control-column']!.width).toBeGreaterThan(3.5);
-    expect(r['primary-controls']!.y).toBeCloseTo(r['course-identity']!.y, 0);
     expect(r['course-stage']!.height).toBeGreaterThan(900 * 0.65);
-    expect(r['control-column']!.bottom).toBeCloseTo(r['secondary-course-actions']!.bottom, 0);
-    expect(r['course-stage']!.y).toBeLessThan(r['course-identity']!.y);
+    expect(r['control-column']!.bottom).toBeCloseTo(r['course-stage']!.bottom, 0);
+    await expect(page.locator('.course-heading h1')).toBeVisible();
+    await expect(page.locator('.secondary-course-actions, .run-metrics')).toHaveCount(0);
+    await expect(page.locator('.control-column .run-controls button')).toHaveCount(2);
     expect(
       await page.locator('.control-column').evaluate((e) => getComputedStyle(e).overflowY),
     ).toBe('hidden');
@@ -246,15 +247,13 @@ test('desktop regions fit the viewport with empty, three, twelve or long invento
 test('real inventory, initial ON state, live counts and disabled cards agree', async ({ page }) => {
   await openLevel(page, inventoryLevel(2, { enabled: true }));
   await expect(page.locator('.inventory-count')).toHaveText('2');
-  const metrics = page.locator('.run-metrics');
-  await expect(metrics.locator('dd').nth(0)).toHaveText('1pt');
-  await expect(metrics.locator('dd').nth(1)).toHaveText('1/ 2');
+  await expect(page.locator('.tile-option.selected')).toHaveCount(1);
   const cards = page.locator('.tile-option');
   await expect(cards.first()).toHaveAttribute('aria-pressed', 'true');
   await expect(cards.last()).toHaveAttribute('aria-pressed', 'false');
   await cards.last().click();
-  await expect(metrics.locator('dd').nth(0)).toHaveText('2pt');
-  await expect(metrics.locator('dd').nth(1)).toHaveText('2/ 2');
+  await expect(page.locator('.tile-option.selected')).toHaveCount(2);
+  await expect(cards.first().locator('.tile-cost')).toHaveText('1 pt');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(cards.first()).toBeDisabled();
   await expect(cards.first()).toContainText('ON');
@@ -284,7 +283,7 @@ test('landscape game fits one viewport and keeps controls reachable after height
         '.course-canvas',
         '.course-identity',
         '.run-controls',
-        '.secondary-course-actions',
+        '.course-stage',
         '.control-column',
         '.toolkit-note',
       ];
@@ -307,7 +306,11 @@ test('landscape game fits one viewport and keeps controls reachable after height
     }
     // Supporting UI must leave most of the screen for a readable course.
     const canvas = geometry.regions.find((region) => region.selector === '.course-canvas')!;
-    expect(canvas.height).toBeGreaterThan(height! * (height! <= 600 ? 0.55 : 0.6));
+    expect(canvas.height).toBeGreaterThan(height! * 0.7);
+    expect(height! - canvas.bottom).toBeLessThanOrEqual(26);
+    await expect(page.getByRole('button', { name: 'Reset layout', exact: true })).toBeInViewport({
+      ratio: 1,
+    });
     for (const card of await page.locator('.tile-option').all())
       await expect(card).toBeInViewport({ ratio: 1 });
     await expect(page.locator('.tile-option').first()).toHaveAttribute('aria-pressed', 'true');
@@ -340,17 +343,10 @@ for (const [width, height] of [
     await page.setViewportSize({ width: width!, height: height! });
     await openLevel(page, level);
     const r = await regions(page);
-    const chain = [
-      'course-meta',
-      'course-identity',
-      'course-stage',
-      'primary-controls',
-      'control-column',
-      'secondary-course-actions',
-    ];
+    const chain = ['course-meta', 'course-stage', 'control-column'];
     for (let i = 1; i < chain.length; i++)
       expect(r[chain[i]!]!.y).toBeGreaterThanOrEqual(r[chain[i - 1]!]!.bottom);
-    expect(r['control-column']!.y - r['primary-controls']!.bottom).toBeLessThanOrEqual(16);
+    expect(r['control-column']!.y - r['course-stage']!.bottom).toBeLessThanOrEqual(16);
     const gap = await page.evaluate(
       () =>
         document.querySelector('.tile-option')!.getBoundingClientRect().top -
@@ -367,7 +363,7 @@ for (const [width, height] of [
     await expectField(page, level, { x: -3, y: 0 });
     await dragField(page, level, { x: -3, y: 0 }, { x: -2, y: -0.5 });
     await page.getByRole('button', { name: 'Play', exact: true }).click();
-    await expect(page.locator('.run-metrics dd').last()).toHaveText('1');
+    await expect(page.locator('.course-status')).toHaveText(/In motion|Finished/);
     await noOverflow(page);
   });
 }
@@ -435,7 +431,7 @@ test('completed moves, fresh hit targets, mounted nodes and keyboard focus survi
     await sameNodes(page);
     await expect(page.locator('.tile-option')).toBeFocused();
     await expectField(page, level, { x: -2, y: -0.5 });
-    await expect(page.locator('.run-metrics dd').last()).toHaveText('0');
+    await expect(page.locator('.course-status')).toHaveText('Planning');
   }
   await dragField(page, level, { x: -2, y: -0.5 }, { x: -1, y: -1 });
   await page.setViewportSize({ width: 960, height: 1000 });
@@ -508,7 +504,7 @@ test('running simulation and a pending daily save keep nodes, attempts and one q
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
   await page.setViewportSize({ width: 960, height: 900 });
-  await expect(page.locator('.run-metrics dd').last()).toHaveText('1');
+  await expect(page.locator('.course-status')).toHaveText(/In motion|Finished/);
   await expect(page.getByRole('dialog', { name: 'Nice work!' })).toBeVisible();
   await expect(page.getByText('Saving run…', { exact: true })).toBeVisible();
   await page.setViewportSize({ width: 959, height: 900 });
@@ -755,11 +751,11 @@ test('zoom-equivalent reflow, enlarged text and task-oriented tab order', async 
     await noOverflow(page);
     await expect(page.locator('.tile-info strong')).toContainText('carefully positioned');
   }
-  await page.locator('.play-button').focus();
+  await page.locator('.tile-option').focus();
   await page.keyboard.press('Tab');
-  await expect(page.locator('.tile-option')).toBeFocused();
+  await expect(page.locator('.play-button')).toBeFocused();
   await page.keyboard.press('Tab');
-  await expect(page.getByRole('button', { name: 'How to play', exact: true })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Reset layout', exact: true })).toBeFocused();
 });
 
 test('rendered text and essential control colors retain contrast in each UI state', async ({
@@ -812,9 +808,9 @@ test('rendered text and essential control colors retain contrast in each UI stat
     rows.push({ label, ...colors, ratio, minimum });
     expect(ratio, label).toBeGreaterThanOrEqual(minimum);
   }
-  await measure('Body instruction', '.course-identity p');
+  await measure('Body instruction', '.control-heading p');
   await measure('Course label', '.challenge-label');
-  await measure('Muted metric label', '.run-metrics dt');
+  await measure('Toolkit note', '.toolkit-note');
   await measure('Nav default', '.nav-button');
   await measure('Play default', '.play-button');
   await page.locator('.play-button').hover();
