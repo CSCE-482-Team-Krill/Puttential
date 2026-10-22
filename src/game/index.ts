@@ -22,6 +22,7 @@ export type {
   Game,
   GameCommand,
   GameSnapshot,
+  PendingTeleport,
   Prediction,
   PredictionOptions,
   PredictionSample,
@@ -41,7 +42,7 @@ export {
   containsBounds,
 } from './levels/document';
 export { starterLevels, starterDocument } from './levels/starters';
-export { forceCatalog, forceDefinition } from './objects/catalog';
+export { forceCatalog, forceDefinition, isCourseObject } from './objects/catalog';
 export type { FieldParam } from './objects/catalog';
 export { forceDensity } from './objects/forces';
 export { shapePresets } from './objects/presets';

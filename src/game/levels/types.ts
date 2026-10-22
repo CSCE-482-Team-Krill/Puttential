@@ -56,6 +56,15 @@ export type StaticBodyDefinition = Readonly<{
  * field shape.
  */
 export type FieldForceDefinition =
+  | Readonly<{ kind: 'water'; drag: number; sinkSpeed: number }>
+  | Readonly<{ kind: 'lava' }>
+  | Readonly<{
+      kind: 'portal';
+      pairId: string;
+      rotateVelocity: boolean;
+      delaySeconds?: number;
+      cooldownSeconds?: number;
+    }>
   | Readonly<{ kind: 'uniform'; density: Vec2 }>
   | Readonly<{ kind: 'attractor'; source: Vec2; strength: number }>
   | Readonly<{ kind: 'repulsor'; source: Vec2; strength: number }>;

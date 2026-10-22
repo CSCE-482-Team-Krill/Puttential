@@ -1,11 +1,10 @@
-import type { CreateAttemptRequest, CreateSolutionRequest } from './types';
+import { BackendError } from './errors';
+import type { CreateAttemptRequest, CreateSolutionRequest, SolutionPlacementData } from './types';
 
-export class HttpError extends Error {
-  constructor(
-    public status: number,
-    message: string,
-  ) {
-    super(message);
+/** A malformed request rejected before any service runs. */
+export class HttpError extends BackendError {
+  constructor(status: number, message: string) {
+    super(message, status);
   }
 }
 
@@ -90,14 +89,26 @@ export function parseSolution(value: unknown): CreateSolutionRequest {
     }
     throw new HttpError(400, 'Invalid replay command.');
   });
+  const placementData: SolutionPlacementData = {
+    levelId: id(placement.levelId, 'levelId'),
+    levelVersion: placement.levelVersion as number,
+    commands,
+  };
+  // Optional: records which engine build produced the replay, for later validation.
+  if (placement.simulationVersion !== undefined) {
+    const version = placement.simulationVersion;
+    if (typeof version !== 'string' || !version.trim() || version.length > 200) {
+      throw new HttpError(
+        400,
+        'simulationVersion must be a non-empty string of at most 200 characters.',
+      );
+    }
+    placementData.simulationVersion = version;
+  }
   return {
     puzzleId: id(body.puzzleId, 'puzzleId'),
     attemptId: id(body.attemptId, 'attemptId'),
-    placementData: {
-      levelId: id(placement.levelId, 'levelId'),
-      levelVersion: placement.levelVersion as number,
-      commands,
-    },
+    placementData,
   };
 }
 
@@ -109,24 +120,26 @@ export async function jsonBody(request: Request): Promise<unknown> {
   }
 }
 
+/**
+ * Prisma reports a unique-constraint violation as P2002. This can still happen
+ * after a service's own duplicate check when two identical requests race.
+ */
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: unknown }).code === 'P2002'
+  );
+}
+
 export function apiError(error: unknown): Response {
-  if (error instanceof HttpError)
+  // Services and request parsing throw typed errors that carry their HTTP status.
+  if (error instanceof BackendError) {
     return Response.json({ error: error.message }, { status: error.status });
-  // The existing service layer uses ordinary Errors for domain failures.
-  if (error instanceof Error) {
-    if (/^(Puzzle|User|Attempt) not found:/.test(error.message)) {
-      return Response.json({ error: error.message }, { status: 404 });
-    }
-    if (/^A solution already exists/.test(error.message)) {
-      return Response.json({ error: error.message }, { status: 409 });
-    }
-    if (
-      /^(The attempt does not belong|A solution cannot be created|The solution user does not match)/.test(
-        error.message,
-      )
-    ) {
-      return Response.json({ error: error.message }, { status: 400 });
-    }
+  }
+  if (isUniqueConstraintError(error)) {
+    return Response.json({ error: 'This record already exists.' }, { status: 409 });
   }
   console.error('Puzzle API request failed:', error);
   return Response.json(
