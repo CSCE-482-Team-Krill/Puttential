@@ -195,7 +195,7 @@ for (const [width, height] of [
   });
 }
 
-test('desktop joined regions do not stretch with empty, three, twelve or long inventories', async ({
+test('desktop regions fit the viewport with empty, three, twelve or long inventories', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -209,24 +209,21 @@ test('desktop joined regions do not stretch with empty, three, twelve or long in
     await page.unroute('**/api/puzzles/today');
     await openLevel(page, inventoryLevel(count, { long }));
     const r = await regions(page);
-    const chain = [
-      'course-meta',
-      'course-stage',
-      'course-identity',
-      'primary-controls',
-      'secondary-course-actions',
-    ];
+    const chain = ['course-meta', 'course-stage', 'course-identity', 'secondary-course-actions'];
     const gaps = chain.slice(1).map((key, i) => r[key]!.y - r[chain[i]!]!.bottom);
-    gaps.forEach((gap) => {
+    gaps.forEach((gap, index) => {
       expect(gap).toBeGreaterThanOrEqual(-1);
-      expect(gap).toBeLessThanOrEqual(4);
+      expect(gap).toBeLessThanOrEqual(index === 1 ? 12 : 4);
     });
     expect(r['control-column']!.x).toBeGreaterThan(r['course-stage']!.right);
-    expect(r['control-column']!.width).toBe(300);
+    expect(r['course-stage']!.width / r['control-column']!.width).toBeGreaterThan(3.5);
+    expect(r['primary-controls']!.y).toBeCloseTo(r['course-identity']!.y, 0);
+    expect(r['course-stage']!.height).toBeGreaterThan(900 * 0.65);
+    expect(r['control-column']!.bottom).toBeCloseTo(r['secondary-course-actions']!.bottom, 0);
     expect(r['course-stage']!.y).toBeLessThan(r['course-identity']!.y);
     expect(
       await page.locator('.control-column').evaluate((e) => getComputedStyle(e).overflowY),
-    ).toBe('visible');
+    ).toBe('hidden');
     if (count) {
       await page.locator('.tile-option').last().scrollIntoViewIfNeeded();
       await expect(page.locator('.tile-option').last()).toBeInViewport();
@@ -235,6 +232,7 @@ test('desktop joined regions do not stretch with empty, three, twelve or long in
         'No force blocks available for this course.',
       );
     await noOverflow(page);
+    expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(900);
     recorded.push({ count, long, gaps, regions: r });
     await screenshot(page, `inventory-${count}${long ? '-long' : ''}`);
   }
@@ -261,6 +259,73 @@ test('real inventory, initial ON state, live counts and disabled cards agree', a
   await expect(cards.first()).toBeDisabled();
   await expect(cards.first()).toContainText('ON');
   expect(await cards.first().evaluate((e) => getComputedStyle(e).opacity)).toBe('1');
+});
+
+test('landscape game fits one viewport and keeps controls reachable after height changes', async ({
+  page,
+}) => {
+  await openLevel(page, inventoryLevel(3));
+  await page.locator('.tile-option').first().click();
+  for (const [width, height] of [
+    [960, 600],
+    [1024, 600],
+    [1280, 720],
+    [1366, 768],
+    [1440, 900],
+    [1440, 1024],
+    [1920, 1080],
+    [2560, 1440],
+  ]) {
+    await page.setViewportSize({ width: width!, height: height! });
+    await expect(page.locator('.course-canvas.editable')).toHaveCount(1);
+    const geometry = await page.evaluate(() => {
+      const selectors = [
+        '.site-header',
+        '.course-canvas',
+        '.course-identity',
+        '.run-controls',
+        '.secondary-course-actions',
+        '.control-column',
+        '.toolkit-note',
+      ];
+      return {
+        document: [document.documentElement.scrollWidth, document.documentElement.scrollHeight],
+        viewport: [innerWidth, innerHeight],
+        regions: selectors.map((selector) => {
+          const r = document.querySelector(selector)!.getBoundingClientRect();
+          return { selector, x: r.x, y: r.y, right: r.right, bottom: r.bottom, height: r.height };
+        }),
+      };
+    });
+    expect(geometry.document).toEqual(geometry.viewport);
+    for (const region of geometry.regions) {
+      expect(region.x, region.selector).toBeGreaterThanOrEqual(0);
+      expect(region.y, region.selector).toBeGreaterThanOrEqual(0);
+      expect(region.right, region.selector).toBeLessThanOrEqual(width!);
+      expect(region.bottom, region.selector).toBeLessThanOrEqual(height!);
+      expect(region.height, region.selector).toBeGreaterThan(0);
+    }
+    // Supporting UI must leave most of the screen for a readable course.
+    const canvas = geometry.regions.find((region) => region.selector === '.course-canvas')!;
+    expect(canvas.height).toBeGreaterThan(height! * (height! <= 600 ? 0.55 : 0.6));
+    for (const card of await page.locator('.tile-option').all())
+      await expect(card).toBeInViewport({ ratio: 1 });
+    await expect(page.locator('.tile-option').first()).toHaveAttribute('aria-pressed', 'true');
+    await page.mouse.move(30, 30);
+    await page.mouse.wheel(0, 1200);
+    expect(await page.evaluate(() => scrollY)).toBe(0);
+  }
+  // The real API can be unavailable; its notice also needs room in the viewport.
+  await page.route('**/api/puzzles/today', (route) =>
+    route.fulfill({ status: 503, json: { error: 'Unavailable' } }),
+  );
+  await page.setViewportSize({ width: 1024, height: 600 });
+  await page.reload();
+  await expect(page.locator('.api-notice')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeInViewport({
+    ratio: 1,
+  });
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBe(600);
 });
 
 for (const [width, height] of [

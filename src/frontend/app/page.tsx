@@ -173,8 +173,7 @@ function Game({
       <main className="dashboard">
         {loadError && (
           <p className="api-notice" role="status">
-            Today's puzzle is unavailable. Practice courses still work; those runs aren't saved. You
-            can play a practice course below.
+            Today's puzzle is unavailable. Practice courses still work; those runs aren't saved.
           </p>
         )}
         <div className="game-layout">
@@ -268,10 +267,7 @@ function Game({
                   {inventoryCount}
                 </span>
               </div>
-              <p>
-                Turn a block ON here, then drag its field on the course. The cards themselves do not
-                drag.
-              </p>
+              <p>Turn a block ON, then drag its field on the course.</p>
             </div>
             <ForceToolkit level={level} puzzle={puzzle} />
             <p className="toolkit-note">

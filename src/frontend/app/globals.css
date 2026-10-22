@@ -997,9 +997,235 @@ button:disabled {
     scroll-behavior: auto !important;
   }
 }
-@media (min-width: 1550px) {
+/* Reserve the landscape viewport for the course. The title and run controls
+   share a compact row; the camera fits the course into the remaining space. */
+@media (min-width: 960px) and (orientation: landscape) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
   .site-wrap {
-    padding: 32px;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 0;
+    padding: 8px;
+    overflow: hidden;
+  }
+  .site-header,
+  .dashboard {
+    width: 100%;
+    max-width: none;
+  }
+  .site-header {
+    flex: 0 0 auto;
+    min-height: 56px;
+    padding: 4px 12px;
+    flex-wrap: nowrap;
+  }
+  .main-nav {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .nav-button {
+    flex-direction: row;
+    gap: 6px;
+    min-width: 44px;
+    min-height: 40px;
+    padding: 8px 10px;
+    border-color: var(--ui-line);
+    border-radius: var(--ui-r-md);
+  }
+  .dashboard {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    padding: 8px;
+    overflow: hidden;
+  }
+  .api-notice {
+    flex-shrink: 0;
+    margin-bottom: 6px;
+    padding: 4px 8px;
+    font-size: 0.78125rem;
+  }
+  .game-layout {
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) max-content clamp(240px, 21vw, 280px);
+    grid-template-areas: 'meta meta toolkit' 'stage stage toolkit' 'identity primary toolkit' 'secondary secondary toolkit';
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    column-gap: 0;
+    align-items: stretch;
+  }
+  .game-layout > * {
+    min-height: 0;
+  }
+  .course-heading {
+    padding: 4px 8px;
+    margin-right: 8px;
+  }
+  .course-stage {
+    display: flex;
+    padding: 0 6px 6px;
+    margin: 0 8px 6px 0;
+  }
+  .course {
+    height: 100%;
+    aspect-ratio: auto;
+  }
+  .course-identity {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 8px 12px;
+    border: 1px solid var(--ui-line);
+    border-bottom: 0;
+    border-right: 0;
+    border-radius: var(--ui-r-md) 0 0 0;
+  }
+  .course-identity .section-kicker {
+    display: none;
+  }
+  .course-identity h1 {
+    margin: 0 0 4px;
+    font-size: 1.125rem;
+  }
+  .course-identity p {
+    font-size: 0.8125rem;
+  }
+  .primary-controls {
+    margin-right: 8px;
+    padding: 8px 12px;
+    border: 1px solid var(--ui-line);
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0 var(--ui-r-md) 0 0;
+  }
+  .run-controls,
+  .run-metrics {
+    flex-wrap: nowrap;
+    gap: 12px;
+  }
+  .run-metrics > div + div {
+    padding-left: 12px;
+  }
+  .run-metrics dt {
+    font-size: 0.75rem;
+  }
+  .run-metrics dd {
+    margin-top: 2px;
+    font-size: 1.125rem;
+  }
+  .play-button {
+    min-width: 104px;
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+  .secondary-course-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px 12px;
+    align-self: stretch;
+    margin-right: 8px;
+    padding: 4px 12px 8px;
+    border: 1px solid var(--ui-line);
+    border-top: 0;
+    border-radius: 0 0 var(--ui-r-md) var(--ui-r-md);
+  }
+  .secondary-action-row {
+    gap: 4px;
+    padding-bottom: 0;
+  }
+  .secondary-action-row :is(.how-button, .text-button) {
+    min-height: 36px;
+    padding: 6px 8px;
+    font-size: 0.75rem;
+  }
+  .game-toolbar {
+    gap: 4px 12px;
+    padding-top: 0;
+    border-top: 0;
+  }
+  .course-legend {
+    gap: 8px;
+    font-size: 0.6875rem;
+  }
+  .demo-note {
+    font-size: 0.75rem;
+  }
+  .save-status {
+    flex-basis: 100%;
+    margin: 0;
+  }
+  .control-column {
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    min-height: 0;
+    padding: 12px;
+    overflow: hidden;
+  }
+  .control-heading,
+  .toolkit-note {
+    flex-shrink: 0;
+  }
+  .control-heading p,
+  .toolkit-note {
+    font-size: 0.75rem;
+  }
+  .control-heading .section-kicker {
+    display: none;
+  }
+  .toolkit-title {
+    margin-top: 0;
+  }
+  .toolkit-title h2 {
+    font-size: 1.125rem;
+  }
+  .control-heading p {
+    margin-top: 8px;
+  }
+  .tile-list {
+    flex: 1;
+    min-height: 0;
+    gap: 8px;
+    margin: 8px -4px 0;
+    padding: 4px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ui-secondary) transparent;
+  }
+  .tile-option {
+    flex-shrink: 0;
+    min-height: 72px;
+    gap: 8px;
+    padding: 10px;
+  }
+  .tile-option.selected {
+    padding: 9px;
+  }
+  .tile-arrows {
+    flex-basis: 40px;
+    width: 40px;
+    min-height: 40px;
+    font-size: 1.5rem;
+  }
+  .tile-info strong {
+    font-size: 0.875rem;
+  }
+  .toolkit-note {
+    margin-top: 8px;
+    padding-top: 8px;
+  }
+  .loading-region {
+    flex: 1;
+    min-height: 0;
   }
 }
 @media (max-width: 959px) {

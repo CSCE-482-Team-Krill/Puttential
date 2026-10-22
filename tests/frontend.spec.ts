@@ -145,7 +145,7 @@ test('unavailable daily backend offers practice without submitting it', async ({
     return route.fulfill({ status: 500 });
   });
   await page.goto('http://127.0.0.1:3000');
-  await expect(page.getByText(/You can play a practice course below/)).toBeVisible();
+  await expect(page.locator('.api-notice')).toContainText('Practice courses still work');
   await expect(page.locator('.challenge-label')).toContainText('Practice challenge');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'So close' })).toBeVisible();
