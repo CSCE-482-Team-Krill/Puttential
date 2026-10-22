@@ -5,6 +5,7 @@ import type { Level } from '../../../game';
 import { Modal, usePreferences } from '../../modal';
 import type { Panel } from '../../modal';
 import { Icon } from '../../icon';
+import { BrandLogo } from '../../brand-logo';
 import type { IconName } from '../../icon';
 import { TILE_COST } from '../../score-display';
 
@@ -38,7 +39,7 @@ export default function ModalPreview() {
     <div className={`site-wrap ${preferences.reducedMotion ? 'reduce-motion' : ''}`}>
       <header className="site-header">
         <span className="brand">
-          Puttential<span className="brand-dot">.</span>
+          <BrandLogo />
         </span>
         <nav className="main-nav" aria-label="Modal preview">
           {panels.map((item) => (

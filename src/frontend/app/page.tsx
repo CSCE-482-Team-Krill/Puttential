@@ -9,6 +9,7 @@ import { LevelImport } from '../level-import';
 import { CourseCanvas } from '../course-canvas';
 import { usePuzzle } from '../puzzle';
 import { Icon } from '../icon';
+import { BrandLogo } from '../brand-logo';
 import type { IconName } from '../icon';
 import { Modal, usePreferences } from '../modal';
 import type { Panel } from '../modal';
@@ -46,7 +47,7 @@ export default function Home() {
       <div className="site-wrap loading-shell">
         <header className="site-header">
           <span className="brand">
-            Puttential<span className="brand-dot">.</span>
+            <BrandLogo />
           </span>
         </header>
         <main className="dashboard">
@@ -145,13 +146,7 @@ function Game({
           }}
           aria-label="Puttential home"
         >
-          <span className="brand-mark" aria-hidden="true">
-            <span className="brand-ball" />
-            <span className="brand-flag" />
-          </span>
-          <span>
-            Puttential<span className="brand-dot">.</span>
-          </span>
+          <BrandLogo />
         </button>
         <nav className="main-nav" aria-label="Main navigation">
           {nav.map((item) => (

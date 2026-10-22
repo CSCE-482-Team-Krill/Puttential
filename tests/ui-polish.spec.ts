@@ -177,7 +177,7 @@ for (const [width, height] of [
     });
     await page.goto(URL);
     await expect(page.getByRole('status')).toHaveText("Loading today's course…");
-    await expect(page.locator('.brand')).toContainText('Puttential');
+    await expect(page.getByRole('img', { name: 'Puttential', exact: true })).toBeVisible();
     await expect(page.locator('.loading-shell button')).toHaveCount(0);
     await noOverflow(page);
     release();

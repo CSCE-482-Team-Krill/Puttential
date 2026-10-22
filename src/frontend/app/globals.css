@@ -105,6 +105,11 @@ button:disabled {
   line-height: 1;
   letter-spacing: -0.04em;
 }
+.brand-logo {
+  display: block;
+  width: 200px;
+  height: auto;
+}
 .brand-dot {
   color: var(--ui-green);
 }
@@ -1023,6 +1028,9 @@ button:disabled {
     min-height: 56px;
     padding: 4px 12px;
     flex-wrap: nowrap;
+  }
+  .brand-logo {
+    width: 180px;
   }
   .main-nav {
     flex-wrap: nowrap;
