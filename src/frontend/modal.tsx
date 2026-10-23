@@ -67,7 +67,7 @@ const HELP_SECTIONS = [
   {
     title: 'How to play',
     content:
-      'Turn a block ON in your toolkit, then drag its field on the course. The cards themselves do not drag. The dotted path previews the start of the run. Press Play to lock your layout and watch it move. Use Try again to adjust your plan, or Reset layout to start over.',
+      'Turn a block ON in your toolkit, then drag its field on the course. The cards themselves do not drag. Three dots and an arrow show the initial direction. Press Play to lock your layout and watch it move. Use Try again to adjust your plan, or Reset layout to start over.',
   },
   {
     title: 'Scoring',

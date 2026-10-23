@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import type { RefObject } from 'react';
 import { drawZone, drawLiquid } from './zone-drawing';
 import { portalPairColors } from './portal-colors';
+import { directionHint } from './direction-hint';
 import { isCourseObject, polygonBounds, shapePolygon, forceDensity, levelBounds } from '../game';
 import type {
   FieldZoneDefinition,
@@ -46,8 +47,6 @@ type Drag = Readonly<{
 const ARROW_SPACING = 0.6;
 const ARROW_LENGTH = 0.32;
 const VIEW_MARGIN = 0.15;
-/** Screen distance between preview dots, independent of how fast the body moves. */
-const TRAIL_DOT_SPACING = 14;
 
 function rotate(vector: Vec2, angle: number): Vec2 {
   const cos = Math.cos(angle),
@@ -286,25 +285,24 @@ function draw(
   }
   context.shadowColor = 'transparent';
 
-  // Predicted path for the start of the run.
+  // Start beyond the body's edge so even a slow, wide body cannot hide the hint.
   if (props.mode === 'setup') {
-    context.fillStyle = '#25682acc';
-    const points = props.trail.map((point) => toCanvas(view, point));
-    let untilNextDot = TRAIL_DOT_SPACING;
-    for (let i = 1; i < points.length; i += 1) {
-      const from = points[i - 1]!,
-        to = points[i]!;
-      const length = Math.hypot(to.x - from.x, to.y - from.y);
-      let travelled = 0;
-      while (length - travelled >= untilNextDot) {
-        travelled += untilNextDot;
-        untilNextDot = TRAIL_DOT_SPACING;
-        const t = travelled / length;
+    const body = state.bodies.find((body) => body.id === props.level.goal.bodyId);
+    const hint = body && directionHint(body, props.trail, view.scale);
+    if (hint) {
+      context.save();
+      context.fillStyle = '#000000';
+      context.strokeStyle = '#000000';
+      context.lineWidth = 1.5;
+      context.lineCap = 'round';
+      for (const dot of hint.dots) {
+        const point = toCanvas(view, dot);
         context.beginPath();
-        context.arc(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, 3, 0, Math.PI * 2);
+        context.arc(point.x, point.y, 3, 0, Math.PI * 2);
         context.fill();
       }
-      untilNextDot -= length - travelled;
+      drawArrow(context, toCanvas(view, hint.arrow.from), toCanvas(view, hint.arrow.to));
+      context.restore();
     }
   }
 
