@@ -5,7 +5,7 @@ test('migrated Figma modals retain focus, keyboard controls and preferences', as
   await page.goto('http://127.0.0.1:3000/modal-preview');
   for (const [button, title] of [
     ['Help', 'Help'],
-    ['Profile', 'You'],
+    ['Profile', 'Profile'],
     ['Leaderboard', 'Leaderboard'],
     ['Calendar', 'Calendar'],
     ['Settings', 'Settings'],
@@ -28,17 +28,51 @@ test('migrated Figma modals retain focus, keyboard controls and preferences', as
   await page.getByText('How to play', { exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Press Play');
   await page.keyboard.press('Escape');
-  for (const width of [320, 390, 700, 760, 850, 1050, 1440, 1920]) {
+  for (const width of [320, 390, 700, 760, 850, 959, 960, 961, 1050, 1440, 1920]) {
     await page.setViewportSize({ width, height: 900 });
     const brand = (await page.locator('.brand').boundingBox())!;
     const nav = (await page.getByRole('navigation').boundingBox())!;
     const header = await page.locator('.site-header').evaluate((element) => {
       const bounds = element.getBoundingClientRect();
-      return { right: bounds.right, padding: parseFloat(getComputedStyle(element).paddingRight) };
+      return {
+        left: bounds.left,
+        top: bounds.top,
+        bottom: bounds.bottom,
+        right: bounds.right,
+        padding: parseFloat(getComputedStyle(element).paddingRight),
+      };
     });
-    expect(nav.x).toBeGreaterThanOrEqual(brand.x + brand.width);
-    expect(Math.abs(nav.y + nav.height / 2 - (brand.y + brand.height / 2))).toBeLessThan(2);
+    if (width >= 960 || nav.y < brand.y + brand.height - 1) {
+      expect(nav.x).toBeGreaterThanOrEqual(brand.x + brand.width);
+      expect(Math.abs(nav.y + nav.height / 2 - (brand.y + brand.height / 2))).toBeLessThan(2);
+    } else {
+      expect(brand.y + brand.height).toBeLessThanOrEqual(nav.y + 1);
+    }
+    for (const box of [brand, nav]) {
+      expect(box.x).toBeGreaterThanOrEqual(header.left);
+      expect(box.x + box.width).toBeLessThanOrEqual(header.right);
+      expect(box.y).toBeGreaterThanOrEqual(header.top);
+      expect(box.y + box.height).toBeLessThanOrEqual(header.bottom);
+    }
+    const controlBoxes = [];
+    for (const name of ['Calendar', 'Leaderboard', 'Settings', 'Profile', 'Help']) {
+      const control = page.getByRole('button', { name, exact: true });
+      await expect(control).toBeVisible();
+      const box = (await control.boundingBox())!;
+      expect(box.width).toBeGreaterThanOrEqual(40);
+      expect(box.height).toBeGreaterThanOrEqual(40);
+      controlBoxes.push(box);
+    }
+    controlBoxes.sort((a, b) => a.x - b.x);
+    for (let index = 1; index < controlBoxes.length; index++) {
+      expect(
+        controlBoxes[index]!.x - (controlBoxes[index - 1]!.x + controlBoxes[index - 1]!.width),
+      ).toBeGreaterThanOrEqual(4);
+    }
     expect(Math.abs(nav.x + nav.width - (header.right - header.padding - 1))).toBeLessThan(2);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
     await expect(page.getByRole('button', { name: 'Calendar', exact: true })).toBeVisible();
   }
 });
@@ -111,7 +145,7 @@ test('unavailable daily backend offers practice without submitting it', async ({
     return route.fulfill({ status: 500 });
   });
   await page.goto('http://127.0.0.1:3000');
-  await expect(page.getByText(/You can play a practice course below/)).toBeVisible();
+  await expect(page.locator('.api-notice')).toContainText('Practice courses still work');
   await expect(page.locator('.challenge-label')).toContainText('Practice challenge');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'So close' })).toBeVisible();

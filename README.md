@@ -65,13 +65,57 @@ The checked-in `src/frontend/vercel.json` runs `npm run build`; its `prebuild` g
 
 Set `DATABASE_URL` in Vercel's Preview and Production environments to the corresponding hosted PostgreSQL database. Builds do not require a live database; the API needs it at runtime. Run migrations and seed dated courses against that database separately, rather than modifying it during preview builds.
 
+## Frontend polish and local design review
+
+The game uses the Little Putting Club paper/turf theme from the v1.2.1 package. One mounted canvas and one set of controls adapt with CSS: desktop keeps the course and scorecard left of the toolkit; mobile puts the title before the course, then Play, toolkit and secondary actions. The editor retains its existing styles and engine.
+
+For frontend-only review (no database required), run from the repository root in Windows PowerShell:
+
+```powershell
+node --version # 22.12 or newer
+npm.cmd install
+npm.cmd run db:generate
+npm.cmd run game
+```
+
+Open **http://127.0.0.1:3000**. Without PostgreSQL the game shows an unavailable-daily notice and offers the bundled practice courses. Use **Open local course** below the game controls for editor JSON. Practice/local runs are not saved. To serve and save today's actual daily course, follow the full-stack setup above; preserve your existing `.env` rather than overwriting it. If creating it for the first time:
+
+```powershell
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
+docker compose up -d --wait db
+npm.cmd run db:migrate
+npm.cmd run db:seed
+npm.cmd run game
+```
+
+**http://127.0.0.1:3000/modal-preview** is a development-only review page, with clearly labeled example courses and six example leaderboard rows. It returns **404 in production**. The real Profile and Leaderboard show unavailable messages until their data is connected. Settings persist on this device; audio preferences are not connected to playback.
+
+For a production preview, stop the development server with Ctrl+C, then:
+
+```powershell
+npm.cmd run game:build
+npm.cmd run game:start
+```
+
+UI regression and production route checks:
+
+```powershell
+npx.cmd playwright install chromium
+npm.cmd run test:e2e
+# Stop next dev before building/starting against the same workspace.
+npm.cmd run game:build
+npm.cmd run test:ui:production
+```
+
+The production smoke script temporarily serves the built app on **127.0.0.1:3002**, checks `/` is 200 and `/modal-preview` is 404, then stops its server. Deterministic screenshots and review notes are in [artifacts/ui-polish](artifacts/ui-polish/implementation-notes.md). Browser tests mock the daily API; they do not require a live database. Keyboard-only placement of canvas fields remains an existing gameplay limitation.
+
 ## Integration status
 
 The Figma frontend, all six modal layouts, responsive styles, preferences and isolated `/modal-preview` route live in `src/frontend`. The game and editor share canvas drawing, controls and simulation hooks without duplicating physics.
 
 The connected prototype exposes `GET /api/puzzles/today`, `POST /api/attempts` and `POST /api/solutions`. HTTP submissions support anonymous play only. Daily configuration is validated by the engine codec. Completed runs are saved once per visit; interrupted runs and unsent runs are not persisted or retried after a connection failure.
 
-Profile, streak and leaderboard panels still display clearly labeled sample data. Calendar lists the daily course and bundled practice courses; historical database browsing and accounts are not implemented. The backend validates request structure and attempt/solution relationships but **still trusts client-reported success and scoring**; server-side replay verification and ranking remain future work.
+Profile and leaderboard panels show honest unavailable states; only the development preview displays example rankings. Calendar lists the daily course and bundled practice courses; historical database browsing and accounts are not implemented. The backend validates request structure and attempt/solution relationships but **still trusts client-reported success and scoring**; server-side replay verification and ranking remain future work.
 
 ## Source layout
 

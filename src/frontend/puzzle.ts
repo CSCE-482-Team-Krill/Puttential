@@ -21,8 +21,8 @@ export type CompletedRun = Readonly<{
   commands: GameCommand[];
 }>;
 
-/** How much of the run the dotted preview shows. */
-const TRAIL_TICKS = 120;
+/** Reveal only the initial direction, even when a course requests a full prediction. */
+const TRAIL_TICKS = Math.round(0.5 / FIXED_DT);
 /** Caps catch-up work after a slow frame or a background tab. */
 const MAX_STEPS_PER_FRAME = 8;
 
@@ -104,10 +104,10 @@ export function usePuzzle(level: Level) {
   useEffect(() => {
     const game = gameRef.current;
     if (mode !== 'setup' || game === null) return;
-    const prediction = game.predict(
-      layoutCommands(draft),
-      level.prediction ?? { maxTicks: TRAIL_TICKS, sampleEveryTicks: 1 },
-    );
+    const prediction = game.predict(layoutCommands(draft), {
+      maxTicks: Math.min(level.prediction?.maxTicks ?? TRAIL_TICKS, TRAIL_TICKS),
+      sampleEveryTicks: 1,
+    });
     setTrail(
       prediction.samples.flatMap((sample) =>
         sample.bodies.filter((body) => body.id === level.goal.bodyId).map((body) => body.position),
