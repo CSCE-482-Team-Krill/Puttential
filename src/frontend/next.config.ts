@@ -11,6 +11,12 @@ const nextConfig: NextConfig = {
   agentRules: false,
   outputFileTracingRoot: repositoryRoot,
   turbopack: { root: repositoryRoot },
+  // pg loads pg-cloudflare only on Cloudflare Workers. `next build` traces files
+  // under Node.js, where that code is never reached, so include it explicitly
+  // for the API routes that talk to the database.
+  outputFileTracingIncludes: {
+    '/api/**': ['../../node_modules/pg-cloudflare/dist/**'],
+  },
 };
 
 export default nextConfig;

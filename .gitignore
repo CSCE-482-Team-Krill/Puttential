@@ -25,3 +25,11 @@ Thumbs.db
 *.tsbuildinfo
 test-results/
 playwright-report/
+
+
+# Cloudflare / OpenNext build output and local secrets
+.open-next/
+.wrangler/
+.dev.vars
+
+prisma/.schema.cloudflare.prisma
