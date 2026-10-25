@@ -1,10 +1,12 @@
+import 'dotenv/config';
 import { readFile } from 'node:fs/promises';
 import { Prisma } from '../../generated/prisma/client';
 import { parseLevel } from '../game/levels/parse';
 import { starterLevels } from '../game/levels/starters';
-import { prisma } from './prisma';
+import { getPrisma } from './prisma';
 import { centralDateString } from './puzzle-date';
 
+const prisma = getPrisma();
 async function main() {
   // Optional canonical course JSON and date: npm run db:seed -- path/to/course.json YYYY-MM-DD
   const [file, requestedDate] = process.argv.slice(2);

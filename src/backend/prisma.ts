@@ -1,30 +1,23 @@
-import "dotenv/config";
+import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '../../generated/prisma/client';
 
-import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "../../generated/prisma/client";
-
-// Read the PostgreSQL connection string from the environment.
-const connectionString = process.env.DATABASE_URL;
-
-if (!connectionString) {
-    throw new Error("DATABASE_URL is not defined.");
-}
-
-// Storing PrismaClient on globalThis lets us reuse one client instead of repeatedly creating new database connections.
-const globalForPrisma = globalThis as unknown as {
-    prisma?: PrismaClient;
-};
-
-// Create the Prisma client only if one does not already exist.
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    adapter: new PrismaPg({
-      connectionString,
-    }),
+/**
+ * Creates a Prisma client for the current request.
+ *
+ * Cloudflare Workers cannot reuse a database connection across requests, so
+ * we never share one global client. Each call gets its own client, and
+ * `maxUses: 1` closes every connection after a single use. This also works
+ * unchanged under Node.js (`next dev`, the seed script).
+ *
+ * DATABASE_URL comes from the platform: Cloudflare/Vercel variables in
+ * production, the root .env locally (loaded by next.config.ts and the CLI).
+ */
+export function getPrisma(): PrismaClient {
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error('DATABASE_URL is not defined.');
+  }
+  return new PrismaClient({
+    adapter: new PrismaPg({ connectionString, maxUses: 1 }),
   });
-
-// In our production, the module is normally initialized once, so this cache is mainly useful for the local development environment.
-if (process.env.NODE_ENV !== "production") {
-    globalForPrisma.prisma = prisma;
 }

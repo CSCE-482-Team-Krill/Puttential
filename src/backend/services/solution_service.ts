@@ -1,6 +1,6 @@
 import { Prisma } from "../../../generated/prisma/client";
 
-import { prisma } from "../prisma";
+import { getPrisma } from "../prisma";
 import type { CreateSolutionRequest, CreateSolutionResponse,} from "../types";
 import { ConflictError, NotFoundError, ValidationError } from "../errors";
 
@@ -93,6 +93,7 @@ function validatePlacementData(placementData: CreateSolutionRequest["placementDa
  * - comparing or analyzing player solutions.
  */
 export async function createSolution(input: CreateSolutionRequest): Promise<CreateSolutionResponse> {
+    const prisma = getPrisma();
     // Basic ID validation before querying the database.
     if (!input.puzzleId || input.puzzleId.trim().length === 0) {
         throw new ValidationError("puzzleId is required.");

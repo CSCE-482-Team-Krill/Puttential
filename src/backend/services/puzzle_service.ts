@@ -1,4 +1,4 @@
-import { prisma } from '../prisma';
+import { getPrisma } from "../prisma";
 import type { TodayPuzzleResponse } from '../types';
 
 import { centralDateString } from '../puzzle-date';
@@ -19,6 +19,7 @@ function databaseDate(dateString: string): Date {
  * the raw Prisma database record directly.
  */
 export async function getPuzzleByDate(date: Date): Promise<TodayPuzzleResponse | null> {
+  const prisma = getPrisma();
   const centralDate = centralDateString(date);
 
   const puzzle = await prisma.puzzle.findUnique({

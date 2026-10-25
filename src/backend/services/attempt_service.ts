@@ -1,4 +1,4 @@
-import { prisma } from "../prisma";
+import { getPrisma } from "../prisma";
 import type {CreateAttemptRequest, CreateAttemptResponse,} from "../types";
 import { NotFoundError, ValidationError } from "../errors";
 
@@ -44,6 +44,7 @@ function validateOptionalNonNegativeInteger(value: number | null | undefined,fie
  * does not yet calculate every final scoring value.
  */
 export async function createAttempt(input: CreateAttemptRequest): Promise<CreateAttemptResponse> {
+    const prisma = getPrisma();
   // A puzzle is required for every attempt.
     if (!input.puzzleId || input.puzzleId.trim().length === 0) {
         throw new ValidationError("puzzleId is required.");
