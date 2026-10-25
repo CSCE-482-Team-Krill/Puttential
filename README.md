@@ -57,13 +57,44 @@ Use **Node 22.12+** and **PostgreSQL 17** (or Docker Desktop). Run commands from
 
 For a production build, run `npm run game:build`, then `npm run game:start` with `DATABASE_URL` set. The frontend's `prebuild` step generates Prisma Client, including on clean CI checkouts. Apply `npm run db:migrate` to the deployment database and provision dated courses before serving players. `docker compose stop db` stops the local database and retains its data.
 
-## Vercel deployment
+<!-- ## Vercel deployment
 
 Set the Vercel project's **Root Directory** to `src/frontend`, with **Next.js** as the framework. Enable **Include source files outside of the Root Directory in the Build Step** so the build can access the shared engine, backend, Prisma schema and root workspace dependencies. The former `ui_ux_research/design_c` directory is documentation only.
 
 The checked-in `src/frontend/vercel.json` runs `npm run build`; its `prebuild` generates the ignored Prisma Client before Next.js compiles API routes. Use the root npm workspace lockfile and the default install command. Keep the Output Directory at its Next.js default (`.next`).
 
-Set `DATABASE_URL` in Vercel's Preview and Production environments to the corresponding hosted PostgreSQL database. Builds do not require a live database; the API needs it at runtime. Run migrations and seed dated courses against that database separately, rather than modifying it during preview builds.
+Set `DATABASE_URL` in Vercel's Preview and Production environments to the corresponding hosted PostgreSQL database. Builds do not require a live database; the API needs it at runtime. Run migrations and seed dated courses against that database separately, rather than modifying it during preview builds. -->
+## Deployment (Vercel -> Cloudflare Workers)
+
+Local development does not change: keep using `npm run game` with the Docker database. Only whoever deploys needs the steps below.
+
+The app is built with [`@opennextjs/cloudflare`](https://opennext.js.org/cloudflare) and deployed by Cloudflare Workers Builds from GitHub. Configuration lives in `src/frontend/wrangler.jsonc` and `src/frontend/open-next.config.ts`.
+
+**Workers Builds settings** (Cloudflare dashboard → `puttential` → Settings → Build):
+
+| Setting | Value |
+| --- | --- |
+| Root directory (Path) | `src/frontend` |
+| Build command | `cd ../.. && npm ci && cd src/frontend && npx @opennextjs/cloudflare build` |
+| Deploy command | `npx @opennextjs/cloudflare deploy` |
+| Build variable | `PRISMA_RUNTIME=cloudflare` |
+
+**Runtime secret:** `DATABASE_URL` (type *Secret*, not a plain variable) holds the pooled Neon connection string. Production uses the Neon `production` branch; previews and testing use the Neon `preview` branch.
+
+**Prisma Client per runtime:** Workers forbid compiling WebAssembly at runtime, and the Workers Prisma Client cannot run under Node.js. `scripts/prisma-generate.mjs` therefore generates the Node.js client by default (`npm run game`, `npm run db:seed`, builds), and the Workers client only when `PRISMA_RUNTIME=cloudflare`.
+
+**Testing the Workers build locally:** OpenNext does not guarantee Windows support, so use WSL or Linux. Create `src/frontend/.dev.vars` (git-ignored):
+
+```
+NEXTJS_ENV=development
+DATABASE_URL=postgresql://puttential:puttential@127.0.0.1:5432/puttential
+```
+
+Then run `npm run preview` in `src/frontend` and open http://localhost:8787. Afterwards, run `npm run db:generate` before `npm run db:seed`, because preview leaves the Workers client in `generated/prisma` (`npm run game` regenerates the Node.js client automatically).
+
+**Daily puzzles:** puzzles are not generated automatically yet. Seed each date into the target database with `npm run db:seed` (see above). Automating this with Cloudflare Cron Triggers is planned.
+
+The Vercel deployment remains active until the Cloudflare cutover is complete.
 
 ## Integration status
 
