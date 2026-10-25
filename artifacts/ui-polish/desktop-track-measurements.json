@@ -1,0 +1,242 @@
+[
+  {
+    "count": 0,
+    "long": false,
+    "gaps": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "regions": {
+      "course-meta": {
+        "x": 41,
+        "y": 123,
+        "right": 1083,
+        "bottom": 174,
+        "width": 1042,
+        "height": 51
+      },
+      "course-identity": {
+        "x": 41,
+        "y": 751.4375,
+        "right": 1083,
+        "bottom": 858.921875,
+        "width": 1042,
+        "height": 107.484375
+      },
+      "course-stage": {
+        "x": 41,
+        "y": 174,
+        "right": 1083,
+        "bottom": 751.4375,
+        "width": 1042,
+        "height": 577.4375
+      },
+      "primary-controls": {
+        "x": 41,
+        "y": 858.921875,
+        "right": 1083,
+        "bottom": 933.171875,
+        "width": 1042,
+        "height": 74.25
+      },
+      "control-column": {
+        "x": 1099,
+        "y": 123,
+        "right": 1399,
+        "bottom": 381.296875,
+        "width": 300,
+        "height": 258.296875
+      },
+      "secondary-course-actions": {
+        "x": 41,
+        "y": 933.171875,
+        "right": 1083,
+        "bottom": 1052.921875,
+        "width": 1042,
+        "height": 119.75
+      }
+    }
+  },
+  {
+    "count": 3,
+    "long": false,
+    "gaps": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "regions": {
+      "course-meta": {
+        "x": 41,
+        "y": 123,
+        "right": 1083,
+        "bottom": 174,
+        "width": 1042,
+        "height": 51
+      },
+      "course-identity": {
+        "x": 41,
+        "y": 751.4375,
+        "right": 1083,
+        "bottom": 858.921875,
+        "width": 1042,
+        "height": 107.484375
+      },
+      "course-stage": {
+        "x": 41,
+        "y": 174,
+        "right": 1083,
+        "bottom": 751.4375,
+        "width": 1042,
+        "height": 577.4375
+      },
+      "primary-controls": {
+        "x": 41,
+        "y": 858.921875,
+        "right": 1083,
+        "bottom": 933.171875,
+        "width": 1042,
+        "height": 74.25
+      },
+      "control-column": {
+        "x": 1099,
+        "y": 123,
+        "right": 1399,
+        "bottom": 624.296875,
+        "width": 300,
+        "height": 501.296875
+      },
+      "secondary-course-actions": {
+        "x": 41,
+        "y": 933.171875,
+        "right": 1083,
+        "bottom": 1052.921875,
+        "width": 1042,
+        "height": 119.75
+      }
+    }
+  },
+  {
+    "count": 12,
+    "long": false,
+    "gaps": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "regions": {
+      "course-meta": {
+        "x": 41,
+        "y": 123,
+        "right": 1083,
+        "bottom": 174,
+        "width": 1042,
+        "height": 51
+      },
+      "course-identity": {
+        "x": 41,
+        "y": 751.4375,
+        "right": 1083,
+        "bottom": 858.921875,
+        "width": 1042,
+        "height": 107.484375
+      },
+      "course-stage": {
+        "x": 41,
+        "y": 174,
+        "right": 1083,
+        "bottom": 751.4375,
+        "width": 1042,
+        "height": 577.4375
+      },
+      "primary-controls": {
+        "x": 41,
+        "y": 858.921875,
+        "right": 1083,
+        "bottom": 933.171875,
+        "width": 1042,
+        "height": 74.25
+      },
+      "control-column": {
+        "x": 1099,
+        "y": 123,
+        "right": 1399,
+        "bottom": 1452.296875,
+        "width": 300,
+        "height": 1329.296875
+      },
+      "secondary-course-actions": {
+        "x": 41,
+        "y": 933.171875,
+        "right": 1083,
+        "bottom": 1052.921875,
+        "width": 1042,
+        "height": 119.75
+      }
+    }
+  },
+  {
+    "count": 12,
+    "long": true,
+    "gaps": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "regions": {
+      "course-meta": {
+        "x": 41,
+        "y": 123,
+        "right": 1083,
+        "bottom": 174,
+        "width": 1042,
+        "height": 51
+      },
+      "course-identity": {
+        "x": 41,
+        "y": 751.4375,
+        "right": 1083,
+        "bottom": 858.921875,
+        "width": 1042,
+        "height": 107.484375
+      },
+      "course-stage": {
+        "x": 41,
+        "y": 174,
+        "right": 1083,
+        "bottom": 751.4375,
+        "width": 1042,
+        "height": 577.4375
+      },
+      "primary-controls": {
+        "x": 41,
+        "y": 858.921875,
+        "right": 1083,
+        "bottom": 933.171875,
+        "width": 1042,
+        "height": 74.25
+      },
+      "control-column": {
+        "x": 1099,
+        "y": 123,
+        "right": 1399,
+        "bottom": 1497.46875,
+        "width": 300,
+        "height": 1374.46875
+      },
+      "secondary-course-actions": {
+        "x": 41,
+        "y": 933.171875,
+        "right": 1083,
+        "bottom": 1052.921875,
+        "width": 1042,
+        "height": 119.75
+      }
+    }
+  }
+]
