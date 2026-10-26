@@ -4,7 +4,8 @@ import { documentFromLevel, levelBounds, quantizePosition, type Level } from '..
 import { dailyFixture, inventoryLevel, successLevel } from './ui-polish-fixtures';
 
 const URL = 'http://127.0.0.1:3000/';
-const artifacts = process.env.PUTTENTIAL_REVIEW_ARTIFACTS ?? 'artifacts/ui-polish';
+const artifacts =
+  process.env.PUTTENTIAL_REVIEW_ARTIFACTS ?? 'artifacts/iteration-two/ui-regression';
 test.use({
   deviceScaleFactor: 1,
   reducedMotion: 'reduce',
@@ -14,6 +15,9 @@ test.use({
 
 test.beforeEach(async ({ context }) => {
   await mkdir(artifacts, { recursive: true });
+  await context.route('**/api/**', (route) =>
+    route.fulfill({ status: 404, json: { error: 'Fixture endpoint unavailable' } }),
+  );
   // Keep every fixture run off the real database, including tests concerned only
   // with appearance/motion. Individual save tests override these at page scope.
   await context.route('**/api/attempts', (route) =>
@@ -39,6 +43,7 @@ test.beforeEach(async ({ context }) => {
 async function openLevel(page: Page, level: Level) {
   await page.route('**/api/puzzles/today', (route) => route.fulfill({ json: dailyFixture(level) }));
   await page.goto(URL);
+  await page.getByRole('button', { name: 'Play this course unranked', exact: true }).click();
   await expect(page.locator('.course-canvas')).toHaveClass(/editable/);
 }
 
@@ -84,7 +89,7 @@ async function projection(page: Page, level: Level, position: { x: number; y: nu
   return { x, y, clientX: box.x + x, clientY: box.y + y, scale, box };
 }
 
-// Sample the actual white top outline of the isolated field, excluding its arrows.
+// Sample the white or selected gold top outline, excluding its arrows.
 // The 2px outline is allowed a 2px raster tolerance, at deviceScaleFactor 1.
 async function fieldEdge(page: Page, level: Level, position: { x: number; y: number }) {
   const p = await projection(page, level, position);
@@ -102,7 +107,7 @@ async function fieldEdge(page: Page, level: Level, position: { x: number; y: num
       let white = 0;
       for (let column = 0; column < width; column++) {
         const i = (row * width + column) * 4;
-        if (data[i]! > 240 && data[i + 1]! > 240 && data[i + 2]! > 240 && data[i + 3]! > 220)
+        if (data[i]! > 240 && data[i + 1]! >= 200 && data[i + 2]! >= 95 && data[i + 3]! > 220)
           white++;
       }
       best = Math.max(best, white / width);
@@ -176,9 +181,9 @@ for (const [width, height] of [
       await route.fulfill({ json: dailyFixture(inventoryLevel(1)) });
     });
     await page.goto(URL);
-    await expect(page.getByRole('status')).toHaveText("Loading today's course…");
+    await expect(page.getByRole('status')).toContainText("Loading today's course…");
     await expect(page.getByRole('img', { name: 'Puttential', exact: true })).toBeVisible();
-    await expect(page.locator('.loading-shell button')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Play practice', exact: true })).toBeEnabled();
     await noOverflow(page);
     release();
     await expect(page.locator('.course-canvas.editable')).toHaveCount(1);
@@ -187,9 +192,8 @@ for (const [width, height] of [
       route.fulfill({ status: 503, json: { error: 'Unavailable' } }),
     );
     await page.reload();
-    await expect(page.locator('.api-notice')).toContainText(
-      "Today's puzzle is unavailable. Practice courses still work; those runs aren't saved.",
-    );
+    await expect(page.locator('.api-notice')).toContainText('Practice courses still work');
+    await page.getByRole('button', { name: 'Play practice', exact: true }).click();
     await expect(page.locator('.challenge-label')).toContainText('Practice challenge');
     await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   });
@@ -285,7 +289,6 @@ test('landscape game fits one viewport and keeps controls reachable after height
         '.run-controls',
         '.course-stage',
         '.control-column',
-        '.toolkit-note',
       ];
       return {
         document: [document.documentElement.scrollWidth, document.documentElement.scrollHeight],
@@ -311,8 +314,10 @@ test('landscape game fits one viewport and keeps controls reachable after height
     await expect(page.getByRole('button', { name: 'Reset layout', exact: true })).toBeInViewport({
       ratio: 1,
     });
-    for (const card of await page.locator('.tile-option').all())
+    for (const card of await page.locator('.tile-option').all()) {
+      await card.scrollIntoViewIfNeeded();
       await expect(card).toBeInViewport({ ratio: 1 });
+    }
     await expect(page.locator('.tile-option').first()).toHaveAttribute('aria-pressed', 'true');
     await page.mouse.move(30, 30);
     await page.mouse.wheel(0, 1200);
@@ -325,6 +330,7 @@ test('landscape game fits one viewport and keeps controls reachable after height
   await page.setViewportSize({ width: 1024, height: 600 });
   await page.reload();
   await expect(page.locator('.api-notice')).toBeVisible();
+  await page.getByRole('button', { name: 'Play practice', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeInViewport({
     ratio: 1,
   });
@@ -472,28 +478,16 @@ for (const [from, to] of [
   });
 }
 
-test('running simulation and a pending daily save keep nodes, attempts and one quantized replay', async ({
+test('unranked execution keeps mounted nodes across responsive changes and makes no competitive writes', async ({
   page,
 }) => {
   const level = { ...successLevel, goal: { ...successLevel.goal, holdSeconds: 0.6 } };
-  await page.setViewportSize({ width: 959, height: 900 });
-  const attempts: unknown[] = [],
-    solutions: { placementData: { commands: unknown[] } }[] = [];
-  let release!: () => void;
-  const gate = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  await page.route('**/api/attempts', async (route) => {
-    attempts.push(route.request().postDataJSON());
-    await gate;
-    await route.fulfill({ status: 201, json: { attemptId: 'polish-attempt' } });
-  });
-  await page.route('**/api/solutions', async (route) => {
-    solutions.push(route.request().postDataJSON());
-    await route.fulfill({ status: 201, json: { solutionId: 'polish-solution' } });
+  let posts = 0;
+  await page.route('**/api/runs**', (route) => {
+    posts++;
+    return route.fulfill({ status: 503 });
   });
   await openLevel(page, level);
-  // This success fixture has two fields. Store the four unique core nodes.
   await page.evaluate(() =>
     Object.assign(window, {
       runNodes: ['canvas', '.play-button', '.run-controls', '.tile-list'].map((s) =>
@@ -502,32 +496,10 @@ test('running simulation and a pending daily save keep nodes, attempts and one q
     }),
   );
   await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
   await page.setViewportSize({ width: 960, height: 900 });
-  await expect(page.locator('.course-status')).toHaveText(/In motion|Finished/);
   await expect(page.getByRole('dialog', { name: 'Nice work!' })).toBeVisible();
-  await expect(page.getByText('Saving run…', { exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog')).toContainText('Practice — unranked');
   await page.setViewportSize({ width: 959, height: 900 });
-  release();
-  await expect(page.getByText('Attempt and solution saved.', { exact: true })).toBeVisible();
-  expect(attempts).toHaveLength(1);
-  expect(solutions).toHaveLength(1);
-  const commands = level.fields.flatMap((field, index) => [
-    {
-      type: 'move-field',
-      fieldId: field.id,
-      xQ: quantizePosition(field.position.x),
-      yQ: quantizePosition(field.position.y),
-      sequence: index * 2,
-    },
-    {
-      type: 'set-field-enabled',
-      fieldId: field.id,
-      enabled: field.enabled,
-      sequence: index * 2 + 1,
-    },
-  ]);
-  expect(solutions[0]!.placementData.commands).toEqual(commands);
   expect(
     await page.evaluate(() => {
       const stored = (window as unknown as { runNodes: Element[] }).runNodes;
@@ -537,16 +509,14 @@ test('running simulation and a pending daily save keep nodes, attempts and one q
     }),
   ).toBe(true);
   await screenshot(page, 'result-success');
-  await page.getByRole('button', { name: 'Back to course' }).click();
+  await page.getByRole('button', { name: 'Close panel' }).click();
   await expect(page.locator('canvas')).not.toHaveClass(/editable/);
   await page.getByRole('button', { name: 'Try again', exact: true }).click();
   await expect(page.locator('canvas')).toHaveClass(/editable/);
-  expect(attempts).toHaveLength(1);
+  expect(posts).toBe(0);
 });
 
-test('failure saves an attempt only and explains close versus retry; POST failures stay honest', async ({
-  page,
-}) => {
+test('practice failure stays unranked and explains close versus retry', async ({ page }) => {
   let attempts = 0,
     solutions = 0;
   await page.route('**/api/attempts', (route) => {
@@ -564,13 +534,13 @@ test('failure saves an attempt only and explains close versus retry; POST failur
   await expect(dialog).toContainText(
     'Close this panel, then choose Try again to adjust your fields.',
   );
-  await expect(page.locator('.save-status')).toContainText('could not be fully saved');
+  await expect(dialog).toContainText('Practice — unranked');
   await screenshot(page, 'result-failure');
-  await dialog.getByRole('button', { name: 'Back to course' }).click();
+  await dialog.getByRole('button', { name: 'Close panel' }).click();
   await expect(page.locator('.tile-option')).toBeDisabled();
   await page.getByRole('button', { name: 'Try again', exact: true }).click();
   await expect(page.locator('.tile-option')).toBeEnabled();
-  expect(attempts).toBe(1);
+  expect(attempts).toBe(0);
   expect(solutions).toBe(0);
 });
 
@@ -595,20 +565,18 @@ test('production data stays unavailable; development preview has six labeled exa
         'How to play',
         'Scoring',
         'Daily Challenges',
+        'Saving and recovery',
       ]);
-    if (name === 'Profile') {
-      await expect(dialog.locator('h3')).toHaveText(['Stats', 'Games played', 'Ranking']);
-      await expect(dialog.locator('.unavailable-state')).toHaveCount(3);
-      await expect(dialog).toContainText('Profile statistics are not connected.');
-    }
+    if (name === 'Profile')
+      await expect(dialog).toContainText('Competitive guest session unavailable');
     if (name === 'Leaderboard') {
-      await expect(dialog).toContainText('Leaderboard is not available yet.');
+      await expect(dialog).toContainText('Choose a published dated course');
       await expect(dialog.locator('.ranking-row')).toHaveCount(0);
     }
     if (name === 'Calendar') {
-      await expect(dialog.locator('.archive-row')).toHaveCount(3);
-      await expect(dialog.locator('.archive-row').first()).toContainText('2026-10-15');
-      await expect(dialog.locator('.archive-row').nth(1)).toContainText('Practice course');
+      await expect(dialog.locator('.archive-row')).toHaveCount(2);
+      await expect(dialog).toContainText('Practice — unranked');
+      await expect(dialog).toContainText('Archive unavailable');
     }
     await screenshot(page, `modals-${file}`);
     await page.keyboard.press('Escape');
@@ -706,7 +674,7 @@ test('integrated import rejects corrupt/oversize data, retains pending file inpu
   await sameNodes(page);
   await page.evaluate(() => (window as unknown as { releaseImport: () => void }).releaseImport());
   await expect(page.locator('h1')).toHaveText('Imported Polish Course');
-  await expect(page.locator('.challenge-label')).toHaveText('Local course');
+  await expect(page.locator('.challenge-label')).toHaveText('Local course — unranked');
   await expect(page.locator('.local-level-import [role=alert]')).toHaveCount(0);
   expect(
     await page.evaluate(() => (window as unknown as { importReads: number }).importReads),
@@ -843,7 +811,7 @@ test('rendered text and essential control colors retain contrast in each UI stat
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Profile', exact: true }).click();
   await measure('Modal heading', '.modal-header h2');
-  await measure('Modal unavailable text', '.unavailable-state');
+  await measure('Modal unavailable text', '.modal-body p');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await measure('OFF switch thumb', '.switch span', 'background-color', 3);

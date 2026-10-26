@@ -77,77 +77,30 @@ test('migrated Figma modals retain focus, keyboard controls and preferences', as
   }
 });
 
-test('daily course loads from the API and saves the locked successful replay once', async ({
+test('legacy daily data is rejected honestly and practice never uses legacy writes', async ({
   page,
 }) => {
-  const level = {
-    ...starterLevels[0]!,
-    id: 'daily-integration-check',
-    goal: { bodyId: 'bar', minX: -6, maxX: -3, minY: 0, maxY: 3, holdSeconds: 0.025 },
-  };
-  const attempts: Record<string, unknown>[] = [];
-  const solutions: Record<string, unknown>[] = [];
+  let posts = 0;
+  await page.route('**/api/**', (route) => {
+    if (route.request().method() === 'POST') posts++;
+    return route.fulfill({ status: 404, json: { error: 'Unavailable fixture' } });
+  });
   await page.route('**/api/puzzles/today', (route) =>
     route.fulfill({
       json: {
-        id: 'database-puzzle-id',
+        id: 'legacy-puzzle',
         date: '2026-10-15',
         seed: 'daily',
         difficulty: 1,
-        configuration: level,
+        configuration: starterLevels[0],
       },
     }),
   );
-  await page.route('**/api/attempts', async (route) => {
-    attempts.push(route.request().postDataJSON());
-    await route.fulfill({ status: 201, json: { attemptId: 'new-attempt-id' } });
-  });
-  await page.route('**/api/solutions', async (route) => {
-    solutions.push(route.request().postDataJSON());
-    await route.fulfill({ status: 201, json: { solutionId: 'new-solution-id' } });
-  });
   await page.goto('http://127.0.0.1:3000');
-  await expect(page.getByRole('heading', { name: 'Daily Integration Check' })).toBeVisible();
-  await page.getByRole('button', { name: 'Play', exact: true }).click();
-  await expect(page.getByRole('dialog', { name: 'Nice work!' })).toBeVisible();
-  await expect(page.getByText('Attempt and solution saved.', { exact: true })).toBeVisible();
-  expect(attempts).toHaveLength(1);
-  expect(attempts[0]).toMatchObject({
-    puzzleId: 'database-puzzle-id',
-    success: true,
-    tileCount: 0,
-    forceCost: 0,
-  });
-  expect(solutions).toHaveLength(1);
-  expect(solutions[0]).toMatchObject({
-    puzzleId: 'database-puzzle-id',
-    attemptId: 'new-attempt-id',
-    placementData: { levelId: level.id, levelVersion: level.version },
-  });
-  const placement = solutions[0]!.placementData as { commands: unknown[] };
-  expect(placement.commands).toHaveLength(level.fields.length * 2);
-  await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: 'Profile', exact: true }).click();
-  await page.keyboard.press('Escape');
-  expect(attempts).toHaveLength(1);
-});
-
-test('unavailable daily backend offers practice without submitting it', async ({ page }) => {
-  let submissions = 0;
-  await page.route('**/api/puzzles/today', (route) =>
-    route.fulfill({
-      status: 503,
-      json: { error: 'Daily course unavailable.' },
-    }),
-  );
-  await page.route('**/api/attempts', (route) => {
-    submissions++;
-    return route.fulfill({ status: 500 });
-  });
-  await page.goto('http://127.0.0.1:3000');
-  await expect(page.locator('.api-notice')).toContainText('Practice courses still work');
+  await expect(page.locator('.api-notice')).toContainText('incompatible puzzle data');
+  await page.getByRole('button', { name: 'Play practice', exact: true }).click();
   await expect(page.locator('.challenge-label')).toContainText('Practice challenge');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'So close' })).toBeVisible();
-  expect(submissions).toBe(0);
+  expect(posts).toBe(0);
 });
