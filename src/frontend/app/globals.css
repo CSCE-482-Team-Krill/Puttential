@@ -1199,3 +1199,146 @@ button:disabled {
     min-height: 40px;
   }
 }
+/* Iteration two panels use the existing paper/turf palette and modal shell. */
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 8px;
+}
+.panel-actions button,
+.copy-result > button,
+.modal-body form button,
+.modal-body > button,
+.modal-stack > button,
+.api-notice button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #acc2a6;
+  border-radius: 8px;
+  color: #244b34;
+  background: #f8faf3;
+  cursor: pointer;
+}
+.modal-body label,
+.selected-field-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.modal-body input,
+.modal-body select,
+.modal-body textarea,
+.selected-field-controls input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 8px;
+  color: #243b2b;
+  background: #fffdf5;
+  border: 1px solid #a7baa1;
+  border-radius: 6px;
+  font: inherit;
+}
+.modal-body textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+.selected-field-controls {
+  min-width: 0;
+  margin: 8px 0;
+  padding: 12px;
+  border: 1px solid #a7baa1;
+  border-radius: 10px;
+}
+.field-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.run-timer {
+  font-variant-numeric: tabular-nums;
+}
+.run-controls p {
+  margin: 2px 0;
+  font-size: 0.8rem;
+}
+.selected-field-controls {
+  flex-shrink: 0;
+}
+@media (min-width: 960px) {
+  .setup-tools {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 2px;
+  }
+  .setup-tools .tile-list {
+    flex: 1 0 auto;
+    overflow: visible;
+  }
+  .control-column .run-controls {
+    flex: 0 0 auto;
+  }
+  .selected-field-controls {
+    padding: 6px;
+    font-size: 0.75rem;
+  }
+  .selected-field-controls .field-inputs {
+    gap: 4px;
+  }
+  .selected-field-controls input {
+    min-height: 32px;
+    padding: 4px;
+  }
+  .selected-field-controls .panel-actions {
+    margin: 4px 0;
+    gap: 4px;
+  }
+  .selected-field-controls .panel-actions button {
+    min-height: 28px;
+    padding: 4px 6px;
+  }
+  .run-status-list {
+    max-height: 15vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+}
+.run-status-list {
+  margin-top: 16px;
+  overflow-wrap: anywhere;
+}
+.api-notice {
+  overflow-wrap: anywhere;
+}
+.modal-body {
+  overflow-wrap: anywhere;
+}
+.modal-body .ranking-player {
+  min-width: 0;
+}
+.modal-body .ranking-player small {
+  white-space: normal;
+}
+.modal-body form {
+  display: grid;
+  gap: 10px;
+}
+button:disabled {
+  cursor: default;
+}
+@media (max-width: 400px) {
+  .modal-body .ranking-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) 40px;
+    gap: 6px;
+  }
+  .modal-body .ranking-player small {
+    line-height: 1.5;
+  }
+}

@@ -67,16 +67,22 @@ const HELP_SECTIONS = [
   {
     title: 'How to play',
     content:
-      'Turn a block ON in your toolkit, then drag its field on the course. The cards themselves do not drag. Three dots and an arrow show the initial direction. Press Play to lock your layout and watch it move. Use Try again to adjust your plan, or Reset layout to start over.',
+      'Turn a block ON in your toolkit, then drag its field on the course or edit the selected tile’s X/Y controls. Three dots and an arrow show the initial direction. Rotation is available only with a compatible engine; unavailable controls say so. Press Play to lock your layout and watch it move. Stop ends that run; Try again returns to setup.',
   },
   {
     title: 'Scoring',
-    content: `Each placed block costs ${TILE_COST} point. Successful solutions rank by force cost, then tile count, attempts to your first solve, simulated completion time, and path length. Fewer points is better.`,
+    content:
+      'Published courses set each tile’s cost, shown in the toolkit. Practice costs 1 per tile and is unranked. Verified solutions rank by force cost, tile count, first verified solve run number, completion tick, then path length. Tied tuples share rank. First verified solve is the ordinal of the first success saved and verified, separate from total accepted starts. Stop and interrupted ranked starts count; editing and practice do not.',
   },
   {
     title: 'Daily Challenges',
     content:
-      'Everyone gets the same daily course, starting object, goal, tile inventory, and physics settings. Open Calendar to choose the daily course or try a practice course.',
+      'Everyone gets the same dated course and limited inventory. Runs use simulated time with a maximum of 60 seconds (a course may set a smaller cap). The original daily window closes at Central midnight; standings stay provisional while eligible results await verification. Archive rankings stay open. Open Calendar for published historical courses or separate practice courses. Offline practice never becomes a ranked attempt later.',
+  },
+  {
+    title: 'Saving and recovery',
+    content:
+      'Ranked Play requires a confirmed guest session, compatible rules and a server-accepted start. Local results stay unverified until acknowledged. Pending saves can be retried. Keep this page open when refresh recovery is unavailable. Guest access belongs to this browser’s cookie; clearing it loses access. Another tab can play a distinct run without interrupting yours.',
   },
 ] as const;
 
@@ -102,6 +108,7 @@ type Props = {
   tileCost: number;
   previewMode?: boolean;
   courseImport?: ReactNode;
+  body?: ReactNode;
 };
 
 function SettingSwitch({
@@ -141,6 +148,7 @@ export function Modal({
   tileCost,
   previewMode = false,
   courseImport,
+  body,
 }: Props) {
   const dialogRef = useRef<HTMLElement>(null);
   const closeRef = useRef(close);
@@ -169,7 +177,7 @@ export function Modal({
       if (event.key !== 'Tab') return;
       const elements = Array.from(
         dialogRef.current?.querySelectorAll<HTMLElement>(
-          'button:not(:disabled), summary, a[href], input:not(:disabled), [tabindex="0"]',
+          'button:not(:disabled), summary, a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
         ) ?? [],
       ).filter((element) => element.getClientRects().length > 0);
       const first = elements[0];
@@ -240,7 +248,8 @@ export function Modal({
           </div>
         )}
 
-        {panel === 'stats' && (
+        {body && <div className="modal-body modal-stack">{body}</div>}
+        {!body && panel === 'stats' && (
           <div className="modal-body modal-stack">
             <p className="modal-intro">Profile statistics are not connected.</p>
             {[
@@ -258,7 +267,7 @@ export function Modal({
           </div>
         )}
 
-        {panel === 'leaderboard' && (
+        {!body && panel === 'leaderboard' && (
           <div className="modal-body modal-stack">
             {previewMode ? (
               <>
@@ -291,7 +300,7 @@ export function Modal({
           </div>
         )}
 
-        {panel === 'archive' && (
+        {!body && panel === 'archive' && (
           <div className="modal-body modal-stack">
             <p className="modal-intro">
               Available courses <span>Find another way to the goal</span>
@@ -374,7 +383,7 @@ export function Modal({
           </div>
         )}
 
-        {panel === 'result' && result && (
+        {!body && panel === 'result' && result && (
           <div className="modal-body result-body">
             <div className="result-mark brand-mark" aria-hidden="true">
               <span className="brand-ball" />
@@ -396,7 +405,7 @@ export function Modal({
             )}
             <div className="result-grid">
               <div>
-                <strong>{result.tiles * tileCost}</strong>
+                <strong>{result.forceCost ?? result.tiles * tileCost}</strong>
                 <span>Force cost</span>
               </div>
               <div>
