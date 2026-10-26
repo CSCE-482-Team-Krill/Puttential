@@ -45,7 +45,7 @@ Use **Node 22.12+** and **PostgreSQL 17** (or Docker Desktop). Run commands from
    npm run game
    ```
 
-   Open **http://127.0.0.1:3000**. There is no separate backend process: Next.js route handlers call `src/backend` services on the same origin. Check **http://127.0.0.1:3000/api/puzzles/today**; it should return today's date and canonical level configuration. Completed daily runs create attempts; successful runs also save the locked layout as replay commands. The UI reports save success or failure.
+   Open **http://127.0.0.1:3000**. There is no separate backend process: Next.js route handlers call `src/backend` services on the same origin. Check **http://127.0.0.1:3000/api/puzzles/today** for the legacy dated configuration. Revision 3.1 competitive play additionally requires the separately delivered guest/run APIs, published rules and E0 engine adapter described below; the current checkout offers explicit unranked practice while those dependencies are missing.
 
 5. Optionally start the editor in a second terminal:
 
@@ -107,15 +107,17 @@ npm.cmd run game:build
 npm.cmd run test:ui:production
 ```
 
-The production smoke script temporarily serves the built app on **127.0.0.1:3002**, checks `/` is 200 and `/modal-preview` is 404, then stops its server. Deterministic screenshots and review notes are in [artifacts/ui-polish](artifacts/ui-polish/implementation-notes.md). Browser tests mock the daily API; they do not require a live database. Keyboard-only placement of canvas fields remains an existing gameplay limitation.
+The production smoke script temporarily serves the built app on **127.0.0.1:3002**, checks `/` is 200 and `/modal-preview` is 404, then stops its server. Previous visual evidence is in [artifacts/ui-polish](artifacts/ui-polish/implementation-notes.md); revision 3.1 evidence is in [artifacts/iteration-two](artifacts/iteration-two/implementation-evidence.md). Browser tests intercept API calls and do not prove database integration. Select a toolkit tile to edit X/Y without a pointer; rotation requires E0.
 
 ## Integration status
 
 The Figma frontend, all six modal layouts, responsive styles, preferences and isolated `/modal-preview` route live in `src/frontend`. The game and editor share canvas drawing, controls and simulation hooks without duplicating physics.
 
-The connected prototype exposes `GET /api/puzzles/today`, `POST /api/attempts` and `POST /api/solutions`. HTTP submissions support anonymous play only. Daily configuration is validated by the engine codec. Completed runs are saved once per visit; interrupted runs and unsent runs are not persisted or retried after a connection failure.
+The frontend now targets the revision 3.1 guest/run/progress/archive/leaderboard contract in [puzzle-contracts.ts](src/shared/puzzle-contracts.ts), with runtime response validation. The existing backend still exposes the legacy today/attempt/solution prototype. The competitive UI no longer sends the client-scored attempt/solution pair. Legacy daily responses without published rules, versions and availability produce an incompatible-data notice; choose **Play practice** to use the bundled local game.
 
-Profile and leaderboard panels show honest unavailable states; only the development preview displays example rankings. Calendar lists the daily course and bundled practice courses; historical database browsing and accounts are not implemented. The backend validates request structure and attempt/solution relationships but **still trusts client-reported success and scoring**; server-side replay verification and ranking remain future work.
+Archive, leaderboard, nickname/profile, progress and sharing panels consume the target APIs when supplied. HTTP fixtures exercise these views in tests; production never substitutes fixture courses or rankings. Missing endpoints show unavailable/retry states. Published courses display their individual tile costs. Local/practice games run without guest APIs, support keyboard X/Y placement and retain drafts, and are always unranked. Runs have a 7,200-tick local cap and a tick-based timer.
+
+Competitive orchestration lives in `course-session.ts`: immutable starts, acknowledgement before playback, separate execution ownership, bounded IndexedDB recovery, same-ID retries, revision ordering and a two-request/one-completion scheduler. E0 is not delivered in this checkout, so `engine-adapter.ts` intentionally has no installed competitive binding. Ranked Play and rotation stay unavailable until the engine owner supplies canonical setup/angle commands, shared terminal/path evaluation and supported versions. Do not enable them by casting proposed commands into the old engine. Fixture-tested lifecycle behavior is separate from real API/database/replay acceptance; see the [implementation evidence and dependency handoff](artifacts/iteration-two/implementation-evidence.md).
 
 ## Source layout
 
