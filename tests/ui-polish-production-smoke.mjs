@@ -52,11 +52,9 @@ try {
     modalPreview: preview.status,
     exampleRankingsExposed: false,
   };
-  await mkdir('artifacts/ui-polish', { recursive: true });
-  await writeFile(
-    'artifacts/ui-polish/production-route-smoke.json',
-    JSON.stringify(result, null, 2),
-  );
+  const artifacts = process.env.PUTTENTIAL_REVIEW_ARTIFACTS ?? 'artifacts/iteration-two';
+  await mkdir(artifacts, { recursive: true });
+  await writeFile(`${artifacts}/production-route-smoke.json`, JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result, null, 2));
 } finally {
   server.kill();
