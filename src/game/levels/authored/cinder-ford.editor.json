@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "fd4907ee8a8d7ec5ce72108cf97fe6402c1c2b6be8efb099ec1438383b46a714",
+  "editor": {
+    "name": "Cinder Ford",
+    "arena": {
+      "bounds": {
+        "minX": -8,
+        "maxX": 8,
+        "minY": -5,
+        "maxY": 5
+      },
+      "walls": [
+        "left-rail",
+        "right-rail",
+        "bottom-rail",
+        "top-rail"
+      ],
+      "thickness": 0.5
+    }
+  }
+}

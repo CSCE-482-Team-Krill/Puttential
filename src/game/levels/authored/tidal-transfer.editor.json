@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "613a0d9b0224957050de5c3fd5164a9502d222b5ec2e4b62fcebb8d738073013",
+  "editor": {
+    "name": "Tidal Transfer",
+    "arena": {
+      "bounds": {
+        "minX": -8,
+        "maxX": 8,
+        "minY": -5,
+        "maxY": 5
+      },
+      "walls": [
+        "left-rail",
+        "right-rail",
+        "bottom-rail",
+        "top-rail"
+      ],
+      "thickness": 0.5
+    }
+  }
+}
