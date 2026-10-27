@@ -1,3 +1,5 @@
+> Historical prototype reference. The delivered iteration 2 API is documented in [backend_api.md](backend_api.md); statements below about planned HTTP handlers apply to the earlier prototype.
+
 # Puttential Backend Code Reference
 
 ## 1. Project Setup

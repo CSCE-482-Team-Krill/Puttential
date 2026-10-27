@@ -28,7 +28,9 @@ const frame = game.getRenderState();
 game.destroy();
 ```
 
-`step()` advances exactly `1 / 120` second. Commands queued between steps are applied at the next tick in ascending `sequence` order. Position values use a `1 / 1024` world-unit grid; use `quantizePosition` at the input boundary. A field's shape, angle, and force come from the level and cannot be changed by player commands.
+`step()` advances exactly `1 / 120` second. Commands queued between steps are applied at the next tick in ascending `sequence` order. Position values use a `1 / 1024` world-unit grid; use `quantizePosition` at the input boundary. `set-field-angle` sets an absolute `angleQ` from 0 to 3599 in 0.1-degree units. Shapes, force magnitudes and fixed hazards remain authored data.
+
+Competitive setup uses `game.applySetup(commands)` on an untouched tick-zero world. It updates fields and caches without advancing physics. `run-evaluation.ts` supplies versioned rules, full-inventory placement validation, goal/failure/timeout evaluation, scoring and `replayRun`. Both browser playback and server verification use its `RunEvaluator`; local editor calls can retain the compatibility execution path. `game.movement()` reports each body's latest continuous tick displacement, excluding teleport jumps, and `hasPendingTeleports()` prevents a waiting portal from being mistaken for a settled run. Always destroy replay worlds in a finally block.
 
 ## Levels
 
@@ -43,7 +45,7 @@ A level is plain JSON with no code in it, so it can come from a file, the `Puzzl
 | `gravity` | World gravity vector. |
 | `dynamicBodies`, `staticBodies` | Bodies made of `pieces`, each with a convex `shape`. `material.restitution` is the bounce, from 0 to 1. |
 | `fields` | Force zones; see below. |
-| `goal` | `{ bodyId, minX, maxX, minY, maxY, holdSeconds }`: solved once the body's position stays inside the bounds for `holdSeconds`. The engine stores the goal but does not evaluate it yet. |
+| `goal` | `{ bodyId, minX, maxX, minY, maxY, holdSeconds }`: solved once the body's position stays inside the bounds for `holdSeconds`. The shared run evaluator checks it on every tick. |
 | `prediction` | Optional default `{ maxTicks, sampleEveryTicks }` for `predict`. |
 
 Bodies and fields share one ID namespace.
