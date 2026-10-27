@@ -1,6 +1,6 @@
 import type { Bounds, GameCommand, Level } from '../game';
 
-/** Revision 3.1 target transport. Owner agreement and E0 delivery remain external gates. */
+/** Revision 3.1 transport consumed by the browser and verified daily API. */
 export const CONTRACT_REVISION = '3.1';
 export const LIMITS = {
   fields: 256,
@@ -12,15 +12,7 @@ export const LIMITS = {
   nicknameMin: 3,
   nicknameMax: 24,
 } as const;
-// The angle command is a transport proposal, never cast into the installed engine.
-export type SetupCommand =
-  | GameCommand
-  | Readonly<{
-      type: 'set-field-angle';
-      fieldId: string;
-      angleQ: number;
-      sequence: number;
-    }>;
+export type SetupCommand = GameCommand;
 export type Player = { id: string; nickname: string };
 export type Metrics = {
   forceCost: number;

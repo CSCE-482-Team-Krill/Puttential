@@ -4,6 +4,12 @@ export type Vec2 = Readonly<{ x: number; y: number }>;
 
 export type GameCommand =
   | Readonly<{
+      type: 'set-field-angle';
+      fieldId: string;
+      angleQ: number;
+      sequence: number;
+    }>
+  | Readonly<{
       type: 'move-field';
       fieldId: string;
       xQ: number;
@@ -115,6 +121,9 @@ export type PredictionOptions = Readonly<{
 }>;
 
 export type Game = {
+  applySetup(commands: readonly GameCommand[]): void;
+  movement(): Readonly<Record<string, number>>;
+  hasPendingTeleports(): boolean;
   queueCommand(command: GameCommand): void;
   step(): void;
   getRenderState(): RenderState;

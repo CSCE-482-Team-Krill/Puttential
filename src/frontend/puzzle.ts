@@ -286,6 +286,7 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
           game,
           optionsRef.current.adapter.placement(level, draft, rulesRef.current),
           TRAIL_TICKS,
+          level.goal.bodyId,
         ),
       );
       return;
@@ -328,7 +329,7 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
         const localOutcome =
           failure ??
           (solved ? 'success' : stopped ? 'stopped' : state.tick >= maxTicks ? 'timeout' : null);
-        // The legacy evaluator remains explicitly unranked until the shared E0 evaluator is delivered.
+        // Compatibility callers without an adapter remain unranked.
         const outcome = optionsRef.current.adapter ? authoritative?.outcome : localOutcome;
         if (outcome) {
           const finished: RunResult = {
