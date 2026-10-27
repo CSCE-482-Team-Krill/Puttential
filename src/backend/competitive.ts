@@ -601,9 +601,10 @@ export async function leaderboard(
     cursor = decodeCursor(params.get('cursor'), secret);
   if (!['daily', 'archive'].includes(scope) || !['top', 'around-me'].includes(view))
     return fail(400, 'INVALID_BOARD', 'Invalid leaderboard view.');
-  return prisma.$transaction(async (tx) => {
-    const p = await lockPuzzle(tx, puzzleId),
-      revision = String(p.boardRevision);
+  return prisma.$transaction(
+    async (tx) => {
+      const p = await published(tx, puzzleId),
+        revision = String(p.boardRevision);
     if (cursor && cursor.guest !== guest.id)
       return fail(409, 'LEADERBOARD_VIEWER_CHANGED', 'The page belongs to a different guest.');
     if (cursor && (cursor.puzzle !== p.id || cursor.scope !== scope || cursor.view !== view))
@@ -693,7 +694,10 @@ export async function leaderboard(
       pendingEligibleCount: pending,
       final: !p.canceledAt && scope === 'daily' && closed && pending === 0,
     };
-  });
+    },
+    // A consistent snapshot without blocking starts and completions on this puzzle.
+    { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+  );
 }
 export async function archive(guest: Guest, params: URLSearchParams) {
   const secret = await cursorSecret();
