@@ -25,7 +25,7 @@ Environment: Windows, Node v24.19.0, PostgreSQL 17.6, Chromium. A fresh isolated
 | Local full-cap benchmark | 32–63 ms per opening course; first pair of reviewed replays including cold initialization 101 ms, subsequent pairs 8–16 ms |
 | Real database integration | 2/2 passed: owned/idempotent starts, duplicate completion, forged score isolation, optimization/ties/percentiles, signed cursor tampering/viewer enforcement, future-date protection, closed daily/archive separation, committed receipt recovery, finality and cancellation |
 | Full browser suite | 53/53 passed with a clean runner exit, including the unmocked daily test and existing editor/physics/accessibility/responsive regressions |
-| Final focused UI/backend checks | Database 2/2; browser 4/4 after archive/practice/copy layout changes and bounded guest-body/cancellation refinements |
+| Final focused UI/backend checks | Database 2/2; browser 4/4 after archive/practice/copy layout changes and bounded guest-body/cancellation refinements; Calendar fallback regression 1/1 after updating its practice-row selector |
 | Editor and game production builds | Both passed |
 | Actual built `next start` acceptance | 1/1 passed without HTTP interception: two guest cookies/nicknames, rotated setup, real solved playback, verified saves, refresh/readback, standings, copy fallback and three real historical courses solved after refresh |
 | Production route boundary | `/` = 200, `/modal-preview` = 404, example rankings absent; see `production-route-smoke.json` |

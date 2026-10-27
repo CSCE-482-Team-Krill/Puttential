@@ -574,7 +574,7 @@ test('production data stays unavailable; development preview has six labeled exa
       await expect(dialog.locator('.ranking-row')).toHaveCount(0);
     }
     if (name === 'Calendar') {
-      await expect(dialog.locator('.archive-row')).toHaveCount(2);
+      await expect(dialog.locator('.practice-course')).toHaveCount(2);
       await expect(dialog).toContainText('Practice — unranked');
       await expect(dialog).toContainText('Archive unavailable');
     }
