@@ -1,7 +1,7 @@
 # Rebuild the vector wordmark from the same Trebuchet family used by site headings.
 # Only outlines are exported; the website does not need this font installed.
 Add-Type -AssemblyName System.Drawing
-$repoDirectory = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
+$repoDirectory = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $publicDirectory = Join-Path $repoDirectory 'src/frontend/public'
 $culture = [System.Globalization.CultureInfo]::InvariantCulture
 function Number([single]$value) { return $value.ToString('0.###', $culture) }

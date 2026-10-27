@@ -22,6 +22,7 @@ Thumbs.db
 .vscode/
 
 # TypeScript and browser verification output
+/artifacts/
 *.tsbuildinfo
 test-results/
 playwright-report/

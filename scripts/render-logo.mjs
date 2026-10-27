@@ -1,10 +1,12 @@
-import { readFile, writeFile, copyFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
 import sharp from 'sharp';
 
-const publicDirectory = new URL('../../src/frontend/public/', import.meta.url);
+const publicDirectory = new URL('../src/frontend/public/', import.meta.url);
+const artifactsDirectory = new URL('../artifacts/logo/', import.meta.url);
+await mkdir(artifactsDirectory, { recursive: true });
 const logo = await readFile(new URL('puttential-logo.svg', publicDirectory), 'utf8');
 const symbol = await readFile(new URL('puttential-mark.svg', publicDirectory), 'utf8');
-const icon = await readFile(new URL('../../src/frontend/app/icon.svg', import.meta.url), 'utf8');
+const icon = await readFile(new URL('../src/frontend/app/icon.svg', import.meta.url), 'utf8');
 const data = (svg) => `data:image/svg+xml;base64,${Buffer.from(svg).toString('base64')}`;
 const image = (svg, x, y, width, height) =>
   `<image href="${data(svg)}" x="${x}" y="${y}" width="${width}" height="${height}"/>`;
@@ -13,7 +15,7 @@ const label = (text, x, y, fill = '#566768') =>
 try {
   await copyFile(
     new URL('puttential-logo.png', publicDirectory),
-    new URL('before-logo.png', import.meta.url),
+    new URL('before-logo.png', artifactsDirectory),
     1,
   );
 } catch (error) {
@@ -31,7 +33,7 @@ await sharp(Buffer.from(logo))
   .resize(800, 176)
   .flatten({ background: '#f8f9f4' })
   .png()
-  .toFile(new URL('logo-preview.png', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
+  .toFile(new URL('logo-preview.png', artifactsDirectory).pathname.replace(/^\/([A-Z]:)/, '$1'));
 const wordmark = logo.match(/<path fill="#2d3a3a"[^>]+\/>/)[0];
 const direction = (symbolMarkup) =>
   `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="44" viewBox="0 0 200 44">${symbolMarkup}${wordmark}</svg>`;
@@ -55,10 +57,10 @@ ${label('03  Open P and ball / SELECTED', 44, 458)}
 ${image(logo, 44, 476, 400, 88)}
 ${label('A name initial and putting path in a compact silhouette.', 540, 520)}
 </svg>`;
-await writeFile(new URL('logo-directions.svg', import.meta.url), directions);
+await writeFile(new URL('logo-directions.svg', artifactsDirectory), directions);
 await sharp(Buffer.from(directions))
   .png()
-  .toFile(new URL('logo-directions.png', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
+  .toFile(new URL('logo-directions.png', artifactsDirectory).pathname.replace(/^\/([A-Z]:)/, '$1'));
 const proof = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720" viewBox="0 0 1200 720">
 <rect width="1200" height="720" fill="#f8f9f4"/>
 ${label('PUTTENTIAL / IDENTITY STUDY', 52, 45)}
@@ -81,8 +83,8 @@ ${image(icon, 888, 598, 24, 24)}
 ${image(icon, 950, 606, 16, 16)}
 ${label('48', 743, 647)}${label('32', 825, 647)}${label('24', 892, 647)}${label('16', 951, 647)}
 </svg>`;
-await writeFile(new URL('logo-proof.svg', import.meta.url), proof);
+await writeFile(new URL('logo-proof.svg', artifactsDirectory), proof);
 await sharp(Buffer.from(proof))
   .png()
-  .toFile(new URL('logo-proof.png', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
+  .toFile(new URL('logo-proof.png', artifactsDirectory).pathname.replace(/^\/([A-Z]:)/, '$1'));
 console.log('Rendered PNG fallback, monochrome/reversed vectors, and logo proof.');
