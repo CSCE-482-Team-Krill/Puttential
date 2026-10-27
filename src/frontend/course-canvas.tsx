@@ -29,6 +29,8 @@ export type Props = Readonly<{
   level: Level;
   frameRef: RefObject<RenderState | null>;
   draft: Draft;
+  /** When set, drawn instead of `draft`, so scripted animation needs no React updates. */
+  draftOverride?: RefObject<Draft | null>;
   mode: Mode;
   trail: readonly Vec2[];
   goalRef?: RefObject<GoalProgress>;
@@ -419,7 +421,9 @@ export function CourseCanvas(props: Props) {
         viewRef.current = view;
         propsRef.current.onView?.(view);
         context.setTransform(ratio, 0, 0, ratio, 0, 0);
-        draw(context, view, state, propsRef.current);
+        const props = propsRef.current,
+          override = props.draftOverride?.current;
+        draw(context, view, state, override ? { ...props, draft: override } : props);
         propsRef.current.overlay?.(context, view);
       }
       frame = requestAnimationFrame(render);
