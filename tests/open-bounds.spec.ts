@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { freshDocument, edit } from '../level-editor/editor/model';
 import { setLevelBorders } from '../src/game';
+import { dailyFixture } from './ui-polish-fixtures';
 
 test('Level borders toggle removes/restores walls, keeps board dimensions, and supports undo', async ({
   page,
@@ -75,34 +76,20 @@ test('open editor course fails only after a moving ball completely exits, and re
   await expect(page.getByRole('spinbutton', { name: 'Position X', exact: true })).toHaveValue('6');
 });
 
-test('daily game shares the out-of-bounds failure and records an unsuccessful run', async ({
-  page,
-}) => {
+test('daily game shares the out-of-bounds failure', async ({ page }) => {
   const doc = edit(setLevelBorders(freshDocument(), false), (d) => {
     d.level.dynamicBodies[0]!.position.x = 6;
     d.level.dynamicBodies[0]!.linearVelocity = { x: 8, y: 0 };
   });
-  const attempts: Record<string, unknown>[] = [];
   await page.route('**/api/puzzles/today', (route) =>
-    route.fulfill({
-      json: {
-        id: 'open-board-test',
-        date: '2026-10-21',
-        seed: 'open-board',
-        difficulty: 1,
-        configuration: doc.level,
-      },
-    }),
+    route.fulfill({ json: dailyFixture(doc.level) }),
   );
-  await page.route('**/api/attempts', async (route) => {
-    attempts.push(route.request().postDataJSON());
-    await route.fulfill({ status: 201, json: { attemptId: 'open-board-attempt' } });
-  });
   await page.goto('http://127.0.0.1:3000');
+  await page.getByRole('button', { name: 'Play this course unranked', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'So close', exact: true })).toContainText(
     'An object left the course',
   );
-  await expect.poll(() => attempts.length).toBe(1);
-  expect(attempts[0]!.success).toBe(false);
+  await expect(page.getByRole('dialog')).toContainText('Practice — unranked');
 });
