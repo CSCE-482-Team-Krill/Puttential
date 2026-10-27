@@ -7,7 +7,7 @@ This folder contains the deterministic, framework-independent TypeScript simulat
 ```ts
 import { createGame, parseLevel, quantizePosition } from 'puttential/game';
 
-const response = await fetch('/levels/bar-around-corner.json');
+const response = await fetch('/levels/legacy/bar-around-corner.json');
 const level = parseLevel(await response.json());
 const game = await createGame(level);
 game.queueCommand({
@@ -34,7 +34,7 @@ Competitive setup uses `game.applySetup(commands)` on an untouched tick-zero wor
 
 ## Levels
 
-A level is plain JSON with no code in it, so it can come from a file, the `Puzzle.configuration` database column, or a level editor without being bundled with the engine. `levels/types.ts` defines the format (`Level`), and `levels/bar-around-corner.json` and `levels/radial-relay.json` are the two sample levels.
+A level is plain JSON with no code in it, so it can come from a file, the `Puzzle.configuration` database column, or a level editor without being bundled with the engine. `levels/types.ts` defines the format (`Level`). `levels/legacy/bar-around-corner.json` and `levels/legacy/radial-relay.json` preserve two courses from an earlier game version. The bundled tutorial lives in `levels/tutorial.json`.
 
 `parseLevel(data)` takes untrusted data, checks all of it, and returns a `Level`; it throws an error naming the first bad property, such as `level.fields[0].force.kind is unsupported`. `createGame` runs the same check. `JSON.stringify(parseLevel(data))` writes a level back out with its properties in a fixed order.
 

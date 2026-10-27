@@ -1340,7 +1340,7 @@ button:disabled {
 .api-notice:empty {
   display: none;
 }
-.practice-course {
+.legacy-course {
   width: 100%;
   text-align: left;
 }

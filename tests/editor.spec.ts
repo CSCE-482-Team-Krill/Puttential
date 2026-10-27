@@ -109,7 +109,7 @@ test('author, constrain, save, reopen and play the same course in both apps', as
       route.fulfill({ status: 404, json: { error: 'No daily fixture' } }),
     );
     await game.goto('http://127.0.0.1:3000');
-    await game.getByRole('button', { name: 'Play practice', exact: true }).click();
+    await game.getByRole('button', { name: 'Play legacy course', exact: true }).click();
     await expect(game.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
     await game.screenshot({ path: 'level-editor/screenshots/game.png', fullPage: true });
     await game.getByRole('button', { name: 'Settings', exact: true }).click();
@@ -141,9 +141,9 @@ test('starter geometry, undo and malformed imports keep an editable document', a
   await page.goto('http://127.0.0.1:3001');
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.getByLabel('Game starters').selectOption('0');
+  await page.getByLabel('Legacy courses').selectOption('0');
   await expect(page.getByRole('heading', { name: 'Bar Around Corner', exact: true })).toBeVisible();
-  await page.getByLabel('Game starters').selectOption('1');
+  await page.getByLabel('Legacy courses').selectOption('1');
   await expect(page.getByRole('heading', { name: 'Radial Relay', exact: true })).toBeVisible();
   await page.locator('.object-list').getByRole('button', { name: 'ball', exact: true }).click();
   await expect(page.getByRole('spinbutton', { name: 'Radius', exact: true })).toHaveValue('0.35');

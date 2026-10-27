@@ -2,7 +2,12 @@ import type { Level } from '../game';
 import type { PuzzleResponse } from '../shared/puzzle-contracts';
 export type CourseContext =
   | { key: string; source: 'daily' | 'archive'; level: Level; puzzle: PuzzleResponse }
-  | { key: string; source: 'practice' | 'local' | 'bonus'; level: Level; puzzle?: never };
+  | {
+      key: string;
+      source: 'legacy' | 'practice' | 'local' | 'bonus';
+      level: Level;
+      puzzle?: never;
+    };
 export const publishedContext = (p: PuzzleResponse): CourseContext => ({
   key: JSON.stringify([
     p.id,
@@ -17,7 +22,7 @@ export const publishedContext = (p: PuzzleResponse): CourseContext => ({
 });
 export const localContext = (
   level: Level,
-  source: 'practice' | 'local' | 'bonus' = 'practice',
+  source: 'legacy' | 'practice' | 'local' | 'bonus' = 'practice',
 ): CourseContext => ({
   key: JSON.stringify(['local-v1', source, level]),
   source,

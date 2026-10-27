@@ -17,18 +17,18 @@ Open **http://127.0.0.1:3001**. No database, account or environment configuratio
 
 Paths below are relative to the repository root:
 
-| File                                        | Purpose                                                                             |
-| ------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `src/game/levels/authored/<id>.json`        | Editor-saved game data, loaded with the engine's `parseLevel`.                      |
-| `src/game/levels/authored/<id>.editor.json` | Companion editor name, board bounds, managed wall IDs/thickness and game-file hash. |
-| `src/game/levels/bar-around-corner.json`    | Bundled Bar Around Corner starter.                                                  |
-| `src/game/levels/radial-relay.json`         | Bundled Radial Relay starter, including its circular ball.                          |
+| File                                            | Purpose                                                                             |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `src/game/levels/authored/<id>.json`            | Editor-saved game data, loaded with the engine's `parseLevel`.                      |
+| `src/game/levels/authored/<id>.editor.json`     | Companion editor name, board bounds, managed wall IDs/thickness and game-file hash. |
+| `src/game/levels/legacy/bar-around-corner.json` | Legacy Bar Around Corner course from an earlier game version.                       |
+| `src/game/levels/legacy/radial-relay.json`      | Legacy Radial Relay course, including its circular ball.                            |
 
-The **Repository library** lists authored levels. **Game starters** loads the bundled courses with their managed wall mappings. Saving a starter creates an authored copy; it does not overwrite the bundled starter file.
+The **Repository library** lists authored levels. **Legacy courses** loads courses from an earlier game version with their managed wall mappings. Saving a legacy course creates an authored copy; it does not overwrite the bundled legacy file.
 
 ## Author a course
 
-- Start a new course, open a game starter, import JSON, or open a saved repository level.
+- Start a new course, open a legacy course, import JSON, or open a saved repository level.
 - Drag a preset from the palette, or select it and click on the course. Use the object list to select overlapping objects, the goal, or disabled fields.
 - Ctrl/Cmd-click objects on the canvas or in the object list to toggle multiple selections. Right-drag a rectangle to select fully enclosed objects; Ctrl/Cmd-right-drag adds a region. Managed walls are excluded. Drag a selected object to move the whole group.
 - Drag objects to move them. Coral handles resize and rotate; green edge handles resize the board. Numeric controls support precise transforms. Board width/height changes are centered; dragging an edge keeps the opposite edge fixed.

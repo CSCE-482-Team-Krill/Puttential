@@ -183,7 +183,9 @@ for (const [width, height] of [
     await page.goto(URL);
     await expect(page.getByRole('status')).toContainText("Loading today's course…");
     await expect(page.getByRole('img', { name: 'Puttential', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Play practice', exact: true })).toBeEnabled();
+    await expect(
+      page.getByRole('button', { name: 'Play legacy course', exact: true }),
+    ).toBeEnabled();
     await noOverflow(page);
     release();
     await expect(page.locator('.course-canvas.editable')).toHaveCount(1);
@@ -192,9 +194,9 @@ for (const [width, height] of [
       route.fulfill({ status: 503, json: { error: 'Unavailable' } }),
     );
     await page.reload();
-    await expect(page.locator('.api-notice')).toContainText('Practice courses still work');
-    await page.getByRole('button', { name: 'Play practice', exact: true }).click();
-    await expect(page.locator('.challenge-label')).toContainText('Practice challenge');
+    await expect(page.locator('.api-notice')).toContainText('Legacy courses are still available');
+    await page.getByRole('button', { name: 'Play legacy course', exact: true }).click();
+    await expect(page.locator('.challenge-label')).toHaveText('Legacy course');
     await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   });
 }
@@ -330,7 +332,7 @@ test('landscape game fits one viewport and keeps controls reachable after height
   await page.setViewportSize({ width: 1024, height: 600 });
   await page.reload();
   await expect(page.locator('.api-notice')).toBeVisible();
-  await page.getByRole('button', { name: 'Play practice', exact: true }).click();
+  await page.getByRole('button', { name: 'Play legacy course', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeInViewport({
     ratio: 1,
   });
@@ -574,8 +576,10 @@ test('production data stays unavailable; development preview has six labeled exa
       await expect(dialog.locator('.ranking-row')).toHaveCount(0);
     }
     if (name === 'Calendar') {
-      await expect(dialog.locator('.practice-course')).toHaveCount(2);
-      await expect(dialog).toContainText('Practice — unranked');
+      await expect(dialog.locator('.legacy-course')).toHaveCount(2);
+      await expect(
+        dialog.getByRole('heading', { name: 'Legacy courses', exact: true }),
+      ).toBeVisible();
       await expect(dialog).toContainText('Archive unavailable');
     }
     await screenshot(page, `modals-${file}`);
