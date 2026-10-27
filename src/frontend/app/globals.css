@@ -764,6 +764,42 @@ button:disabled {
   padding: 0;
   list-style: none;
 }
+.leaderboard-snapshot,
+.leaderboard-updated,
+.leaderboard-percentile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.leaderboard-snapshot {
+  gap: 12px;
+}
+.leaderboard-snapshot p {
+  margin: 0;
+}
+.leaderboard-updated > span {
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+}
+.leaderboard-updated time {
+  color: var(--ui-ink);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+.leaderboard-personal {
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ui-line);
+}
+.leaderboard-personal p {
+  margin: 0;
+}
+.leaderboard-percentile strong {
+  color: var(--ui-green);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
 .ranking-row {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr) auto;

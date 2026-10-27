@@ -5,6 +5,15 @@ import { puzzleApi } from '../api';
 import { LeaderboardWindow } from '../leaderboard-state';
 import type { AuthoritativeState } from '../authoritative-state';
 
+function formatStandingsDate(timestamp: string) {
+  const date = new Date(timestamp);
+  const day = date.getUTCDate();
+  const suffix =
+    day % 100 >= 11 && day % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[day % 10] ?? 'th');
+  const month = date.toLocaleDateString('en-US', { month: 'long', timeZone: 'UTC' });
+  return `${month} ${day}${suffix}, ${date.getUTCFullYear()}`;
+}
+
 export function LeaderboardPanel({
   puzzle,
   player,
@@ -99,9 +108,13 @@ export function LeaderboardPanel({
                     ? 'Closed — verification pending'
                     : 'Open — provisional'}
             </p>
-            <p>
-              {board.totalPlayers} ranked players · As of {board.asOf}
-            </p>
+            <div className="leaderboard-snapshot">
+              <p>{board.totalPlayers} ranked players</p>
+              <p className="leaderboard-updated">
+                <span>As of</span>
+                <time dateTime={board.asOf}>{formatStandingsDate(board.asOf)}</time>
+              </p>
+            </div>
             {!board.rows.length && <p>No verified results yet.</p>}
             <ol className="modal-stack ranking-list" aria-label="Verified rankings">
               {board.rows.map((row) => (
@@ -122,14 +135,25 @@ export function LeaderboardPanel({
                 </li>
               ))}
             </ol>
-            <p>
-              {board.me
-                ? `Your rank: #${board.me.rank}. ${board.me.percentile.toFixed(1)}% of ranked players are strictly behind you. Ties share rank.`
-                : 'Solve this course to get a rank.'}
-            </p>
-            <p className="modal-footnote">
-              Percentile uses all {board.totalPlayers} ranked players in this board, including ties.
-            </p>
+            <div className="leaderboard-personal modal-stack">
+              {board.me ? (
+                <>
+                  <p>
+                    Your rank: <strong>#{board.me.rank}</strong>
+                  </p>
+                  <p className="leaderboard-percentile">
+                    <strong>{board.me.percentile.toFixed(1)}%</strong>
+                    <span>of ranked players are strictly behind you.</span>
+                  </p>
+                </>
+              ) : (
+                <p>Solve this course to get a rank.</p>
+              )}
+              <p className="modal-footnote">
+                Ties share rank. Percentile uses all {board.totalPlayers} ranked players in this
+                board, including ties.
+              </p>
+            </div>
             {board.nextCursor && (
               <button disabled={busy} onClick={() => void load(true)}>
                 Load more standings
