@@ -51,9 +51,13 @@ test('real daily browser flow persists a verified result and shares it across tw
       await page.getByRole('button', { name: 'Leaderboard', exact: true }).click();
       await expect(page.getByRole('dialog')).toContainText(nickname);
       await page.keyboard.press('Escape');
+      await page.getByRole('tab', { name: 'Runs', exact: true }).click();
       await page.getByRole('button', { name: 'Copy result', exact: true }).click();
       await expect(page.getByLabel('Result text')).toHaveValue(/Verified/);
-      expect((await page.getByLabel('Result text').boundingBox())!.width).toBeGreaterThan(300);
+      expect((await page.getByLabel('Result text').boundingBox())!.width).toBeGreaterThan(180);
+      expect(
+        await page.locator('.runs-panel').evaluate((e) => e.scrollWidth <= e.clientWidth),
+      ).toBe(true);
       expect(await page.getByLabel('Result text').inputValue()).not.toMatch(/commands|xQ|angleQ/);
       await mkdir('artifacts/iteration-two-completion', { recursive: true });
       await page.screenshot({

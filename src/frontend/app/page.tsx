@@ -33,7 +33,7 @@ import { ArchivePanel } from '../panels/archive';
 import { LeaderboardPanel } from '../panels/leaderboard';
 import { ProfilePanel } from '../panels/profile';
 import { ResultPanel } from '../panels/result';
-import { CopyResult } from '../panels/copy-result';
+import { RunsPanel } from '../panels/runs';
 import { shareResult } from '../share-result';
 
 const PRACTICE_LEVELS = starterLevels.map((level) => ({ level, day: 'Practice course' }));
@@ -46,6 +46,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [importBounds, setImportBounds] = useState<Bounds | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
+  const [sidebarTab, setSidebarTab] = useState<'toolkit' | 'runs'>('toolkit');
   const [preferences, setPreferences] = usePreferences();
   const [player, setPlayer] = useState<Player | null>(null);
   const playerRef = useRef(player);
@@ -614,8 +615,54 @@ export default function Home() {
                   />
                 </div>
               </section>
-              <aside className="control-column" aria-labelledby="toolkit-title">
-                <div className="setup-tools">
+              <aside className="control-column" aria-label="Course controls">
+                <div className="sidebar-tabs" role="tablist" aria-label="Course tools">
+                  {(['toolkit', 'runs'] as const).map((tab, index) => (
+                    <button
+                      key={tab}
+                      id={`${tab}-tab`}
+                      role="tab"
+                      aria-selected={sidebarTab === tab}
+                      aria-controls={`${tab}-panel`}
+                      tabIndex={sidebarTab === tab ? 0 : -1}
+                      onClick={() => setSidebarTab(tab)}
+                      onKeyDown={(event) => {
+                        const next =
+                          event.key === 'Home'
+                            ? 'toolkit'
+                            : event.key === 'End'
+                              ? 'runs'
+                              : event.key === 'ArrowRight' || event.key === 'ArrowLeft'
+                                ? (['toolkit', 'runs'] as const)[1 - index]
+                                : undefined;
+                        if (!next) return;
+                        event.preventDefault();
+                        setSidebarTab(next);
+                        document.getElementById(`${next}-tab`)?.focus();
+                      }}
+                    >
+                      {tab === 'toolkit' ? 'Toolkit' : 'Runs'}
+                      {tab === 'runs' && pending.length > 0 && (
+                        <span className="pending-run-count" aria-hidden="true">
+                          {pending.length}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <p className="sr-only" role="status">
+                  {pending.length > 0
+                    ? `${pending.length} pending runs. Open the Runs tab for status and recovery.`
+                    : ''}
+                </p>
+                <div
+                  className="setup-tools"
+                  id="toolkit-panel"
+                  role="tabpanel"
+                  aria-labelledby="toolkit-tab"
+                  hidden={sidebarTab !== 'toolkit'}
+                  tabIndex={0}
+                >
                   <div className="control-heading">
                     <span className="section-kicker">YOUR TOOLKIT</span>
                     <div className="toolkit-title">
@@ -643,6 +690,34 @@ export default function Home() {
                       : 'Practice costs 1 point per active block.'}
                   </p>
                 </div>
+                <section
+                  className="runs-panel"
+                  id="runs-panel"
+                  role="tabpanel"
+                  aria-labelledby="runs-tab"
+                  hidden={sidebarTab !== 'runs'}
+                  tabIndex={0}
+                >
+                  <RunsPanel
+                    puzzleId={p?.id}
+                    progress={progress}
+                    records={records}
+                    localAttempts={puzzle.attempts}
+                    hasSavedBest={
+                      !!(context.source === 'daily' ? progress?.bestDaily : progress?.bestArchive)
+                    }
+                    compose={() => compose(true)}
+                    retry={(requestId) =>
+                      void session?.retry(requestId).catch((e) => setNotice(e.message))
+                    }
+                    cancel={(requestId) =>
+                      void session?.cancel(requestId).catch((e) => setNotice(e.message))
+                    }
+                    interrupt={(requestId) =>
+                      void session?.interrupt(requestId).catch((e) => setNotice(e.message))
+                    }
+                  />
+                </section>
                 <section className="run-controls" aria-label="Run controls">
                   <PlayButton
                     puzzle={puzzle}
@@ -654,11 +729,6 @@ export default function Home() {
                   <p className="run-timer" role="timer">
                     {(puzzle.tick / 120).toFixed(2)}s / {(puzzle.maxTicks / 120).toFixed(2)}s
                   </p>
-                  <p>
-                    {p
-                      ? `Accepted starts: ${progress?.attemptsStarted ?? 'unavailable'}`
-                      : `Local runs: ${puzzle.attempts}`}
-                  </p>
                   <button
                     className="text-button"
                     disabled={locked || puzzle.mode !== 'setup'}
@@ -669,59 +739,6 @@ export default function Home() {
                 </section>
               </aside>
             </div>
-            {(record || progress || pending.length > 0) && (
-              <section className="run-status-list" aria-label="Saved and pending runs">
-                {record && <p role="status">{record.message}</p>}
-                {pending.map((r) => (
-                  <div key={r.start.requestId}>
-                    <p>
-                      {r.context.date}: {r.message}
-                    </p>
-                    <div className="panel-actions">
-                      <button
-                        onClick={() =>
-                          void session?.retry(r.start.requestId).catch((e) => setNotice(e.message))
-                        }
-                      >
-                        Retry run status
-                      </button>
-                      {!r.intent && (
-                        <>
-                          <button onClick={() => void session?.cancel(r.start.requestId)}>
-                            Cancel run
-                          </button>
-                          <button
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  'Recover this run only after closing its original execution. End it as interrupted?',
-                                )
-                              )
-                                void session
-                                  ?.interrupt(r.start.requestId)
-                                  .catch((e) => setNotice(e.message));
-                            }}
-                          >
-                            Recover interrupted run
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-                {progress && (
-                  <p>
-                    First verified solve:{' '}
-                    {progress.firstSolveAttempts === null
-                      ? 'not yet solved'
-                      : `run #${progress.firstSolveAttempts}`}
-                  </p>
-                )}
-                {(context.source === 'daily' ? progress?.bestDaily : progress?.bestArchive) && (
-                  <CopyResult compose={() => compose(true)} />
-                )}
-              </section>
-            )}
           </>
         )}
       </main>

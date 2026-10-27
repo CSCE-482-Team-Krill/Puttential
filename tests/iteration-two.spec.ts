@@ -208,6 +208,7 @@ test('saved best sharing refreshes cancellation and suppresses historical rank c
     }),
   );
   await page.goto(BASE_URL);
+  await page.getByRole('tab', { name: 'Runs', exact: true }).click();
   await page.getByRole('button', { name: 'Copy result', exact: true }).click();
   await expect(page.getByLabel('Result text')).toHaveValue(/Course canceled/);
   expect(await page.getByLabel('Result text').inputValue()).not.toMatch(/rank #/);
@@ -261,7 +262,9 @@ test('durable terminal intent is recovered after refresh without a new start or 
     });
   }, record);
   await page.reload();
-  await expect(page.getByRole('region', { name: 'Saved and pending runs' })).toContainText(
+  await expect(page.locator('.run-status-list')).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Runs', exact: true }).click();
+  await expect(page.getByRole('tabpanel', { name: 'Runs', exact: true })).toContainText(
     'Saved and verified.',
   );
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeDisabled();
@@ -316,6 +319,7 @@ test('rollover preserves the canvas and draft while an old-scope copy in flight 
   await page.evaluate(() =>
     Object.assign(window, { beforeRolloverCanvas: document.querySelector('canvas') }),
   );
+  await page.getByRole('tab', { name: 'Runs', exact: true }).click();
   await page.getByRole('button', { name: 'Copy result', exact: true }).click();
   nextDay = true;
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
@@ -336,3 +340,97 @@ test('rollover preserves the canvas and draft while an old-scope copy in flight 
     await page.evaluate(() => (window as unknown as { copiedResults: string[] }).copiedResults),
   ).toEqual([]);
 });
+
+for (const width of [1440, 320]) {
+  test(`Runs tab preserves the draft and recovers an accepted run at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const p = await fixtures(page);
+    const accepted = acceptedFixture();
+    const stopped = savedFixture(accepted, {
+      expectedGuestId: playerFixture.id,
+      kind: 'aborted',
+      observedTick: 0,
+    });
+    let reads = 0;
+    await page.route('**/api/runs/by-request/*', (route) => {
+      reads++;
+      return route.fulfill({ json: accepted });
+    });
+    await page.route('**/api/runs/*/complete', (route) => route.fulfill({ json: stopped }));
+    await page.goto(BASE_URL);
+    await expect(page.locator('.toolkit-note')).toBeVisible();
+    await page.evaluate(
+      async (record) => {
+        await new Promise<void>((resolve, reject) => {
+          const request = indexedDB.open('puttential-progress', 1);
+          request.onsuccess = () => {
+            const db = request.result;
+            const tx = db.transaction('runs', 'readwrite');
+            tx.objectStore('runs').put(
+              record,
+              `${record.start.expectedGuestId}/${record.start.requestId}`,
+            );
+            tx.oncomplete = () => {
+              db.close();
+              resolve();
+            };
+            tx.onerror = () => reject(tx.error);
+          };
+          request.onerror = () => reject(request.error);
+        });
+      },
+      {
+        version: 1,
+        persistence: 'durable',
+        start: startFixture(),
+        context: p,
+        owner: { tab: 'closed-tab', document: 'closed-document' },
+        phase: 'accepted',
+        cancelRequested: false,
+        response: accepted,
+        failures: 0,
+        retryAt: 0,
+        message: 'Run accepted.',
+      },
+    );
+    await page.reload();
+    await expect(page.locator('.pending-run-count')).toHaveText('1');
+    await page.locator('.tile-option').first().click();
+    await page.getByLabel('Selected tile X', { exact: true }).fill('1.125');
+    await page.evaluate(() =>
+      Object.assign(window, { tabCanvas: document.querySelector('canvas') }),
+    );
+    await page.getByRole('tab', { name: 'Toolkit', exact: true }).focus();
+    await page.keyboard.press('ArrowRight');
+    const runs = page.getByRole('tabpanel', { name: 'Runs', exact: true });
+    await expect(runs).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Runs', exact: true })).toBeFocused();
+    await expect(page.getByRole('tabpanel', { name: 'Toolkit', exact: true })).toBeHidden();
+    await expect(runs).toContainText('Accepted run needs recovery');
+    await expect(runs.getByRole('button', { name: 'Recover interrupted run' })).toBeVisible();
+    await runs.getByRole('button', { name: 'Retry run status' }).click();
+    await expect.poll(() => reads).toBeGreaterThan(1);
+    await runs.getByRole('button', { name: 'Cancel run', exact: true }).click();
+    await expect(runs).toContainText('Stopped run saved.');
+    await expect(page.locator('.pending-run-count')).toHaveCount(0);
+    await expect(page.locator('.run-status-list')).toHaveCount(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await mkdir('artifacts/runs-tab', { recursive: true });
+    await page.screenshot({ path: `artifacts/runs-tab/runs-${width}-after.png`, fullPage: true });
+    await page.getByRole('tab', { name: 'Runs', exact: true }).focus();
+    await page.keyboard.press('Home');
+    await expect(page.getByLabel('Selected tile X', { exact: true })).toHaveValue('1.125');
+    expect(
+      await page.evaluate(
+        () =>
+          (window as unknown as { tabCanvas: Element }).tabCanvas ===
+          document.querySelector('canvas'),
+      ),
+    ).toBe(true);
+    await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+  });
+}

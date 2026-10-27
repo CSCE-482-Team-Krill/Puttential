@@ -445,6 +445,104 @@ button:disabled {
   border-radius: var(--ui-r-md);
   background: var(--ui-turf-soft);
 }
+.sidebar-tabs {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 4px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-paper);
+}
+.sidebar-tabs button {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.sidebar-tabs button[aria-selected='true'] {
+  background: var(--ui-green);
+  color: var(--ui-white);
+}
+.sidebar-tabs button:hover:not([aria-selected='true']) {
+  background: var(--ui-turf-soft);
+  color: var(--ui-ink);
+}
+.pending-run-count {
+  min-width: 20px;
+  padding: 2px 5px;
+  border-radius: 99px;
+  background: var(--ui-yellow);
+  color: var(--ui-ink);
+  font-size: 0.75rem;
+}
+.control-column > [role='tabpanel'][hidden] {
+  display: none;
+}
+.runs-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+}
+.runs-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 2px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.runs-content h2,
+.runs-content p,
+.runs-summary {
+  margin: 0;
+}
+.runs-content h2 {
+  font-size: 1.125rem;
+}
+.runs-summary {
+  display: grid;
+  gap: 12px;
+}
+.runs-summary dt,
+.runs-note {
+  color: var(--ui-muted);
+  font-size: 0.8125rem;
+}
+.runs-summary dd {
+  margin: 2px 0 0;
+  color: var(--ui-ink);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.run-history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.run-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.run-card .panel-actions {
+  margin: 0;
+}
 .toolkit-title {
   display: flex;
   align-items: center;
@@ -1344,6 +1442,9 @@ button:disabled {
     flex: 1 0 auto;
     overflow: visible;
   }
+  .setup-tools .tile-option {
+    scroll-margin-block: 4px;
+  }
   .control-column .run-controls {
     flex: 0 0 auto;
   }
@@ -1366,15 +1467,6 @@ button:disabled {
     min-height: 28px;
     padding: 4px 6px;
   }
-  .run-status-list {
-    max-height: 15vh;
-    overflow-y: auto;
-    flex-shrink: 0;
-  }
-}
-.run-status-list {
-  margin-top: 16px;
-  overflow-wrap: anywhere;
 }
 .api-notice {
   overflow-wrap: anywhere;
