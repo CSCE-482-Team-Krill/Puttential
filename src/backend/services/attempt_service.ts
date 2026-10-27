@@ -1,6 +1,6 @@
-import { prisma } from "../prisma";
-import type {CreateAttemptRequest, CreateAttemptResponse,} from "../types";
-import { NotFoundError, ValidationError } from "../errors";
+import { prisma } from '../prisma';
+import type { CreateAttemptRequest, CreateAttemptResponse } from '../types';
+import { NotFoundError, ValidationError } from '../errors';
 
 /**
  * Checks whether an optional numeric metric is valid.
@@ -8,14 +8,17 @@ import { NotFoundError, ValidationError } from "../errors";
  * Attempt metrics such as simulation time, force cost, tile count,
  * and path length should never be negative or non-finite.
  */
-function validateOptionalNonNegativeNumber( value: number | null | undefined, fieldName: string): void {
-    if (value === null || value === undefined) {
-        return;
-    }
+function validateOptionalNonNegativeNumber(
+  value: number | null | undefined,
+  fieldName: string,
+): void {
+  if (value === null || value === undefined) {
+    return;
+  }
 
-    if (!Number.isFinite(value) || value < 0) {
-        throw new ValidationError(`${fieldName} must be a non-negative finite number.`);
-    }
+  if (!Number.isFinite(value) || value < 0) {
+    throw new ValidationError(`${fieldName} must be a non-negative finite number.`);
+  }
 }
 
 /**
@@ -24,14 +27,17 @@ function validateOptionalNonNegativeNumber( value: number | null | undefined, fi
  * forceCost and tileCount represent discrete values, so decimal
  * numbers are not valid for these fields.
  */
-function validateOptionalNonNegativeInteger(value: number | null | undefined,fieldName: string): void {
-    if (value === null || value === undefined) {
-        return;
-    }
+function validateOptionalNonNegativeInteger(
+  value: number | null | undefined,
+  fieldName: string,
+): void {
+  if (value === null || value === undefined) {
+    return;
+  }
 
-    if (!Number.isSafeInteger(value) || value < 0) {
-        throw new ValidationError(`${fieldName} must be a non-negative integer.`);
-    }
+  if (!Number.isSafeInteger(value) || value < 0) {
+    throw new ValidationError(`${fieldName} must be a non-negative integer.`);
+  }
 }
 
 /**
@@ -45,101 +51,89 @@ function validateOptionalNonNegativeInteger(value: number | null | undefined,fie
  */
 export async function createAttempt(input: CreateAttemptRequest): Promise<CreateAttemptResponse> {
   // A puzzle is required for every attempt.
-    if (!input.puzzleId || input.puzzleId.trim().length === 0) {
-        throw new ValidationError("puzzleId is required.");
-    }
+  if (!input.puzzleId || input.puzzleId.trim().length === 0) {
+    throw new ValidationError('puzzleId is required.');
+  }
 
-    // Validate optional physics/scoring metrics before sending them
-    // to the database.
-    validateOptionalNonNegativeNumber(
-        input.simulationTime,
-        "simulationTime"
-    );
+  // Validate optional physics/scoring metrics before sending them
+  // to the database.
+  validateOptionalNonNegativeNumber(input.simulationTime, 'simulationTime');
 
-    validateOptionalNonNegativeInteger(
-        input.forceCost,
-        "forceCost"
-    );
+  validateOptionalNonNegativeInteger(input.forceCost, 'forceCost');
 
-    validateOptionalNonNegativeInteger(
-        input.tileCount,
-        "tileCount"
-    );
+  validateOptionalNonNegativeInteger(input.tileCount, 'tileCount');
 
-    validateOptionalNonNegativeNumber(
-        input.pathLength,
-        "pathLength"
-    );
+  validateOptionalNonNegativeNumber(input.pathLength, 'pathLength');
 
-    /**
-     * Confirm that the referenced puzzle actually exists.
-     *
-     * PostgreSQL would eventually reject an invalid foreign key anyway,
-     * but checking here gives the backend a clearer and more intentional
-     * error.
-     */
-    const puzzle = await prisma.puzzle.findUnique({
-        where: {
-        id: input.puzzleId,
-        },
-        select: {
+  /**
+   * Confirm that the referenced puzzle actually exists.
+   *
+   * PostgreSQL would eventually reject an invalid foreign key anyway,
+   * but checking here gives the backend a clearer and more intentional
+   * error.
+   */
+  const puzzle = await prisma.puzzle.findUnique({
+    where: {
+      id: input.puzzleId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!puzzle) {
+    throw new NotFoundError(`Puzzle not found: ${input.puzzleId}`);
+  }
+
+  /**
+   * userId is optional because anonymous gameplay is allowed.
+   *
+   * If a userId is supplied, verify that the user exists before
+   * creating the attempt.
+   */
+  if (input.userId) {
+    const user = await prisma.user.findUnique({
+      where: {
+        id: input.userId,
+      },
+      select: {
         id: true,
-        },
+      },
     });
 
-    if (!puzzle) {
-        throw new NotFoundError(`Puzzle not found: ${input.puzzleId}`);
+    if (!user) {
+      throw new NotFoundError(`User not found: ${input.userId}`);
     }
+  }
 
-    /**
-     * userId is optional because anonymous gameplay is allowed.
-     *
-     * If a userId is supplied, verify that the user exists before
-     * creating the attempt.
-     */
-    if (input.userId) {
-        const user = await prisma.user.findUnique({
-        where: {
-            id: input.userId,
-        },
-        select: {
-            id: true,
-        },
-        });
+  /**
+   * Create the Attempt record.
+   *
+   * For the current prototype, `success` is supplied by the caller.
+   * Later, once the game engine exposes a formal win condition,
+   * server-side physics validation should verify this value instead
+   * of trusting the client directly.
+   */
+  const attempt = await prisma.attempt.create({
+    data: {
+      puzzleId: input.puzzleId,
+      userId: input.userId ?? null,
 
-        if (!user) {
-        throw new NotFoundError(`User not found: ${input.userId}`);
-        }
-    }
+      success: input.success ?? false,
 
-    /**
-     * Create the Attempt record.
-     *
-     * For the current prototype, `success` is supplied by the caller.
-     * Later, once the game engine exposes a formal win condition,
-     * server-side physics validation should verify this value instead
-     * of trusting the client directly.
-     */
-    const attempt = await prisma.attempt.create({
-        data: {
-        puzzleId: input.puzzleId,
-        userId: input.userId ?? null,
+      simulationTime: input.simulationTime ?? null,
+      forceCost: input.forceCost ?? null,
+      tileCount: input.tileCount ?? null,
+      pathLength: input.pathLength ?? null,
+    },
 
-        success: input.success ?? false,
+    // The frontend only needs the new attempt ID at this stage.
+    select: {
+      id: true,
+    },
+  });
 
-        simulationTime: input.simulationTime ?? null,
-        forceCost: input.forceCost ?? null,
-        tileCount: input.tileCount ?? null,
-        pathLength: input.pathLength ?? null,
-        },
-
-        // The frontend only needs the new attempt ID at this stage.
-        select: {
-        id: true,
-        },
-    });
-
-    return {
-        attemptId: attempt.id,
-    };
+  return {
+    attemptId: attempt.id,
+  };
 }
