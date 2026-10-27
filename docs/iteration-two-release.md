@@ -63,9 +63,11 @@ npm run test:ui:production
 
 The database suite rejects nonlocal or unnamed database targets. The unmocked browser test requires `TEST_DATABASE_URL`; its servers must use the matching `DATABASE_URL`. CI provisions PostgreSQL and runs both suites. On Windows without symlink privilege, only the separate symlink-security test is explicitly skipped; Linux CI runs it. Builds and browser tests must run sequentially against a workspace, and multiple Playwright runs need separate output directories.
 
-## Production acceptance still requiring access or people
+## Remaining production acceptance
 
-- Configure, migrate, publish and deploy to the named Vercel project, then demonstrate a real daily solve, refresh/readback, two guests, archive dates, copy text and outage recovery there.
+Production was connected and deployed on October 27, 2026. The [live connection record](../artifacts/production-backend/verification.md) documents the reviewed source revision, additive migration and publishing release, guest persistence, verified replay readback, archive and working leaderboard UI. Standard project install/build settings remain unchanged; the initial release used an explicit production-and-commit-guarded, single-deployment install override to use the existing write-only database secret.
+
+- Exercise additional successful live solves, two ranked guests, optimization/ties, copy text and outage recovery on the named Vercel project. The connection smoke run was a verified non-success and did not populate production rankings.
 - Confirm the hosting replay benchmark, capacity and scheduled recovery/availability monitoring in that environment.
 - Have three uncoached people complete the core flow, resolve any blocking findings and record project-owner acceptance.
 
