@@ -4,7 +4,15 @@ import { useEffect, useRef } from 'react';
 import type { RefObject } from 'react';
 import { drawZone, drawLiquid } from './zone-drawing';
 import { portalPairColors } from './portal-colors';
-import { isCourseObject, polygonBounds, shapePolygon, forceDensity, levelBounds } from '../game';
+import { directionHint } from './direction-hint';
+import {
+  isCourseObject,
+  polygonBounds,
+  shapePolygon,
+  forceDensity,
+  levelBounds,
+  POSITION_QUANTUM,
+} from '../game';
 import type {
   FieldZoneDefinition,
   Level,
@@ -21,6 +29,8 @@ export type Props = Readonly<{
   level: Level;
   frameRef: RefObject<RenderState | null>;
   draft: Draft;
+  /** When set, drawn instead of `draft`, so scripted animation needs no React updates. */
+  draftOverride?: RefObject<Draft | null>;
   mode: Mode;
   trail: readonly Vec2[];
   goalRef?: RefObject<GoalProgress>;
@@ -29,6 +39,10 @@ export type Props = Readonly<{
   onView?: (view: View) => void;
   overlay?: (context: CanvasRenderingContext2D, view: View) => void;
   onMoveField: (id: string, position: Vec2) => void;
+  onSelectField?: (id: string) => void;
+  selectedField?: string | null;
+  placementBounds?: Bounds;
+  editingLocked?: boolean;
 }>;
 
 export type View = Readonly<{ scale: number; originX: number; originY: number; bounds: Bounds }>;
@@ -39,13 +53,13 @@ type Drag = Readonly<{
   start: Vec2;
   fieldStart: Vec2;
   extents: Bounds;
+  width: number;
+  height: number;
 }>;
 
 const ARROW_SPACING = 0.6;
 const ARROW_LENGTH = 0.32;
 const VIEW_MARGIN = 0.15;
-/** Screen distance between preview dots, independent of how fast the body moves. */
-const TRAIL_DOT_SPACING = 14;
 
 function rotate(vector: Vec2, angle: number): Vec2 {
   const cos = Math.cos(angle),
@@ -107,13 +121,19 @@ function displayedField(field: RenderField, draft: Draft, mode: Mode): RenderFie
   if (isCourseObject(field.force)) return field;
   const planned = draft[field.id];
   if (mode !== 'setup' || planned === undefined) return field;
-  const dx = planned.position.x - field.position.x;
-  const dy = planned.position.y - field.position.y;
+  const deltaAngle = (planned.angle ?? field.angle) - field.angle;
   return {
     ...field,
     position: planned.position,
+    angle: planned.angle ?? field.angle,
     enabled: planned.enabled,
-    worldPolygon: field.worldPolygon.map((point) => ({ x: point.x + dx, y: point.y + dy })),
+    worldPolygon: field.worldPolygon.map((point) => {
+      const local = rotate(
+        { x: point.x - field.position.x, y: point.y - field.position.y },
+        deltaAngle,
+      );
+      return { x: planned.position.x + local.x, y: planned.position.y + local.y };
+    }),
   };
 }
 
@@ -229,7 +249,7 @@ function draw(
   context.setLineDash([]);
   const flagX = topLeft.x + goalWidth / 2,
     flagY = topLeft.y + goalHeight / 2 + 14;
-  context.fillStyle = '#39853b';
+  context.fillStyle = '#2d3a3a';
   context.fillRect(flagX - 1.5, flagY - 34, 3, 34);
   context.fillStyle = '#ff6b6b';
   context.beginPath();
@@ -272,55 +292,55 @@ function draw(
       drawHatch(context, field.worldPolygon, view);
     }
     context.restore();
-    context.strokeStyle = '#ffffff';
-    context.lineWidth = 2;
+    context.strokeStyle = props.selectedField === field.id ? '#ffcc66' : '#ffffff';
+    context.lineWidth = props.selectedField === field.id ? 3 : 2;
     context.stroke(path);
   }
 
   // Walls.
-  context.fillStyle = '#3f9441';
-  context.shadowColor = '#2e7d3255';
-  context.shadowOffsetX = 3;
-  context.shadowOffsetY = 4;
+  context.fillStyle = '#2e7d32';
   for (const body of state.staticBodies) {
     for (const piece of body.pieces) context.fill(piecePath(view, piece));
   }
   context.shadowColor = 'transparent';
 
-  // Predicted path for the start of the run.
+  // Start beyond the body's edge so even a slow, wide body cannot hide the hint.
   if (props.mode === 'setup') {
-    context.fillStyle = '#1f5f23cc';
-    const points = props.trail.map((point) => toCanvas(view, point));
-    let untilNextDot = TRAIL_DOT_SPACING;
-    for (let i = 1; i < points.length; i += 1) {
-      const from = points[i - 1]!,
-        to = points[i]!;
-      const length = Math.hypot(to.x - from.x, to.y - from.y);
-      let travelled = 0;
-      while (length - travelled >= untilNextDot) {
-        travelled += untilNextDot;
-        untilNextDot = TRAIL_DOT_SPACING;
-        const t = travelled / length;
+    const body = state.bodies.find((body) => body.id === props.level.goal.bodyId);
+    const hint = body && directionHint(body, props.trail, view.scale);
+    if (hint) {
+      context.save();
+      context.fillStyle = '#000000';
+      context.strokeStyle = '#000000';
+      context.lineWidth = 1.5;
+      context.lineCap = 'round';
+      for (const dot of hint.dots) {
+        const point = toCanvas(view, dot);
         context.beginPath();
-        context.arc(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, 3, 0, Math.PI * 2);
+        context.arc(point.x, point.y, 3, 0, Math.PI * 2);
         context.fill();
       }
-      untilNextDot -= length - travelled;
+      drawArrow(context, toCanvas(view, hint.arrow.from), toCanvas(view, hint.arrow.to));
+      context.restore();
     }
   }
 
-  // Bodies, shaded across each piece's extent so any shape reads as solid.
+  // Ivory bodies with a charcoal edge remain distinct from turf and force fields.
   context.save();
-  context.shadowColor = '#32863477';
-  context.shadowBlur = 10;
-  context.shadowOffsetX = 3;
-  context.shadowOffsetY = 5;
-  context.strokeStyle = '#ffffff';
+  context.shadowColor = '#2d3a3a26';
+  context.shadowBlur = 3;
+  context.shadowOffsetY = 2;
+  context.strokeStyle = '#2d3a3a';
+  context.fillStyle = '#f8f9f4';
   context.lineWidth = 1.5;
   for (const body of state.bodies) {
     if (body.destroyed) continue;
     context.save();
-    if (body.burnt) context.shadowColor = '#00000044';
+    if (body.burnt) {
+      context.shadowColor = '#00000044';
+      context.strokeStyle = '#151515';
+      context.fillStyle = '#161616';
+    }
     if (body.teleporting) context.globalAlpha = 0.45;
     if (body.submerged) {
       const c = toCanvas(view, body.position);
@@ -330,28 +350,6 @@ function draw(
       context.globalAlpha = body.burnt ? 1 : 0.8;
     }
     for (const piece of body.pieces) {
-      const bounds =
-        piece.kind === 'circle'
-          ? {
-              minX: piece.center.x - piece.radius,
-              maxX: piece.center.x + piece.radius,
-              minY: piece.center.y - piece.radius,
-              maxY: piece.center.y + piece.radius,
-            }
-          : polygonBounds(piece.worldPolygon);
-      const topLeft = toCanvas(view, { x: bounds.minX, y: bounds.maxY }),
-        bottomRight = toCanvas(view, { x: bounds.maxX, y: bounds.minY });
-      const gradient = context.createLinearGradient(
-        topLeft.x,
-        topLeft.y,
-        bottomRight.x,
-        bottomRight.y,
-      );
-      gradient.addColorStop(0, body.burnt ? '#303030' : '#ffffff');
-      gradient.addColorStop(0.5, body.burnt ? '#161616' : '#f1fcf1');
-      gradient.addColorStop(1, body.burnt ? '#050505' : '#a9dcaa');
-      context.strokeStyle = body.burnt ? '#151515' : '#ffffff';
-      context.fillStyle = gradient;
       const path = piecePath(view, piece);
       context.fill(path);
       context.stroke(path);
@@ -360,7 +358,7 @@ function draw(
           length = piece.radius * view.scale * 0.7;
         context.save();
         context.shadowColor = 'transparent';
-        context.strokeStyle = body.burnt ? '#454545' : '#45834a88';
+        context.strokeStyle = body.burnt ? '#454545' : '#566768';
         context.lineWidth = 2;
         context.beginPath();
         context.moveTo(center.x, center.y);
@@ -389,6 +387,15 @@ export function CourseCanvas(props: Props) {
   const dragRef = useRef<Drag | null>(null);
   propsRef.current = props;
 
+  /** A changed canvas size invalidates the gesture's original world projection. */
+  function endDrag(canvas: HTMLCanvasElement) {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    if (drag && canvas.hasPointerCapture(drag.pointerId)) {
+      canvas.releasePointerCapture(drag.pointerId);
+    }
+  }
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext('2d');
@@ -398,6 +405,7 @@ export function CourseCanvas(props: Props) {
       const width = Math.round(canvas.clientWidth * ratio),
         height = Math.round(canvas.clientHeight * ratio);
       if (canvas.width !== width || canvas.height !== height) {
+        endDrag(canvas);
         canvas.width = width;
         canvas.height = height;
       }
@@ -413,7 +421,9 @@ export function CourseCanvas(props: Props) {
         viewRef.current = view;
         propsRef.current.onView?.(view);
         context.setTransform(ratio, 0, 0, ratio, 0, 0);
-        draw(context, view, state, propsRef.current);
+        const props = propsRef.current,
+          override = props.draftOverride?.current;
+        draw(context, view, state, override ? { ...props, draft: override } : props);
         propsRef.current.overlay?.(context, view);
       }
       frame = requestAnimationFrame(render);
@@ -449,10 +459,24 @@ export function CourseCanvas(props: Props) {
       className={`course-canvas ${props.mode === 'setup' ? 'editable' : ''}`}
       aria-label="Puzzle course. Drag force fields to move them before pressing Play."
       onPointerDown={(event) => {
-        if (propsRef.current.mode !== 'setup' || viewRef.current === null) return;
+        if (
+          propsRef.current.editingLocked ||
+          propsRef.current.mode !== 'setup' ||
+          viewRef.current === null
+        )
+          return;
+        const canvas = event.currentTarget;
+        const ratio = window.devicePixelRatio || 1;
+        // Wait for a fresh view if a pointer event arrives before the resize frame.
+        if (
+          canvas.width !== Math.round(canvas.clientWidth * ratio) ||
+          canvas.height !== Math.round(canvas.clientHeight * ratio)
+        )
+          return;
         const point = pointerPosition(event);
         const field = fieldAt(point);
         if (field === null) return;
+        propsRef.current.onSelectField?.(field.id);
         event.currentTarget.setPointerCapture(event.pointerId);
         dragRef.current = {
           id: field.id,
@@ -465,31 +489,48 @@ export function CourseCanvas(props: Props) {
               y: point.y - field.position.y,
             })),
           ),
+          width: canvas.clientWidth,
+          height: canvas.clientHeight,
         };
       }}
       onPointerMove={(event) => {
         const drag = dragRef.current,
           view = viewRef.current;
         if (drag === null || view === null || drag.pointerId !== event.pointerId) return;
+        // Pointer events can precede the next render, so also cancel here.
+        if (
+          event.currentTarget.clientWidth !== drag.width ||
+          event.currentTarget.clientHeight !== drag.height
+        ) {
+          endDrag(event.currentTarget);
+          return;
+        }
         const world = toWorld(view, pointerPosition(event));
-        const { bounds } = view;
+        if (propsRef.current.editingLocked || propsRef.current.mode !== 'setup') {
+          endDrag(event.currentTarget);
+          return;
+        }
+        const bounds = propsRef.current.placementBounds ?? view.bounds;
         propsRef.current.onMoveField(drag.id, {
           x: Math.min(
-            bounds.maxX - drag.extents.maxX,
-            Math.max(bounds.minX - drag.extents.minX, drag.fieldStart.x + world.x - drag.start.x),
+            Math.floor((bounds.maxX - drag.extents.maxX) / POSITION_QUANTUM) * POSITION_QUANTUM,
+            Math.max(
+              Math.ceil((bounds.minX - drag.extents.minX) / POSITION_QUANTUM) * POSITION_QUANTUM,
+              drag.fieldStart.x + world.x - drag.start.x,
+            ),
           ),
           y: Math.min(
-            bounds.maxY - drag.extents.maxY,
-            Math.max(bounds.minY - drag.extents.minY, drag.fieldStart.y + world.y - drag.start.y),
+            Math.floor((bounds.maxY - drag.extents.maxY) / POSITION_QUANTUM) * POSITION_QUANTUM,
+            Math.max(
+              Math.ceil((bounds.minY - drag.extents.minY) / POSITION_QUANTUM) * POSITION_QUANTUM,
+              drag.fieldStart.y + world.y - drag.start.y,
+            ),
           ),
         });
       }}
-      onPointerUp={() => {
-        dragRef.current = null;
-      }}
-      onPointerCancel={() => {
-        dragRef.current = null;
-      }}
+      onPointerUp={(event) => endDrag(event.currentTarget)}
+      onPointerCancel={(event) => endDrag(event.currentTarget)}
+      onLostPointerCapture={(event) => endDrag(event.currentTarget)}
     />
   );
 }

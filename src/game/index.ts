@@ -43,7 +43,7 @@ export {
   setLevelBorders,
   containsBounds,
 } from './levels/document';
-export { starterLevels, starterDocument } from './levels/starters';
+export { starterLevels, starterDocument, tutorialLevel } from './levels/starters';
 export { forceCatalog, forceDefinition, isCourseObject } from './objects/catalog';
 export type { FieldParam } from './objects/catalog';
 export { forceDensity } from './objects/forces';

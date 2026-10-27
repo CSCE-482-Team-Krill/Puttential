@@ -25,3 +25,5 @@ Thumbs.db
 *.tsbuildinfo
 test-results/
 playwright-report/
+.playwright-mcp/
+test-results-*/

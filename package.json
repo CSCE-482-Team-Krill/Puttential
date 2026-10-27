@@ -9,10 +9,13 @@
     "test": "tsx --test tests/*.test.ts",
     "format": "prettier --write level-editor src/frontend src/game/levels/codec.ts src/game/objects/catalog.ts tests",
     "test:e2e": "playwright test",
+    "test:ui:production": "node tests/ui-polish-production-smoke.mjs",
     "game:start": "npm run start --workspace=puttential-frontend -- --hostname 127.0.0.1",
     "db:generate": "prisma generate --config prisma7.config.ts",
     "db:migrate": "prisma migrate deploy --config prisma7.config.ts",
-    "db:seed": "tsx src/backend/seed.ts"
+    "db:seed": "tsx src/backend/publish.ts",
+    "courses:publish": "tsx src/backend/publish.ts",
+    "test:integration": "tsx --test tests/*.integration.ts"
   },
   "devDependencies": {
     "typescript": "^5.7.3",

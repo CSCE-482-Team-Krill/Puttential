@@ -6,32 +6,32 @@
  * (for example a lost database connection) becomes a 503.
  */
 export class BackendError extends Error {
-    readonly status: number;
+  readonly status: number;
 
-    constructor(message: string, status: number) {
-      super(message);
-      this.name = new.target.name;
-      this.status = status;
-    }
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = new.target.name;
+    this.status = status;
   }
+}
 
-  /** The request is malformed or breaks a rule (HTTP 400). */
-  export class ValidationError extends BackendError {
-    constructor(message: string) {
-      super(message, 400);
-    }
+/** The request is malformed or breaks a rule (HTTP 400). */
+export class ValidationError extends BackendError {
+  constructor(message: string) {
+    super(message, 400);
   }
+}
 
-  /** A referenced puzzle, user, or attempt does not exist (HTTP 404). */
-  export class NotFoundError extends BackendError {
-    constructor(message: string) {
-      super(message, 404);
-    }
+/** A referenced puzzle, user, or attempt does not exist (HTTP 404). */
+export class NotFoundError extends BackendError {
+  constructor(message: string) {
+    super(message, 404);
   }
+}
 
-  /** The request conflicts with data already stored (HTTP 409). */
-  export class ConflictError extends BackendError {
-    constructor(message: string) {
-      super(message, 409);
-    }
+/** The request conflicts with data already stored (HTTP 409). */
+export class ConflictError extends BackendError {
+  constructor(message: string) {
+    super(message, 409);
   }
+}

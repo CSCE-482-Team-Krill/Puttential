@@ -1,0 +1,134 @@
+[
+  {
+    "count": 0,
+    "long": false,
+    "gaps": [
+      0
+    ],
+    "regions": {
+      "course-meta": {
+        "x": 17,
+        "y": 72,
+        "right": 1135,
+        "bottom": 115,
+        "width": 1118,
+        "height": 43
+      },
+      "course-stage": {
+        "x": 17,
+        "y": 115,
+        "right": 1135,
+        "bottom": 883,
+        "width": 1118,
+        "height": 768
+      },
+      "control-column": {
+        "x": 1143,
+        "y": 72,
+        "right": 1423,
+        "bottom": 883,
+        "width": 280,
+        "height": 811
+      }
+    }
+  },
+  {
+    "count": 3,
+    "long": false,
+    "gaps": [
+      0
+    ],
+    "regions": {
+      "course-meta": {
+        "x": 17,
+        "y": 72,
+        "right": 1135,
+        "bottom": 115,
+        "width": 1118,
+        "height": 43
+      },
+      "course-stage": {
+        "x": 17,
+        "y": 115,
+        "right": 1135,
+        "bottom": 883,
+        "width": 1118,
+        "height": 768
+      },
+      "control-column": {
+        "x": 1143,
+        "y": 72,
+        "right": 1423,
+        "bottom": 883,
+        "width": 280,
+        "height": 811
+      }
+    }
+  },
+  {
+    "count": 12,
+    "long": false,
+    "gaps": [
+      0
+    ],
+    "regions": {
+      "course-meta": {
+        "x": 17,
+        "y": 72,
+        "right": 1135,
+        "bottom": 115,
+        "width": 1118,
+        "height": 43
+      },
+      "course-stage": {
+        "x": 17,
+        "y": 115,
+        "right": 1135,
+        "bottom": 883,
+        "width": 1118,
+        "height": 768
+      },
+      "control-column": {
+        "x": 1143,
+        "y": 72,
+        "right": 1423,
+        "bottom": 883,
+        "width": 280,
+        "height": 811
+      }
+    }
+  },
+  {
+    "count": 12,
+    "long": true,
+    "gaps": [
+      0
+    ],
+    "regions": {
+      "course-meta": {
+        "x": 17,
+        "y": 72,
+        "right": 1135,
+        "bottom": 115,
+        "width": 1118,
+        "height": 43
+      },
+      "course-stage": {
+        "x": 17,
+        "y": 115,
+        "right": 1135,
+        "bottom": 883,
+        "width": 1118,
+        "height": 768
+      },
+      "control-column": {
+        "x": 1143,
+        "y": 72,
+        "right": 1423,
+        "bottom": 883,
+        "width": 280,
+        "height": 811
+      }
+    }
+  }
+]

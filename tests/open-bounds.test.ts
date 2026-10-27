@@ -24,6 +24,8 @@ import { resolveBodyPieces } from '../src/game/objects/bodies';
 import { bodyTouchesBounds } from '../src/game/objects/bounds';
 import { saveLevel, loadLevel } from '../level-editor/editor/library';
 import { advanceGoal, initialGoal } from '../src/frontend/goal-progress';
+import { defaultRules, makePlacement, replayRun } from '../src/game/run-evaluation';
+import { deliveredEngine } from '../src/frontend/engine-adapter';
 
 const bounds = { minX: -2, maxX: 2, minY: -2, maxY: 2 };
 function course(position: Vec2 = { x: 0, y: 0 }, velocity: Vec2 = { x: 0, y: 0 }): Level {
@@ -210,4 +212,30 @@ test('bounds validate positive finite dimensions and old JSON remains losslessly
     { ...bounds, maxY: Infinity },
   ])
     assert.throws(() => parseLevel({ ...legacy, bounds: bad }), /bounds/);
+});
+
+test('shared server replay and browser evaluation stop at the same out-of-bounds tick', async () => {
+  const level = course({ x: 1.5, y: 0 }, { x: 8, y: 0 });
+  const rules = defaultRules(level);
+  const placement = makePlacement(level, {}, rules);
+  const replay = await replayRun(level, placement, rules);
+  assert.equal(replay.outcome, 'out-of-bounds');
+  assert.ok(replay.metrics.completionTick > 1 && replay.metrics.completionTick < 120);
+  const game = await createGame(level);
+  try {
+    deliveredEngine.applySetup(game, placement);
+    deliveredEngine.begin(game, level, rules);
+    let result;
+    for (let i = 0; i < 120; i++) {
+      game.step();
+      result = deliveredEngine.step(game, game.getRenderState());
+      if (result) break;
+    }
+    assert.deepEqual(result, replay);
+    const tick = game.getRenderState().tick;
+    game.step();
+    assert.equal(game.getRenderState().tick, tick);
+  } finally {
+    game.destroy();
+  }
 });

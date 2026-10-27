@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Dispatch, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction, ReactNode, RefObject } from 'react';
 import type { Level } from '../game';
 import { Icon } from './icon';
 import type { RunResult } from './puzzle';
+import { TILE_COST } from './score-display';
 
 export type Panel = 'archive' | 'stats' | 'leaderboard' | 'settings' | 'help' | 'result' | null;
 
@@ -66,28 +67,33 @@ const HELP_SECTIONS = [
   {
     title: 'How to play',
     content:
-      'Choose a force block from your toolkit, then drag its field into position on the course. The dotted path previews the start of the run. Press Play to lock your layout and watch it move. Use Try again to adjust your plan, or Reset layout to start over.',
+      'Turn a block ON in your toolkit, then drag its field on the course or edit the selected tile’s X/Y controls. Three dots and an arrow show the initial direction. Rotation is available only with a compatible engine; unavailable controls say so. Press Play to lock your layout and watch it move. Stop ends that run; Try again returns to setup.',
   },
   {
     title: 'Scoring',
     content:
-      'Each placed block costs 1 point. Successful solutions rank by force cost, then tile count, attempts to your first solve, simulated completion time, and path length. Fewer points is better.',
+      'Published courses set each tile’s cost, shown in the toolkit. Practice costs 1 per tile and is unranked. Verified solutions rank by force cost, tile count, first verified solve run number, completion tick, then path length. Tied tuples share rank. First verified solve is the ordinal of the first success saved and verified, separate from total accepted starts. Stop and interrupted ranked starts count; editing and practice do not.',
   },
   {
     title: 'Daily Challenges',
     content:
-      'Everyone gets the same daily course, starting object, goal, tile inventory, and physics settings. Open Calendar to choose the daily course or try a practice course.',
+      'Everyone gets the same dated course and limited inventory. Runs use simulated time with a maximum of 60 seconds (a course may set a smaller cap). The original daily window closes at Central midnight; standings stay provisional while eligible results await verification. Archive rankings stay open. Open Calendar for published historical courses or separate practice courses. Offline practice never becomes a ranked attempt later.',
+  },
+  {
+    title: 'Saving and recovery',
+    content:
+      'Ranked Play requires a confirmed guest session, compatible rules and a server-accepted start. Local results stay unverified until acknowledged. Pending saves can be retried. Keep this page open when refresh recovery is unavailable. Guest access belongs to this browser’s cookie; clearing it loses access. Another tab can play a distinct run without interrupting yours.',
   },
 ] as const;
 
-// Profile and leaderboard data remain samples until accounts are connected.
+// Display-only fixtures, rendered exclusively by the development preview.
 const RANKINGS = [
-  { rank: 1, name: 'birdbrain', force: 2, tiles: 1, time: '4.82s' },
-  { rank: 2, name: 'physwiz', force: 3, tiles: 2, time: '3.14s' },
-  { rank: 3, name: 'krillking', force: 3, tiles: 2, time: '5.26s' },
-  { rank: 4, name: 'greenkeeper', force: 4, tiles: 2, time: '4.67s' },
-  { rank: 5, name: 'parfect', force: 4, tiles: 3, time: '5.92s' },
-  { rank: 6, name: 'You', force: 5, tiles: 3, time: '6.31s' },
+  { rank: 1, name: 'Example player 1', tiles: 1, time: '4.82s' },
+  { rank: 2, name: 'Example player 2', tiles: 2, time: '3.14s' },
+  { rank: 3, name: 'Example player 3', tiles: 2, time: '5.26s' },
+  { rank: 4, name: 'Example player 4', tiles: 3, time: '4.67s' },
+  { rank: 5, name: 'Example player 5', tiles: 3, time: '5.92s' },
+  { rank: 6, name: 'Example player 6', tiles: 4, time: '6.31s' },
 ] as const;
 
 type Props = {
@@ -100,6 +106,11 @@ type Props = {
   currentLevel: Level;
   chooseLevel: (level: Level) => void;
   tileCost: number;
+  previewMode?: boolean;
+  courseImport?: ReactNode;
+  body?: ReactNode;
+  /** Replays the first-visit walkthrough from Help. */
+  showTutorial?: () => void;
 };
 
 function SettingSwitch({
@@ -127,29 +138,10 @@ function SettingSwitch({
   );
 }
 
-export function Modal({
-  panel,
-  close,
-  preferences,
-  setPreferences,
-  result,
-  levels,
-  currentLevel,
-  chooseLevel,
-  tileCost,
-}: Props) {
-  const dialogRef = useRef<HTMLElement>(null);
+/** Focus, Escape and Tab containment shared by every modal dialog. */
+export function useDialog(dialogRef: RefObject<HTMLElement | null>, close: () => void) {
   const closeRef = useRef(close);
   closeRef.current = close;
-  const titles: Record<Exclude<Panel, null>, string> = {
-    archive: 'Calendar',
-    stats: 'You',
-    leaderboard: 'Leaderboard',
-    settings: 'Settings',
-    help: 'Help',
-    result: result?.solved === false ? 'So close' : 'Nice work!',
-  };
-
   useEffect(() => {
     const previousFocus =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -165,9 +157,9 @@ export function Modal({
       if (event.key !== 'Tab') return;
       const elements = Array.from(
         dialogRef.current?.querySelectorAll<HTMLElement>(
-          'button:not(:disabled), summary, a[href], input:not(:disabled), [tabindex="0"]',
+          'button:not(:disabled), summary, a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
         ) ?? [],
-      );
+      ).filter((element) => element.getClientRects().length > 0);
       const first = elements[0];
       const last = elements[elements.length - 1];
       if (!first || !last) return;
@@ -191,7 +183,34 @@ export function Modal({
       document.body.style.overflow = previousOverflow;
       previousFocus?.focus();
     };
-  }, []);
+  }, [dialogRef]);
+}
+
+export function Modal({
+  panel,
+  close,
+  preferences,
+  setPreferences,
+  result,
+  levels,
+  currentLevel,
+  chooseLevel,
+  tileCost,
+  previewMode = false,
+  courseImport,
+  body,
+  showTutorial,
+}: Props) {
+  const dialogRef = useRef<HTMLElement>(null);
+  useDialog(dialogRef, close);
+  const titles: Record<Exclude<Panel, null>, string> = {
+    archive: 'Calendar',
+    stats: 'Profile',
+    leaderboard: 'Leaderboard',
+    settings: 'Settings',
+    help: 'Help',
+    result: result?.solved === false ? 'So close' : 'Nice work!',
+  };
 
   function togglePreference(key: keyof Preferences) {
     setPreferences((current) => ({ ...current, [key]: !current[key] }));
@@ -224,6 +243,17 @@ export function Modal({
 
         {panel === 'help' && (
           <div className="modal-body modal-stack">
+            {showTutorial && (
+              <button className="tutorial-launch" onClick={showTutorial}>
+                <span className="tutorial-launch-icon" aria-hidden="true">
+                  <Icon name="play" size={20} />
+                </span>
+                <span>
+                  <strong>Watch the tutorial</strong>
+                  <small>Watch a full shot step by step, then try it yourself.</small>
+                </span>
+              </button>
+            )}
             {HELP_SECTIONS.map(({ title, content }) => (
               <details className="help-section" key={title}>
                 <summary>
@@ -236,91 +266,59 @@ export function Modal({
           </div>
         )}
 
-        {panel === 'stats' && (
+        {body && <div className="modal-body modal-stack">{body}</div>}
+        {!body && panel === 'stats' && (
           <div className="modal-body modal-stack">
-            <section className="profile-section" aria-labelledby="profile-stats">
-              <h3 id="profile-stats" className="modal-section-heading">
-                Stats
-              </h3>
-              <dl className="profile-metrics">
-                <div>
-                  <dt>Current streak</dt>
-                  <dd>
-                    14 <small>days</small>
-                  </dd>
-                </div>
-                <div>
-                  <dt>Average attempts</dt>
-                  <dd>4.2</dd>
-                </div>
-              </dl>
-            </section>
-            <section className="profile-section" aria-labelledby="profile-games">
-              <h3 id="profile-games" className="modal-section-heading">
-                Games played
-              </h3>
-              <div className="profile-summary">
-                <strong>87</strong>
-                <span>courses played</span>
-              </div>
-            </section>
-            <section className="profile-section" aria-labelledby="profile-ranking">
-              <h3 id="profile-ranking" className="modal-section-heading">
-                Ranking
-              </h3>
-              <dl className="profile-metrics">
-                <div>
-                  <dt>Today&apos;s position</dt>
-                  <dd>#6</dd>
-                </div>
-                <div>
-                  <dt>Average percentile</dt>
-                  <dd>
-                    78<small>%</small>
-                  </dd>
-                </div>
-              </dl>
-            </section>
-            <p className="modal-footnote">Sample profile · progress tracking is coming soon.</p>
+            <p className="modal-intro">Profile statistics are not connected.</p>
+            {[
+              ['stats', 'Stats'],
+              ['games', 'Games played'],
+              ['ranking', 'Ranking'],
+            ].map(([id, title]) => (
+              <section className="profile-section" aria-labelledby={`profile-${id}`} key={id}>
+                <h3 id={`profile-${id}`} className="modal-section-heading">
+                  {title}
+                </h3>
+                <p className="unavailable-state">No recorded data available</p>
+              </section>
+            ))}
           </div>
         )}
 
-        {panel === 'leaderboard' && (
+        {!body && panel === 'leaderboard' && (
           <div className="modal-body modal-stack">
-            <p className="modal-intro">
-              Today&apos;s solutions <span>Lowest force cost wins</span>
-            </p>
-            <ol className="modal-stack ranking-list" aria-label="Sample rankings">
-              {RANKINGS.map((entry) => (
-                <li
-                  className={`modal-row ranking-row ${entry.name === 'You' ? 'your-row' : ''}`}
-                  key={entry.rank}
-                >
-                  <span className="ranking-number">#{entry.rank}</span>
-                  <span className="ranking-player">
-                    <strong>{entry.name}</strong>
-                    <small>
-                      {entry.tiles} {entry.tiles === 1 ? 'tile' : 'tiles'} · {entry.time}
-                    </small>
-                  </span>
-                  <span className="ranking-score">
-                    {entry.force}
-                    <small>pt</small>
-                  </span>
-                  <span className="player-avatar" aria-hidden="true">
-                    {entry.name.slice(0, 1).toUpperCase()}
-                  </span>
-                </li>
-              ))}
-            </ol>
-            <p className="modal-footnote">
-              Sample rankings. Ties use tile count, first-solve attempts, simulation time, then path
-              length.
-            </p>
+            {previewMode ? (
+              <>
+                <p className="modal-intro">EXAMPLE RANKINGS — PREVIEW ONLY</p>
+                <ol className="modal-stack ranking-list" aria-label="Sample rankings">
+                  {RANKINGS.map((entry) => (
+                    <li className="modal-row ranking-row" key={entry.rank}>
+                      <span className="ranking-number">#{entry.rank}</span>
+                      <span className="ranking-player">
+                        <strong>{entry.name}</strong>
+                        <small>
+                          {entry.tiles} {entry.tiles === 1 ? 'tile' : 'tiles'} · {entry.time}
+                        </small>
+                      </span>
+                      <span className="ranking-score">
+                        {entry.tiles * tileCost}
+                        <small>pt</small>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="modal-footnote">
+                  Example rankings. Ties use tile count, first-solve attempts, simulation time, then
+                  path length.
+                </p>
+              </>
+            ) : (
+              <p className="unavailable-state">Leaderboard is not available yet.</p>
+            )}
           </div>
         )}
 
-        {panel === 'archive' && (
+        {!body && panel === 'archive' && (
           <div className="modal-body modal-stack">
             <p className="modal-intro">
               Available courses <span>Find another way to the goal</span>
@@ -389,16 +387,25 @@ export function Modal({
                 change={() => togglePreference('showPreview')}
               />
             </section>
+            {courseImport && (
+              <section className="settings-section" aria-labelledby="local-course-settings">
+                <h3 className="modal-section-heading" id="local-course-settings">
+                  Local courses
+                </h3>
+                {courseImport}
+              </section>
+            )}
             <p className="modal-footnote">
               Preferences are saved on this device. Audio playback is not available yet.
             </p>
           </div>
         )}
 
-        {panel === 'result' && result && (
+        {!body && panel === 'result' && result && (
           <div className="modal-body result-body">
-            <div className="result-trophy" aria-hidden="true">
-              <Icon name={result.solved ? 'trophy' : 'help'} size={48} />
+            <div className="result-mark brand-mark" aria-hidden="true">
+              <span className="brand-ball" />
+              <span className="brand-flag" />
             </div>
             <p>
               {result.solved
@@ -411,9 +418,14 @@ export function Modal({
                       ? 'An object left the course. Keep at least part of every object inside the board.'
                       : 'The ball stopped short of the goal. Adjust your fields and try again.'}
             </p>
+            {!result.solved && (
+              <p className="result-helper">
+                Close this panel, then choose Try again to adjust your fields.
+              </p>
+            )}
             <div className="result-grid">
               <div>
-                <strong>{result.tiles * tileCost}</strong>
+                <strong>{result.forceCost ?? result.tiles * tileCost}</strong>
                 <span>Force cost</span>
               </div>
               <div>

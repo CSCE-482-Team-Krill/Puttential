@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { freshDocument } from '../level-editor/editor/model';
 import { parseLevel } from '../src/game';
+import { dailyFixture } from './ui-polish-fixtures';
 
 for (const frameMs of [8, 67]) {
   for (const hazardFirst of [false, true]) {
@@ -36,13 +37,7 @@ for (const frameMs of [8, 67]) {
       let solutions = 0;
       await page.route('**/api/puzzles/today', (route) =>
         route.fulfill({
-          json: {
-            id: 'timing-puzzle',
-            date: '2026-10-19',
-            seed: 'timing',
-            difficulty: 1,
-            configuration: level,
-          },
+          json: dailyFixture(level),
         }),
       );
       await page.route('**/api/attempts', async (route) => {
@@ -54,28 +49,23 @@ for (const frameMs of [8, 67]) {
         await route.fulfill({ status: 201, json: { solutionId: 'timing-solution' } });
       });
       await page.goto('http://127.0.0.1:3000');
+      await page.getByRole('button', { name: 'Play this course unranked', exact: true }).click();
       await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
       await page.getByRole('button', { name: 'Play', exact: true }).click();
       await expect(
         page.getByRole('dialog', { name: hazardFirst ? 'So close' : 'Nice work!' }),
       ).toBeVisible();
-      await expect(
-        page.getByText(hazardFirst ? 'Attempt saved.' : 'Attempt and solution saved.', {
-          exact: true,
-        }),
-      ).toBeVisible();
-      expect(attempts).toHaveLength(1);
-      expect(attempts[0]).toMatchObject({
-        success: !hazardFirst,
-        simulationTime: (hazardFirst ? 125 : 121) / 120,
-        tileCount: 0,
-      });
-      expect(solutions).toBe(hazardFirst ? 0 : 1);
+      await expect(page.getByRole('dialog')).toContainText('Practice — unranked');
+      await expect(page.getByRole('dialog')).toContainText(
+        `${((hazardFirst ? 125 : 121) / 120).toFixed(2)}s`,
+      );
+      expect(attempts).toHaveLength(0);
+      expect(solutions).toBe(0);
       // A completed run stays frozen even after later animation frames.
       await page.clock.install();
       await page.clock.runFor(500);
-      expect(attempts).toHaveLength(1);
-      expect(solutions).toBe(hazardFirst ? 0 : 1);
+      expect(attempts).toHaveLength(0);
+      expect(solutions).toBe(0);
     });
   }
 }

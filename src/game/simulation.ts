@@ -1,5 +1,5 @@
 import RAPIER from '@dimforge/rapier2d-compat';
-import { compareCommands, dequantizePosition, validateCommand } from './commands';
+import { ANGLE_QUANTUM, compareCommands, dequantizePosition, validateCommand } from './commands';
 import { PORTAL_DELAY_SECONDS, PORTAL_COOLDOWN_SECONDS, isCourseObject } from './objects/catalog';
 import { bodyTouchesBounds } from './objects/bounds';
 import { levelBounds } from './levels/codec';
@@ -159,6 +159,23 @@ class Simulation implements Game {
     this.queuedCommands.push({ ...command });
   }
 
+  private lastMovement: Record<string, number> = {};
+
+  movement() {
+    return this.lastMovement;
+  }
+  hasPendingTeleports() {
+    return Object.keys(this.pendingTeleports).length > 0;
+  }
+
+  applySetup(commands: readonly GameCommand[]): void {
+    if (this.tick !== 0 || this.queuedCommands.length)
+      throw new Error('Setup requires an untouched tick-zero world');
+    for (const command of commands) this.queueCommand(command);
+    this.applyQueuedCommands();
+    this.renderState = this.buildRenderState();
+  }
+
   step(): void {
     if (this.failure) return;
     this.applyQueuedCommands();
@@ -187,7 +204,17 @@ class Simulation implements Game {
             ]),
         )
       : undefined;
+    const movementStart = new Map(
+      this.dynamicBodies.map((body) => [body.id, { ...this.rigidBody(body.id).translation() }]),
+    );
     this.world.step();
+    this.lastMovement = Object.fromEntries(
+      this.dynamicBodies.map((body) => {
+        const start = movementStart.get(body.id)!;
+        const end = this.rigidBody(body.id).translation();
+        return [body.id, Math.hypot(end.x - start.x, end.y - start.y)];
+      }),
+    );
     if (before) this.applyZones(before);
     this.tick += 1;
     if (this.releasePortals()) this.applyZones();
@@ -299,6 +326,8 @@ class Simulation implements Game {
       if (command.type === 'move-field') {
         field.position.x = dequantizePosition(command.xQ);
         field.position.y = dequantizePosition(command.yQ);
+      } else if (command.type === 'set-field-angle') {
+        field.angle = command.angleQ * ANGLE_QUANTUM;
       } else {
         field.enabled = command.enabled;
       }

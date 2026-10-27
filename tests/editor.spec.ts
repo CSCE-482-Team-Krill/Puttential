@@ -105,9 +105,14 @@ test('author, constrain, save, reopen and play the same course in both apps', as
     ).toBeVisible();
     const game = await context.newPage();
     game.on('pageerror', (e) => errors.push(e.message));
+    await game.route('**/api/**', (route) =>
+      route.fulfill({ status: 404, json: { error: 'No daily fixture' } }),
+    );
     await game.goto('http://127.0.0.1:3000');
+    await game.getByRole('button', { name: 'Play practice', exact: true }).click();
     await expect(game.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
     await game.screenshot({ path: 'level-editor/screenshots/game.png', fullPage: true });
+    await game.getByRole('button', { name: 'Settings', exact: true }).click();
     await game.getByLabel('Open local course').setInputFiles(file);
     await expect(
       game.getByRole('heading', {
@@ -225,7 +230,9 @@ test('unsupported browser recovery is retained until explicitly discarded', asyn
     original,
   );
   await page.goto('http://127.0.0.1:3001');
-  await expect(page.locator('.recovery-banner[role=alert]')).toContainText('original draft is preserved');
+  await expect(page.locator('.recovery-banner[role=alert]')).toContainText(
+    'original draft is preserved',
+  );
   const input = page.getByRole('textbox', { name: 'Course name', exact: true });
   await input.fill('New work');
   await input.press('Tab');

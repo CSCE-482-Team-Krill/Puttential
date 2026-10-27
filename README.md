@@ -28,16 +28,11 @@ Use **Node 22.12+** and **PostgreSQL 17** (or Docker Desktop). Run commands from
    ```sh
    npm run db:generate
    npm run db:migrate
-   npm run db:seed
+   npm run courses:publish -- schedule
+   npm run courses:publish -- check
    ```
 
-   Seeding uses today's **America/Chicago** date and the bundled Bar Around Corner course. It preserves an existing puzzle for that date. To provision an authored course for a specific day:
-
-   ```sh
-   npm run db:seed -- src/game/levels/authored/straight-forward.json 2026-10-15
-   ```
-
-   Provision each date you want to serve; puzzles are not generated automatically at midnight.
+   Publishing provisions today, the following six days, and three historical dates. Each opening course must pass two distinct successful server replays and a full-cap performance check. Existing dates are preserved. You own daily course publishing; run the schedule check before the next Central midnight. See [the publishing guide](docs/iteration-two-release.md) for custom courses, recovery and cancellation.
 
 4. Start the frontend and API together:
 
@@ -45,7 +40,7 @@ Use **Node 22.12+** and **PostgreSQL 17** (or Docker Desktop). Run commands from
    npm run game
    ```
 
-   Open **http://127.0.0.1:3000**. There is no separate backend process: Next.js route handlers call `src/backend` services on the same origin. Check **http://127.0.0.1:3000/api/puzzles/today**; it should return today's date and canonical level configuration. Completed daily runs create attempts; successful runs also save the locked layout as replay commands. The UI reports save success or failure.
+   Open **http://127.0.0.1:3000**. There is no separate backend process: Next.js route handlers call `src/backend` services on the same origin. Check **http://127.0.0.1:3000/api/puzzles/today** for the published dated course and rules. Guest sessions, server-replayed results, progress, archive, leaderboard and sharing use the same-origin API.
 
 5. Optionally start the editor in a second terminal:
 
@@ -53,7 +48,7 @@ Use **Node 22.12+** and **PostgreSQL 17** (or Docker Desktop). Run commands from
    npm run editor
    ```
 
-   Open **http://127.0.0.1:3001**. See [the editor guide](level-editor/README.md). Courses save as canonical JSON with editor sidecars under `src/game/levels/authored/`. Use **Open local course** to playtest saved JSON, or seed that JSON as a daily course. The editor and practice/local-course play do not need a database; practice runs are not submitted.
+   Open **http://127.0.0.1:3001**. See [the editor guide](level-editor/README.md). Courses save as canonical JSON with editor sidecars under `src/game/levels/authored/`. Use **Open local course** to playtest saved JSON, or publish it with two reviewed solutions as a daily course. The editor and practice/local-course play do not need a database; practice runs are not submitted.
 
 For a production build, run `npm run game:build`, then `npm run game:start` with `DATABASE_URL` set. The frontend's `prebuild` step generates Prisma Client, including on clean CI checkouts. Apply `npm run db:migrate` to the deployment database and provision dated courses before serving players. `docker compose stop db` stops the local database and retains its data.
 
@@ -63,15 +58,63 @@ Set the Vercel project's **Root Directory** to `src/frontend`, with **Next.js** 
 
 The checked-in `src/frontend/vercel.json` runs `npm run build`; its `prebuild` generates the ignored Prisma Client before Next.js compiles API routes. Use the root npm workspace lockfile and the default install command. Keep the Output Directory at its Next.js default (`.next`).
 
-Set `DATABASE_URL` in Vercel's Preview and Production environments to the corresponding hosted PostgreSQL database. Builds do not require a live database; the API needs it at runtime. Run migrations and seed dated courses against that database separately, rather than modifying it during preview builds.
+Set `DATABASE_URL` in Vercel's Preview and Production environments to separate hosted PostgreSQL databases. Set `APP_ORIGIN=https://puttential.vercel.app` in Production, and the corresponding exact preview origin in Preview. Builds do not require a live database; the API needs it at runtime. Run migrations and seed dated courses against that database separately, rather than modifying it during preview builds.
+
+## Frontend polish and local design review
+
+The game uses the Little Putting Club paper/turf theme from the v1.2.1 package. One mounted canvas and one set of controls adapt with CSS: desktop keeps the course and scorecard left of the toolkit; mobile puts the title before the course, then Play, toolkit and secondary actions. The editor retains its existing styles and engine.
+
+For frontend-only review (no database required), run from the repository root in Windows PowerShell:
+
+```powershell
+node --version # 22.12 or newer
+npm.cmd install
+npm.cmd run db:generate
+npm.cmd run game
+```
+
+Open **http://127.0.0.1:3000**. Without PostgreSQL the game shows an unavailable-daily notice and offers the bundled practice courses. Use **Open local course** below the game controls for editor JSON. Practice/local runs are not saved. To serve and save today's actual daily course, follow the full-stack setup above; preserve your existing `.env` rather than overwriting it. If creating it for the first time:
+
+```powershell
+if (!(Test-Path .env)) { Copy-Item .env.example .env }
+docker compose up -d --wait db
+npm.cmd run db:migrate
+npm.cmd run courses:publish -- schedule
+npm.cmd run game
+```
+
+**http://127.0.0.1:3000/modal-preview** is a development-only review page, with clearly labeled example courses and six example leaderboard rows. It returns **404 in production**. The real Profile and Leaderboard use persisted guest progress and verified results. Settings persist on this device; audio preferences are not connected to playback.
+
+For a production preview, stop the development server with Ctrl+C, then:
+
+```powershell
+npm.cmd run game:build
+npm.cmd run game:start
+```
+
+UI regression and production route checks:
+
+```powershell
+npx.cmd playwright install chromium
+npm.cmd run test:e2e
+# Stop next dev before building/starting against the same workspace.
+npm.cmd run game:build
+npm.cmd run test:ui:production
+```
+
+The production smoke script temporarily serves the built app on **127.0.0.1:3002**, checks `/` is 200 and `/modal-preview` is 404, then stops its server. Previous visual evidence is in [artifacts/ui-polish](artifacts/ui-polish/implementation-notes.md); revision 3.1 evidence is in [artifacts/iteration-two](artifacts/iteration-two/implementation-evidence.md). Browser tests intercept API calls and do not prove database integration. Select a toolkit tile to edit X/Y without a pointer; rotation requires E0.
 
 ## Integration status
 
-The Figma frontend, all six modal layouts, responsive styles, preferences and isolated `/modal-preview` route live in `src/frontend`. The game and editor share canvas drawing, controls and simulation hooks without duplicating physics.
+The browser, editor and server use one Rapier engine. The daily API persists opaque cookie-authenticated guests, accepted starts and immutable completion receipts. Server replay computes the outcome and score; client-reported success and metrics cannot enter competitive standings. Daily eligibility requires both start and receipt within the original Central date. Archive solves remain available after daily closure.
 
-The connected prototype exposes `GET /api/puzzles/today`, `POST /api/attempts` and `POST /api/solutions`. HTTP submissions support anonymous play only. Daily configuration is validated by the engine codec. Completed runs are saved once per visit; interrupted runs and unsent runs are not persisted or retried after a connection failure.
+The shared engine supports absolute tile rotation at 0.1-degree increments, complete canonical setup at tick zero, finite runs, shared goal/failure evaluation and path length excluding teleport jumps. The frontend retains drafts and pending submissions, retries the same request IDs, and keeps practice unranked.
 
-Profile, streak and leaderboard panels still display clearly labeled sample data. Calendar lists the daily course and bundled practice courses; historical database browsing and accounts are not implemented. The backend validates request structure and attempt/solution relationships but **still trusts client-reported success and scoring**; server-side replay verification and ranking remain future work.
+Daily/archive standings use competition ties, strictly-worse percentiles, Top and Around me, and signed viewer-bound pagination. A committed eligible receipt keeps a closed daily board provisional until verification finishes. Expiring worker leases and the publisher recovery command handle interrupted verification.
+
+The older attempt/solution prototype endpoints remain unranked and isolated from competitive tables. The development modal preview still uses labeled examples and returns 404 in production.
+
+[Release instructions and remaining production acceptance](docs/iteration-two-release.md) distinguish local integrated evidence from live deployment and human playtesting.
 
 ## Source layout
 
@@ -82,7 +125,7 @@ Profile, streak and leaderboard panels still display clearly labeled sample data
 - `level-editor/`: desktop authoring UI, history and local save API.
 - `ui_ux_research/`: research and independent A/B prototypes. Design C moved to `src/frontend`.
 
-Run workspace commands from the repository root. The `db:*` scripts explicitly use `prisma7.config.ts`.
+Run workspace commands from the repository root. `db:generate` and `db:migrate` use `prisma7.config.ts`; `db:seed` publishes the reviewed opening schedule.
 
 ## Verification
 
@@ -96,4 +139,4 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Browser tests start/reuse both apps. Frontend API tests mock HTTP responses so the suite can run without PostgreSQL. `npm run format` uses the repository Prettier configuration.
+Browser tests start/reuse both apps. Most UI regressions intercept HTTP; the unmocked daily browser test requires `TEST_DATABASE_URL` and servers using the matching `DATABASE_URL`. Run `npm run test:integration` against a disposable migrated and provisioned PostgreSQL database; CI provides one. `npm run format` uses the repository Prettier configuration.

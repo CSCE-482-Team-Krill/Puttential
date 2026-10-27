@@ -1,0 +1,47 @@
+name: Frontend and shared regressions
+on: [push, pull_request]
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: puttential
+          POSTGRES_PASSWORD: puttential
+          POSTGRES_DB: puttential_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U puttential -d puttential_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://puttential:puttential@127.0.0.1:5432/puttential_test
+      TEST_DATABASE_URL: postgresql://puttential:puttential@127.0.0.1:5432/puttential_test
+      APP_ORIGIN: http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run db:generate
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run db:migrate
+      - run: npm run courses:publish -- schedule
+      - run: npm run courses:publish -- check
+      - run: npm run test:integration
+      - run: npm run editor:build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - run: npm run game:build
+      - run: npm run test:ui:production
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-browser-evidence
+          path: |
+            test-results/
+            artifacts/iteration-two/
+            artifacts/iteration-two-completion/
