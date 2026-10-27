@@ -263,51 +263,7 @@ export function Modal({
                 {courseImport}
               </section>
             )}
-            <p className="modal-footnote">
-              Preferences are saved on this device. Audio playback is not available yet.
-            </p>
-          </div>
-        )}
-
-        {!body && panel === 'result' && result && (
-          <div className="modal-body result-body">
-            <div className="result-mark brand-mark" aria-hidden="true">
-              <span className="brand-ball" />
-              <span className="brand-flag" />
-            </div>
-            <p>
-              {result.solved
-                ? 'The ball held in the goal.'
-                : result.failure === 'water'
-                  ? 'The ball sank in water. Keep it moving or find a route around.'
-                  : result.failure === 'lava'
-                    ? 'The ball burnt in lava. Find a route around it.'
-                    : result.failure === 'out-of-bounds'
-                      ? 'An object left the course. Keep at least part of every object inside the board.'
-                      : 'The ball stopped short of the goal. Adjust your fields and try again.'}
-            </p>
-            {!result.solved && (
-              <p className="result-helper">
-                Close this panel, then choose Try again to adjust your fields.
-              </p>
-            )}
-            <div className="result-grid">
-              <div>
-                <strong>{result.forceCost ?? result.tiles * tileCost}</strong>
-                <span>Force cost</span>
-              </div>
-              <div>
-                <strong>{result.tiles}</strong>
-                <span>Tiles</span>
-              </div>
-              <div>
-                <strong>{result.seconds.toFixed(2)}s</strong>
-                <span>{result.solved ? 'Ball time' : 'Run time'}</span>
-              </div>
-            </div>
-            <button className="primary-button" onClick={close}>
-              Back to course <Icon name="arrow" size={18} />
-            </button>
+            <p className="modal-footnote">Preferences are saved on this device.</p>
           </div>
         )}
       </section>
