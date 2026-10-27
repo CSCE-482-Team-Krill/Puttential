@@ -7,7 +7,10 @@ import { usePuzzle } from '../../src/frontend/puzzle';
 import { ForceToolkit, PlayButton } from '../../src/frontend/player-controls';
 
 export function Playtest({ document, onClose }: { document: LevelDocument; onClose: () => void }) {
-  const level = useMemo(() => decodeLevel(document.level), [document]);
+  const level = useMemo(
+    () => decodeLevel({ ...document.level, bounds: document.editor.arena.bounds }),
+    [document],
+  );
   const puzzle = usePuzzle(level);
   const bounds = document.editor.arena.bounds;
   return (
@@ -57,7 +60,9 @@ export function Playtest({ document, onClose }: { document: LevelDocument; onClo
                 ? 'Ball sank in water'
                 : puzzle.result.failure === 'lava'
                   ? 'Ball burnt by lava'
-                  : 'Run finished'}{' '}
+                  : puzzle.result.failure === 'out-of-bounds'
+                    ? 'An object left the course'
+                    : 'Run finished'}{' '}
             · {puzzle.result.seconds.toFixed(2)} seconds · {puzzle.result.tiles} tiles
           </p>
         )}

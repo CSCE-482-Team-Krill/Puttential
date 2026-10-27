@@ -407,7 +407,9 @@ export function Modal({
                   ? 'The ball sank in water. Keep it moving or find a route around.'
                   : result.failure === 'lava'
                     ? 'The ball burnt in lava. Find a route around it.'
-                    : 'The ball stopped short of the goal. Adjust your fields and try again.'}
+                    : result.failure === 'out-of-bounds'
+                      ? 'An object left the course. Keep at least part of every object inside the board.'
+                      : 'The ball stopped short of the goal. Adjust your fields and try again.'}
             </p>
             <div className="result-grid">
               <div>

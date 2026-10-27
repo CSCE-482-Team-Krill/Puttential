@@ -24,6 +24,7 @@ export function advanceGoal(previous: GoalProgress, state: RenderState): GoalPro
   const body = state.bodies.find((b) => b.id === previous.area.bodyId),
     b = previous.area;
   const inside =
+    !state.failure &&
     !!body &&
     !body.destroyed &&
     !body.burnt &&
@@ -38,6 +39,8 @@ export function advanceGoal(previous: GoalProgress, state: RenderState): GoalPro
     inside,
     heldTicks,
     tick: state.tick,
-    completedTick: previous.completedTick ?? (heldTicks >= previous.holdTicks ? state.tick : null),
+    completedTick: state.failure
+      ? null
+      : (previous.completedTick ?? (heldTicks >= previous.holdTicks ? state.tick : null)),
   };
 }

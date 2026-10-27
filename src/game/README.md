@@ -28,7 +28,7 @@ const frame = game.getRenderState();
 game.destroy();
 ```
 
-`step()` advances exactly `1 / 120` second. Commands queued between steps are applied at the next tick in ascending `sequence` order. Position values use a `1 / 1024` world-unit grid; use `quantizePosition` at the input boundary. A field's shape, angle, and force come from the level and cannot be changed by player commands.
+`step()` advances exactly `1 / 120` second, then freezes after an out-of-bounds failure. Commands queued between steps are applied at the next tick in ascending `sequence` order. Position values use a `1 / 1024` world-unit grid; use `quantizePosition` at the input boundary. A field's shape, angle, and force come from the level and cannot be changed by player commands.
 
 ## Levels
 
@@ -41,6 +41,7 @@ A level is plain JSON with no code in it, so it can come from a file, the `Puzzl
 | `formatVersion` | Must equal `LEVEL_FORMAT_VERSION` (currently `1`). Raise it only when existing files stop meaning the same thing. |
 | `id`, `version` | Identify the level's content. Snapshots and saved solutions record both; raise `version` whenever a change would alter a replay. |
 | `gravity` | World gravity vector. |
+| `bounds` | Optional playable `{ minX, maxX, minY, maxY }`, independent of physical walls. Older levels infer bounds from their initial geometry. |
 | `dynamicBodies`, `staticBodies` | Bodies made of `pieces`, each with a convex `shape`. `material.restitution` is the bounce, from 0 to 1. |
 | `fields` | Force zones; see below. |
 | `goal` | `{ bodyId, minX, maxX, minY, maxY, holdSeconds }`: solved once the body's position stays inside the bounds for `holdSeconds`. The engine stores the goal but does not evaluate it yet. |
@@ -59,6 +60,14 @@ Every piece and field has a `shape`, in its owner's local frame:
 A circle collides as a true circle and has a disc's mass and moment of inertia, so it spins when something applies a torque and keeps spinning afterwards. Field loads on a circle are integrated over a 32-sided polygon of the same area. To add a shape, add it to `levels/types.ts`, read it in `levels/parse.ts`, and give it an outline in `geometry/shapes.ts` and a collider in `objects/bodies.ts`.
 
 Unknown properties and unknown `kind` values are rejected instead of ignored, so an engine that does not know a mechanic refuses the level instead of simulating a different puzzle. To add a mechanic, add its data to `levels/types.ts` and `levels/parse.ts` and its behavior to the engine: a new force is another `kind` in `FieldForceDefinition`, and area mechanics can reuse the field shape and catalog; unrelated objects such as joints can use a new optional top-level array. Existing level files stay valid, and `formatVersion` does not change.
+
+## Playable bounds and optional walls
+
+A board does not require an outer box. Physical borders are ordinary static bodies; the editor’s **Level borders** toggle adds/removes only its managed wall IDs. `bounds` preserves the playable area when walls are removed, resized, saved or imported. Initial editor geometry still needs to fit inside the board.
+
+At runtime, partial overhang is valid. The level fails when any non-sunk, non-transiting dynamic body has no piece touching the playable rectangle. Circles use their true radius; convex polygons use separating-axis tests, and compound bodies remain valid while any piece overlaps. Edge tangency counts as contact, with a small float32 tolerance. This avoids false results from centers or axis-aligned bounding boxes at corners.
+
+The engine exposes `RenderState.failure = { reason: 'out-of-bounds', bodyId }`, freezes at that terminal tick, and preserves the failure in snapshots. Prediction terminates on failure too. The shared frontend rejects goal completion on that tick, reports the failure in editor playtest and the daily game, and records an unsuccessful run. Restoring the setup snapshot clears the failure.
 
 ## Fields
 

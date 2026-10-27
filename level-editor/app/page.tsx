@@ -5,6 +5,7 @@ import {
   starterLevels,
   levelName,
   resizeArena,
+  setLevelBorders,
   validateDocument,
 } from '../../src/game';
 import type { LevelDocument } from '../../src/game';
@@ -448,6 +449,21 @@ export default function Editor() {
               ))}
               <section>
                 <h3>Board</h3>
+                <label className="check">
+                  <input
+                    type="checkbox"
+                    checked={doc.editor.arena.walls.length === 4}
+                    onChange={(e) => {
+                      apply((d) => setLevelBorders(d, e.target.checked));
+                      select(null);
+                    }}
+                  />
+                  Level borders
+                </label>
+                <p className="muted">
+                  Borders are optional. Partial overhang is allowed during play; leaving completely
+                  fails the run.
+                </p>
                 <NumberInput
                   label="Board width"
                   value={b.maxX - b.minX}
@@ -471,8 +487,8 @@ export default function Editor() {
                   }
                 />
                 <p className="muted">
-                  Dimensions include boundary walls. Resize preserves object sizes and positions.
-                  Anything outside the bounds blocks the change.
+                  Resize preserves object sizes and positions. Anything outside the bounds blocks
+                  the change.
                 </p>
               </section>
               <section>

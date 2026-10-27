@@ -1,6 +1,8 @@
 import RAPIER from '@dimforge/rapier2d-compat';
 import { compareCommands, dequantizePosition, validateCommand } from './commands';
 import { PORTAL_DELAY_SECONDS, PORTAL_COOLDOWN_SECONDS, isCourseObject } from './objects/catalog';
+import { bodyTouchesBounds } from './objects/bounds';
+import { levelBounds } from './levels/codec';
 import { centerZoneEntry, zoneContact } from './objects/zones';
 import { boundsOverlap, pointInPolygon, polygonBounds, transformPolygon } from './geometry/polygon';
 import { triangulateSimplePolygon } from './geometry/polygon';
@@ -25,6 +27,7 @@ import type {
   Game,
   GameCommand,
   GameSnapshot,
+  GameFailure,
   Prediction,
   PredictionOptions,
   PredictionSample,
@@ -78,6 +81,8 @@ function sample(state: RenderState): PredictionSample {
 
 class Simulation implements Game {
   private readonly level: Level;
+  private readonly bounds: ReturnType<typeof levelBounds>;
+  private failure: GameFailure | undefined;
   // Level data, sorted by ID once so every tick iterates in the same order.
   private readonly dynamicBodies: readonly DynamicBody[];
   private readonly staticBodies: readonly RenderStaticBody[];
@@ -105,6 +110,7 @@ class Simulation implements Game {
   constructor(data: Level, snapshot?: GameSnapshot) {
     const level = parseLevel(data);
     this.level = level;
+    this.bounds = levelBounds(level);
     this.dynamicBodies = sortById(level.dynamicBodies).map((body) => {
       const pieces = resolveBodyPieces(body);
       const radius = Math.max(
@@ -154,7 +160,13 @@ class Simulation implements Game {
   }
 
   step(): void {
+    if (this.failure) return;
     this.applyQueuedCommands();
+    this.checkBounds();
+    if (this.failure) {
+      this.renderState = this.buildRenderState();
+      return;
+    }
     this.applyZones();
     this.applyFieldLoads();
     const before = this.zoneGeometry().length
@@ -179,6 +191,7 @@ class Simulation implements Game {
     if (before) this.applyZones(before);
     this.tick += 1;
     if (this.releasePortals()) this.applyZones();
+    this.checkBounds();
     this.renderState = this.buildRenderState();
   }
 
@@ -192,6 +205,7 @@ class Simulation implements Game {
       levelVersion: this.level.version,
       tick: this.tick,
       physics: this.world.takeSnapshot(),
+      ...(this.failure ? { failure: { ...this.failure } } : {}),
       destroyedBodies: { ...this.destroyedBodies },
       portalLocks: { ...this.portalLocks },
       pendingTeleports: structuredClone(this.pendingTeleports),
@@ -217,6 +231,7 @@ class Simulation implements Game {
     this.fieldStates = new Map(snapshot.fields.map((field) => [field.id, copyFieldState(field)]));
     this.queuedCommands = snapshot.queuedCommands.map((command) => ({ ...command }));
     this.tick = snapshot.tick;
+    this.failure = snapshot.failure ? { ...snapshot.failure } : undefined;
     this.destroyedBodies = { ...snapshot.destroyedBodies };
     this.portalLocks = { ...snapshot.portalLocks };
     this.pendingTeleports = structuredClone(snapshot.pendingTeleports ?? {});
@@ -232,7 +247,7 @@ class Simulation implements Game {
     this.renderState = this.buildRenderState();
   }
 
-  /** Runs the commands on a copy of this game until every body sleeps or the tick limit. */
+  /** Runs commands on a copy until settlement, failure or the tick limit. */
   predict(commands: GameCommand | readonly GameCommand[], options?: PredictionOptions): Prediction {
     const maxTicks = options?.maxTicks ?? this.level.prediction?.maxTicks ?? 1200;
     const sampleEveryTicks =
@@ -246,10 +261,11 @@ class Simulation implements Game {
         copy.queueCommand(command);
       }
       const samples = [sample(copy.renderState)];
-      let settled = false;
+      let settled = !!copy.failure;
       while (!settled && copy.tick - this.tick < maxTicks) {
         copy.step();
         settled =
+          !!copy.failure ||
           !!copy.destroyedBodies[this.level.goal.bodyId] ||
           copy.burntBodies.has(this.level.goal.bodyId) ||
           copy.renderState.bodies.every((body) => body.sleeping);
@@ -590,6 +606,17 @@ class Simulation implements Game {
     return released;
   }
 
+  private checkBounds(): void {
+    for (const body of this.dynamicBodies) {
+      if (this.destroyedBodies[body.id] || this.pendingTeleports[body.id]) continue;
+      const rigid = this.rigidBody(body.id);
+      if (!bodyTouchesBounds(body.pieces, rigid.translation(), rigid.rotation(), this.bounds)) {
+        this.failure = { reason: 'out-of-bounds', bodyId: body.id };
+        return;
+      }
+    }
+  }
+
   private burnBody(id: string): void {
     const rigid = this.rigidBody(id);
     rigid.setEnabled(true);
@@ -646,7 +673,13 @@ class Simulation implements Game {
       };
     }));
 
-    return { tick: this.tick, bodies, staticBodies: this.staticBodies, fields };
+    return {
+      tick: this.tick,
+      ...(this.failure ? { failure: { ...this.failure } } : {}),
+      bodies,
+      staticBodies: this.staticBodies,
+      fields,
+    };
   }
 
   private invalidateFields(): void {

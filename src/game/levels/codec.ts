@@ -1,6 +1,6 @@
 import type { Bounds } from '../geometry/polygon';
 import type { Level } from './types';
-import { parseLevel } from './parse';
+import { parseLevel, parseLevelBounds } from './parse';
 import { shapeBounds, unionBounds } from '../geometry/authoring';
 
 export type LevelData = { -readonly [K in keyof Level]: Level[K] };
@@ -29,21 +29,11 @@ function keys(value: Record<string, unknown>, allowed: string[], label: string) 
     if (!allowed.includes(key)) throw new Error(`${label}.${key} is unsupported`);
 }
 export function parseBounds(value: unknown): Bounds {
-  const b = object(value, 'bounds');
-  keys(b, ['minX', 'maxX', 'minY', 'maxY'], 'bounds');
-  for (const key of ['minX', 'maxX', 'minY', 'maxY'])
-    if (typeof b[key] !== 'number' || !Number.isFinite(b[key]))
-      throw new Error(`bounds.${key} must be finite`);
-  const bounds = b as Bounds;
-  if (
-    !(bounds.maxX > bounds.minX && bounds.maxY > bounds.minY) ||
-    !Number.isFinite(bounds.maxX - bounds.minX) ||
-    !Number.isFinite(bounds.maxY - bounds.minY)
-  )
-    throw new Error('Bounds must have positive finite dimensions');
-  return bounds;
+  return parseLevelBounds(value, 'bounds');
 }
+
 export function levelBounds(level: Level): Bounds {
+  if (level.bounds) return { ...level.bounds };
   return unionBounds([
     ...[...level.dynamicBodies, ...level.staticBodies].flatMap((body) =>
       body.pieces.map((piece) => shapeBounds(piece.shape, body.position, body.angle)),
@@ -123,8 +113,8 @@ export function parseDocument(value: unknown): LevelDocument {
   if (raw.version === 1) raw = object(migrateLegacy(raw), 'migrated document');
   keys(raw, ['version', 'level', 'editor'], 'document');
   if (raw.version !== 2) throw new Error(`Unsupported document version: ${String(raw.version)}`);
-  const level = parseLevel(raw.level),
-    editor = object(raw.editor, 'editor');
+  let level = parseLevel(raw.level);
+  const editor = object(raw.editor, 'editor');
   keys(editor, ['name', 'arena'], 'editor');
   if (typeof editor.name !== 'string' || !editor.name.trim())
     throw new Error('Editor name must be nonempty');
@@ -144,6 +134,13 @@ export function parseDocument(value: unknown): LevelDocument {
     throw new Error('Arena needs zero or four distinct wall IDs');
   if (walls.some((id) => !level.staticBodies.some((body) => body.id === id)))
     throw new Error('Arena references a missing wall');
+  const matchesBounds = (a: Bounds, b: Bounds) =>
+    (['minX', 'maxX', 'minY', 'maxY'] as const).every((k) => Math.abs(a[k] - b[k]) <= 1e-8);
+  if (level.bounds && !matchesBounds(level.bounds, bounds))
+    throw new Error('Editor board bounds must match level bounds');
+  // Preserve older sidecar-only board sizes when the file is next saved or playtested.
+  if (!level.bounds && !matchesBounds(levelBounds(level), bounds))
+    level = { ...level, bounds: { ...bounds } };
   return {
     version: 2,
     level,

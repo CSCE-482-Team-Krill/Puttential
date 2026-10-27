@@ -13,7 +13,7 @@ export type RunResult = Readonly<{
   solved: boolean;
   tiles: number;
   seconds: number;
-  failure?: 'water' | 'lava';
+  failure?: 'water' | 'lava' | 'out-of-bounds';
 }>;
 export type CompletedRun = Readonly<{
   level: Level;
@@ -134,7 +134,8 @@ export function usePuzzle(level: Level) {
         // Stop on the first terminal tick, before another catch-up step can change the result.
         const goal = goalRef.current;
         const targetBody = state.bodies.find((body) => body.id === level.goal.bodyId);
-        const failure = targetBody?.burnt ? 'lava' : targetBody?.destroyed;
+        const failure =
+          state.failure?.reason ?? (targetBody?.burnt ? 'lava' : targetBody?.destroyed);
         const failed = !!failure;
         const solved = !failed && goal.completedTick !== null;
         // A body resting inside the goal still has to finish its hold.
