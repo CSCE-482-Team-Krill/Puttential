@@ -71,7 +71,7 @@ export default function Home() {
   const level = context?.level ?? starterLevels[0]!;
   const p = context?.puzzle;
   const puzzle = usePuzzle(level, {
-    ...(deliveredEngine ? { adapter: deliveredEngine } : {}),
+    ...(!p || deliveredEngine.supports(p.rules) ? { adapter: deliveredEngine } : {}),
     ...(p ? { rules: p.rules } : {}),
     ...(context
       ? {
@@ -647,7 +647,7 @@ export default function Home() {
                   <PlayButton
                     puzzle={puzzle}
                     pending={locked && puzzle.mode !== 'running'}
-                    disabled={!!p && !canRank}
+                    disabled={puzzle.mode === 'setup' && !!p && !canRank}
                     onPlay={() => void play()}
                     onStop={() => void stop()}
                   />
@@ -754,7 +754,7 @@ export default function Home() {
                     <h3>Practice — unranked</h3>
                     {PRACTICE_LEVELS.map((entry) => (
                       <button
-                        className="modal-row archive-row"
+                        className="modal-row practice-course"
                         key={entry.level.id}
                         onClick={() => void chooseLocal(entry.level)}
                       >

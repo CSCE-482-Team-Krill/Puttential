@@ -1200,6 +1200,33 @@ button:disabled {
   }
 }
 /* Iteration two panels use the existing paper/turf palette and modal shell. */
+.published-archive .archive-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.api-notice:empty {
+  display: none;
+}
+.practice-course {
+  width: 100%;
+  text-align: left;
+}
+.copy-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.copy-fallback textarea {
+  width: 100%;
+  min-height: 140px;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid var(--ui-line);
+  border-radius: 6px;
+  background: var(--ui-paper);
+  color: var(--ui-ink);
+  font: inherit;
+  resize: vertical;
+}
 .panel-actions {
   display: flex;
   flex-wrap: wrap;

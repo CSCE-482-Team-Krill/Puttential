@@ -84,7 +84,7 @@ export function ArchivePanel({
     };
   }, [player?.id, month]);
   return (
-    <section className="modal-stack" aria-label="Daily archive">
+    <section className="modal-stack published-archive" aria-label="Daily archive">
       <h3>Daily archive</h3>
       <label>
         Month
