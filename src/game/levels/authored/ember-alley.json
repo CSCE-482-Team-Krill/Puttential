@@ -1,0 +1,313 @@
+{
+  "formatVersion": 1,
+  "id": "ember-alley",
+  "version": 2,
+  "gravity": {
+    "x": 0,
+    "y": 0
+  },
+  "bounds": {
+    "minX": -8,
+    "maxX": 8,
+    "minY": -5,
+    "maxY": 5
+  },
+  "dynamicBodies": [
+    {
+      "id": "ball",
+      "position": {
+        "x": -6,
+        "y": 0
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "ball-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 3
+          }
+        }
+      ]
+    }
+  ],
+  "staticBodies": [
+    {
+      "id": "left-rail",
+      "position": {
+        "x": -7.75,
+        "y": 0
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "left-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "right-rail",
+      "position": {
+        "x": 7.75,
+        "y": 0
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "right-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "bottom-rail",
+      "position": {
+        "x": 0,
+        "y": -4.75
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "bottom-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 16,
+            "height": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "top-rail",
+      "position": {
+        "x": 0,
+        "y": 4.75
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "top-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 16,
+            "height": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1",
+      "position": {
+        "x": 4,
+        "y": 2
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "square-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 1
+          }
+        }
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "id": "launch",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2.8,
+        "height": 1.2
+      },
+      "position": {
+        "x": -4.3,
+        "y": -2.75
+      },
+      "angle": 1.5707963267948966,
+      "enabled": true,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 5,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "north-lava",
+      "shape": {
+        "kind": "rectangle",
+        "width": 5,
+        "height": 2.4
+      },
+      "position": {
+        "x": -3,
+        "y": 3.3
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "lava"
+      }
+    },
+    {
+      "id": "south-lava",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2.5,
+        "height": 3.9000000000000004
+      },
+      "position": {
+        "x": 5.75,
+        "y": 2.2
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "lava"
+      }
+    },
+    {
+      "id": "launch-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2.8,
+        "height": 1.2
+      },
+      "position": {
+        "x": -4.55,
+        "y": -0.25
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 5,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "launch-2",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2.8,
+        "height": 1.2
+      },
+      "position": {
+        "x": -2.05,
+        "y": -0.75
+      },
+      "angle": 0.7853981633974483,
+      "enabled": true,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 5,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "launch-3",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2.8,
+        "height": 1.2
+      },
+      "position": {
+        "x": -0.7999999999999998,
+        "y": -2.75
+      },
+      "angle": -3.141592653589793,
+      "enabled": true,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 5,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "south-lava-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 3.5,
+        "height": 4.9
+      },
+      "position": {
+        "x": 1.75,
+        "y": -1.5499999999999998
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "lava"
+      }
+    },
+    {
+      "id": "south-lava-2",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2.5,
+        "height": 3.9000000000000004
+      },
+      "position": {
+        "x": 5.75,
+        "y": -2.05
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "lava"
+      }
+    }
+  ],
+  "goal": {
+    "bodyId": "ball",
+    "minX": -0.25,
+    "maxX": 2.55,
+    "minY": 2.35,
+    "maxY": 4.15,
+    "holdSeconds": 0.25
+  },
+  "prediction": {
+    "maxTicks": 2400,
+    "sampleEveryTicks": 12
+  }
+}

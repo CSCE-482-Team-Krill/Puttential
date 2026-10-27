@@ -64,8 +64,11 @@ export type RenderField = Readonly<{
   force: FieldForceDefinition;
 }>;
 
+export type GameFailure = Readonly<{ reason: 'out-of-bounds'; bodyId: string }>;
+
 export type RenderState = Readonly<{
   tick: number;
+  failure?: GameFailure;
   bodies: readonly RenderBody[];
   staticBodies: readonly RenderStaticBody[];
   fields: readonly RenderField[];
@@ -88,6 +91,7 @@ export type GameSnapshot = Readonly<{
   levelVersion: number;
   tick: number;
   physics: Uint8Array;
+  failure?: GameFailure;
   bodyHandles: Readonly<Record<string, number>>;
   fields: readonly FieldState[];
   queuedCommands: readonly GameCommand[];

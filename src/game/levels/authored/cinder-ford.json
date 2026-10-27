@@ -1,0 +1,355 @@
+{
+  "formatVersion": 1,
+  "id": "cinder-ford",
+  "version": 2,
+  "gravity": {
+    "x": 0,
+    "y": 0
+  },
+  "bounds": {
+    "minX": -8,
+    "maxX": 8,
+    "minY": -5,
+    "maxY": 5
+  },
+  "dynamicBodies": [
+    {
+      "id": "ball",
+      "position": {
+        "x": -6,
+        "y": 0
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "ball-piece",
+          "shape": {
+            "kind": "circle",
+            "radius": 0.35
+          }
+        }
+      ]
+    }
+  ],
+  "staticBodies": [
+    {
+      "id": "left-rail",
+      "position": {
+        "x": -7.75,
+        "y": 0
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "left-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "right-rail",
+      "position": {
+        "x": 7.75,
+        "y": 0
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "right-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 10
+          }
+        }
+      ]
+    },
+    {
+      "id": "bottom-rail",
+      "position": {
+        "x": 0,
+        "y": -4.75
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "bottom-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 16,
+            "height": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "top-rail",
+      "position": {
+        "x": 0,
+        "y": 4.75
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "top-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 16,
+            "height": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-2",
+      "position": {
+        "x": 7,
+        "y": -1.5
+      },
+      "angle": -0.7853981633974483,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "triangle-2-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.6,
+                "y": 0
+              },
+              {
+                "x": -0.2999999999999999,
+                "y": 0.5196152422706632
+              },
+              {
+                "x": -0.30000000000000027,
+                "y": -0.519615242270663
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-2-1",
+      "position": {
+        "x": 6.75,
+        "y": 1.75
+      },
+      "angle": -5.235987755982989,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "triangle-2-1-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.6,
+                "y": 0
+              },
+              {
+                "x": -0.2999999999999999,
+                "y": 0.5196152422706632
+              },
+              {
+                "x": -0.30000000000000027,
+                "y": -0.519615242270663
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-2-2",
+      "position": {
+        "x": 2.25,
+        "y": 0.25
+      },
+      "angle": -0.7853981633974483,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "triangle-2-2-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.6,
+                "y": 0
+              },
+              {
+                "x": -0.2999999999999999,
+                "y": 0.5196152422706632
+              },
+              {
+                "x": -0.30000000000000027,
+                "y": -0.519615242270663
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "id": "launch",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2.8,
+        "height": 1.2
+      },
+      "position": {
+        "x": 6.45,
+        "y": -3
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 8,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "cooling-ford",
+      "shape": {
+        "kind": "rectangle",
+        "width": 1.4,
+        "height": 2.2
+      },
+      "position": {
+        "x": -1.2,
+        "y": 0
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "water",
+        "drag": 1.2,
+        "sinkSpeed": 0.06
+      }
+    },
+    {
+      "id": "north-lava",
+      "shape": {
+        "kind": "rectangle",
+        "width": 5,
+        "height": 2
+      },
+      "position": {
+        "x": 0.5,
+        "y": 2.4
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "lava"
+      }
+    },
+    {
+      "id": "south-lava",
+      "shape": {
+        "kind": "rectangle",
+        "width": 5,
+        "height": 2
+      },
+      "position": {
+        "x": 0.5,
+        "y": -2.4
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "lava"
+      }
+    },
+    {
+      "id": "uniform-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 3.5,
+        "height": 1
+      },
+      "position": {
+        "x": -3.75,
+        "y": -2.5
+      },
+      "angle": 1.5707963267948966,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "attractor-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2,
+        "height": 2
+      },
+      "position": {
+        "x": -3.5,
+        "y": 2.75
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "attractor",
+        "source": {
+          "x": 0,
+          "y": 0
+        },
+        "strength": 4
+      }
+    }
+  ],
+  "goal": {
+    "bodyId": "ball",
+    "minX": 4,
+    "maxX": 6.8,
+    "minY": -0.9,
+    "maxY": 0.9,
+    "holdSeconds": 0.25
+  },
+  "prediction": {
+    "maxTicks": 2400,
+    "sampleEveryTicks": 12
+  }
+}

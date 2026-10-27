@@ -1,4 +1,5 @@
 import { assertValidConvexPolygon, assertValidSimplePolygon } from '../geometry/polygon';
+import type { Bounds } from '../geometry/polygon';
 import { shapePolygon } from '../geometry/shapes';
 import { forceValidationError } from '../objects/forces';
 import type { Vec2 } from '../types';
@@ -48,6 +49,23 @@ function readNumber(value: unknown, path: string): number {
     throw new Error(`${path} must be a finite number`);
   }
   return value;
+}
+
+export function parseLevelBounds(value: unknown, path = 'level.bounds'): Bounds {
+  const object = readObject(value, path, ['minX', 'maxX', 'minY', 'maxY']);
+  const bounds = {
+    minX: readNumber(object.minX, `${path}.minX`),
+    maxX: readNumber(object.maxX, `${path}.maxX`),
+    minY: readNumber(object.minY, `${path}.minY`),
+    maxY: readNumber(object.maxY, `${path}.maxY`),
+  };
+  if (
+    !(bounds.maxX > bounds.minX && bounds.maxY > bounds.minY) ||
+    !Number.isFinite(bounds.maxX - bounds.minX) ||
+    !Number.isFinite(bounds.maxY - bounds.minY)
+  )
+    throw new Error(`${path} must have positive finite dimensions`);
+  return bounds;
 }
 
 function readPositive(value: unknown, path: string): number {
@@ -297,6 +315,7 @@ function readPrediction(value: unknown, path: string): NonNullable<Level['predic
 export function parseLevel(data: unknown): Level {
   const object = readObject(data, 'level', [
     'formatVersion',
+    'bounds',
     'id',
     'version',
     'gravity',
@@ -330,6 +349,7 @@ export function parseLevel(data: unknown): Level {
     id: readId(object.id, 'level.id'),
     version: readPositiveInteger(object.version, 'level.version'),
     gravity: readVec2(object.gravity, 'level.gravity'),
+    ...(object.bounds !== undefined && { bounds: parseLevelBounds(object.bounds) }),
     dynamicBodies,
     staticBodies,
     fields,

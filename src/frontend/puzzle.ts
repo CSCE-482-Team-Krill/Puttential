@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { advanceGoal, initialGoal } from './goal-progress';
@@ -32,7 +32,7 @@ export type RunResult = Readonly<{
   solved: boolean;
   tiles: number;
   seconds: number;
-  failure?: 'water' | 'lava';
+  failure?: 'water' | 'lava' | 'out-of-bounds';
   forceCost?: number;
   tick?: number;
   outcome?: SavedResult['outcome'];
@@ -319,7 +319,7 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
         const authoritative = optionsRef.current.adapter?.step(game, state);
         const goal = goalRef.current,
           target = state.bodies.find((b) => b.id === level.goal.bodyId);
-        const failure = target?.burnt ? 'lava' : target?.destroyed;
+        const failure = state.failure?.reason ?? (target?.burnt ? 'lava' : target?.destroyed);
         const solved = !failure && goal.completedTick !== null;
         const sleeping = state.bodies.every((b) => b.sleeping || b.destroyed);
         const stopped =
@@ -334,7 +334,9 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
         if (outcome) {
           const finished: RunResult = {
             solved: outcome === 'success',
-            ...(outcome === 'water' || outcome === 'lava' ? { failure: outcome } : {}),
+            ...(outcome === 'water' || outcome === 'lava' || outcome === 'out-of-bounds'
+              ? { failure: outcome }
+              : {}),
             outcome,
             tiles:
               authoritative?.metrics.tileCount ??

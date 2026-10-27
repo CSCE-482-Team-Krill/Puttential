@@ -22,6 +22,7 @@ export type {
   Game,
   GameCommand,
   GameSnapshot,
+  GameFailure,
   PendingTeleport,
   Prediction,
   PredictionOptions,
@@ -39,6 +40,7 @@ export {
   validateDocument,
   documentFromLevel,
   resizeArena,
+  setLevelBorders,
   containsBounds,
 } from './levels/document';
 export { starterLevels, starterDocument, tutorialLevel } from './levels/starters';
