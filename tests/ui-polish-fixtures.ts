@@ -1,5 +1,6 @@
 import type { Level } from '../src/game';
 import { starterLevels } from '../src/game/levels/starters';
+import { levelBounds, isCourseObject } from '../src/game';
 
 // Data-only fixtures. They go through the same HTTP decoder as a real daily course.
 export function inventoryLevel(
@@ -42,5 +43,29 @@ export function dailyFixture(configuration: Level) {
     seed: 'ui-polish-fixed',
     difficulty: 1,
     configuration,
+    title: configuration.id
+      .split('-')
+      .map((w) => w[0]!.toUpperCase() + w.slice(1))
+      .join(' '),
+    rules: {
+      rulesVersion: 'fixture-rules-3.1',
+      simulationVersion: 'fixture-engine-3.1',
+      maxTicks: 7200,
+      placementBounds: levelBounds(configuration),
+      rotationAllowed: true,
+      tileCosts: Object.fromEntries(
+        configuration.fields.filter((f) => !isCourseObject(f.force)).map((f) => [f.id, 1]),
+      ),
+    },
+    availability: {
+      puzzleId: 'ui-polish-daily',
+      revision: '0',
+      publicationStatus: 'active',
+      canceledAt: null,
+      cancellationMessage: null,
+    },
+    serverNow: '2026-10-15T17:00:00Z',
+    todayDate: '2026-10-15',
+    nextDailyAt: '2026-10-16T05:00:00Z',
   };
 }

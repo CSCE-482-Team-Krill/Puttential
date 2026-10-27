@@ -5,7 +5,14 @@ import type { RefObject } from 'react';
 import { drawZone, drawLiquid } from './zone-drawing';
 import { portalPairColors } from './portal-colors';
 import { directionHint } from './direction-hint';
-import { isCourseObject, polygonBounds, shapePolygon, forceDensity, levelBounds } from '../game';
+import {
+  isCourseObject,
+  polygonBounds,
+  shapePolygon,
+  forceDensity,
+  levelBounds,
+  POSITION_QUANTUM,
+} from '../game';
 import type {
   FieldZoneDefinition,
   Level,
@@ -30,6 +37,10 @@ export type Props = Readonly<{
   onView?: (view: View) => void;
   overlay?: (context: CanvasRenderingContext2D, view: View) => void;
   onMoveField: (id: string, position: Vec2) => void;
+  onSelectField?: (id: string) => void;
+  selectedField?: string | null;
+  placementBounds?: Bounds;
+  editingLocked?: boolean;
 }>;
 
 export type View = Readonly<{ scale: number; originX: number; originY: number; bounds: Bounds }>;
@@ -108,13 +119,19 @@ function displayedField(field: RenderField, draft: Draft, mode: Mode): RenderFie
   if (isCourseObject(field.force)) return field;
   const planned = draft[field.id];
   if (mode !== 'setup' || planned === undefined) return field;
-  const dx = planned.position.x - field.position.x;
-  const dy = planned.position.y - field.position.y;
+  const deltaAngle = (planned.angle ?? field.angle) - field.angle;
   return {
     ...field,
     position: planned.position,
+    angle: planned.angle ?? field.angle,
     enabled: planned.enabled,
-    worldPolygon: field.worldPolygon.map((point) => ({ x: point.x + dx, y: point.y + dy })),
+    worldPolygon: field.worldPolygon.map((point) => {
+      const local = rotate(
+        { x: point.x - field.position.x, y: point.y - field.position.y },
+        deltaAngle,
+      );
+      return { x: planned.position.x + local.x, y: planned.position.y + local.y };
+    }),
   };
 }
 
@@ -273,8 +290,8 @@ function draw(
       drawHatch(context, field.worldPolygon, view);
     }
     context.restore();
-    context.strokeStyle = '#ffffff';
-    context.lineWidth = 2;
+    context.strokeStyle = props.selectedField === field.id ? '#ffcc66' : '#ffffff';
+    context.lineWidth = props.selectedField === field.id ? 3 : 2;
     context.stroke(path);
   }
 
@@ -438,7 +455,12 @@ export function CourseCanvas(props: Props) {
       className={`course-canvas ${props.mode === 'setup' ? 'editable' : ''}`}
       aria-label="Puzzle course. Drag force fields to move them before pressing Play."
       onPointerDown={(event) => {
-        if (propsRef.current.mode !== 'setup' || viewRef.current === null) return;
+        if (
+          propsRef.current.editingLocked ||
+          propsRef.current.mode !== 'setup' ||
+          viewRef.current === null
+        )
+          return;
         const canvas = event.currentTarget;
         const ratio = window.devicePixelRatio || 1;
         // Wait for a fresh view if a pointer event arrives before the resize frame.
@@ -450,6 +472,7 @@ export function CourseCanvas(props: Props) {
         const point = pointerPosition(event);
         const field = fieldAt(point);
         if (field === null) return;
+        propsRef.current.onSelectField?.(field.id);
         event.currentTarget.setPointerCapture(event.pointerId);
         dragRef.current = {
           id: field.id,
@@ -479,15 +502,25 @@ export function CourseCanvas(props: Props) {
           return;
         }
         const world = toWorld(view, pointerPosition(event));
-        const { bounds } = view;
+        if (propsRef.current.editingLocked || propsRef.current.mode !== 'setup') {
+          endDrag(event.currentTarget);
+          return;
+        }
+        const bounds = propsRef.current.placementBounds ?? view.bounds;
         propsRef.current.onMoveField(drag.id, {
           x: Math.min(
-            bounds.maxX - drag.extents.maxX,
-            Math.max(bounds.minX - drag.extents.minX, drag.fieldStart.x + world.x - drag.start.x),
+            Math.floor((bounds.maxX - drag.extents.maxX) / POSITION_QUANTUM) * POSITION_QUANTUM,
+            Math.max(
+              Math.ceil((bounds.minX - drag.extents.minX) / POSITION_QUANTUM) * POSITION_QUANTUM,
+              drag.fieldStart.x + world.x - drag.start.x,
+            ),
           ),
           y: Math.min(
-            bounds.maxY - drag.extents.maxY,
-            Math.max(bounds.minY - drag.extents.minY, drag.fieldStart.y + world.y - drag.start.y),
+            Math.floor((bounds.maxY - drag.extents.maxY) / POSITION_QUANTUM) * POSITION_QUANTUM,
+            Math.max(
+              Math.ceil((bounds.minY - drag.extents.minY) / POSITION_QUANTUM) * POSITION_QUANTUM,
+              drag.fieldStart.y + world.y - drag.start.y,
+            ),
           ),
         });
       }}

@@ -373,15 +373,38 @@ test('repository saves canonical game JSON and sidecar, increments content versi
     await assert.rejects(saveLevel(doc, saved.revision, directory), /changed on disk/);
     await assert.rejects(saveLevel(doc, null, directory), /already exists/);
     await assert.rejects(loadLevel('../escape', directory), /Level ID/);
-    await symlink(file, path.join(directory, 'linked.json'));
-    await assert.rejects(loadLevel('linked', directory), /regular files/);
     // An interrupted save or independent JSON edit cannot attach stale authoring metadata.
     await writeFile(file, JSON.stringify({ ...raw, version: 3 }));
     const external = await loadLevel(doc.level.id, directory);
     assert.match(external.warning, /changed independently/);
     assert.deepEqual(external.document.editor.arena.walls, []);
     assert.equal(external.document.level.version, 3);
-    assert.deepEqual(await listLevels(directory), ['linked', doc.level.id]);
+    assert.deepEqual(await listLevels(directory), [doc.level.id]);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('repository rejects symlinked level files', async (t) => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'puttential-symlink-'));
+  try {
+    const doc = freshDocument();
+    await saveLevel(doc, null, directory);
+    try {
+      await symlink(
+        path.join(directory, `${doc.level.id}.json`),
+        path.join(directory, 'linked.json'),
+      );
+    } catch (error: any) {
+      if (process.platform === 'win32' && ['EPERM', 'EACCES', 'ENOSYS'].includes(error.code)) {
+        t.skip(
+          'Windows requires Developer Mode or symlink privilege; Linux CI exercises this security assertion.',
+        );
+        return;
+      }
+      throw error;
+    }
+    await assert.rejects(loadLevel('linked', directory), /regular files/);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

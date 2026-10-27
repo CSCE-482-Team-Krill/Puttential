@@ -1,58 +1,29 @@
-# Puttential prototype API
+# Daily competitive API
 
-The Next.js app in `src/frontend` serves these same-origin endpoints on port 3000. Route handlers call services in `src/backend/services`; Prisma uses PostgreSQL through the root `DATABASE_URL`. See the [full-stack setup guide](../../README.md).
+Next.js serves all routes on the game origin with private, no-store responses. The runtime contract and validators live in `src/shared/puzzle-contracts.ts` and `src/shared/response-validation.ts`. Responses never include author solutions or player placement commands.
 
-## GET /api/puzzles/today
+| Method | Path | Behavior |
+| --- | --- | --- |
+| GET | /api/puzzles/today | Published Central-date course, immutable rules, availability and next midnight |
+| GET | /api/puzzles/by-date/YYYY-MM-DD | Published historical/current course; future dates are hidden |
+| POST | /api/guest | Reuse or create an opaque HttpOnly guest session |
+| GET / PATCH | /api/me | Read guest / update nickname with expectedGuestId |
+| GET | /api/me/progress?puzzleId=... | Persisted starts, frozen first solve, best daily/archive and revisions |
+| POST | /api/runs | Idempotent counted start with expected guest, UUID request ID and canonical Placement |
+| GET | /api/runs/by-request/requestId | Recover the current guest's ambiguous start |
+| GET | /api/runs/runId | Read owned lifecycle and current availability; recover expired verification leases |
+| POST | /api/runs/runId/complete | Persist one immutable completion receipt, then perform server replay |
+| GET | /api/puzzles?month=YYYY-MM&limit=20&cursor=... | Nonfuture archive summaries with current guest progress |
+| GET | /api/puzzles/puzzleId/leaderboard?scope=daily&view=top | Verified standings, ties, percentile, me and finality |
 
-Returns `{ id, date, seed, difficulty, configuration }`. The date is `YYYY-MM-DD` in `America/Chicago`; `configuration` is a canonical engine `Level`, parsed with the shared codec before it is returned. Responses are dynamic and are not cached. A missing dated puzzle returns 404. Run `npm run db:seed` to provision today.
+Leaderboard scope is `daily` or `archive`; view is `top` or `around-me`. Pagination accepts 1?50 rows and signed cursors bound to guest, puzzle, scope, view and board revision. An invalidated board returns 409 BOARD_REVISION_CHANGED; a different viewer returns 409 LEADERBOARD_VIEWER_CHANGED.
 
-## POST /api/attempts
+All guest-owned mutations include `expectedGuestId`, but ownership comes exclusively from the cookie. The server checks the configured exact origin; a submitted public guest ID cannot authenticate a write. Complete uses `{ expectedGuestId, kind: 'terminal' }` or an aborted/interrupted intent with a bounded observedTick. Claimed client success and score do not control replay.
 
-Accepts JSON:
+Start and completion retries reuse their original identities and bodies. A conflicting reused request or completion returns 409. Starts commit an attempt ordinal before acknowledgment. Completion receipts capture database time before replay, so a lost response or crashed worker cannot change daily qualification. Best results, first-solve ordinal and terminal result save atomically.
 
-```json
-{
-  "puzzleId": "database-puzzle-id",
-  "success": true,
-  "simulationTime": 4.82,
-  "forceCost": 2,
-  "tileCount": 2,
-  "pathLength": 7.4
-}
-```
+Errors are `{ error, code, retryable }`, with 400/413/415 for malformed requests, 401 for missing guest, 403 for origin rejection, 404 for missing/unowned/future data, 409 for identity/content conflicts, 410 for canceled courses, 429 for admission limits and 503 for infrastructure unavailability. Retry-After accompanies 429/503.
 
-Returns status 201 with `{ "attemptId": "..." }`. `puzzleId` is required. Metrics are optional and must be finite and non-negative; force cost and tile count must be 32-bit integers. The frontend submits completed runs, including failures; interrupted runs are not submitted. Path length is not currently measured by the frontend.
+The compatibility `POST /api/attempts` and `POST /api/solutions` routes retain their prototype payloads and write only legacy, unranked tables. They cannot populate competitive progress or standings. Do not use them for the daily frontend.
 
-## POST /api/solutions
-
-Accepts JSON:
-
-```json
-{
-  "puzzleId": "database-puzzle-id",
-  "attemptId": "successful-attempt-id",
-  "placementData": {
-    "levelId": "bar-around-corner",
-    "levelVersion": 4,
-    "simulationVersion": "puttential-core-1",
-    "commands": [
-      { "type": "move-field", "fieldId": "push-field", "xQ": 0, "yQ": 0, "sequence": 0 },
-      { "type": "set-field-enabled", "fieldId": "push-field", "enabled": true, "sequence": 1 }
-    ]
-  }
-}
-```
-
-Returns status 201 with `{ "solutionId": "..." }`. Replay commands use the engine's `GameCommand` type and quantized integer coordinates. Sequence numbers must be unique non-negative integers. `simulationVersion` is optional; when present it must be a non-empty string of at most 200 characters, and it is stored with the replay for future server-side validation. The attempt must exist, belong to the same puzzle, be successful and have no existing solution.
-
-## Errors and prototype limits
-
-Errors use `{ "error": "Human-readable message" }`.
-
-- 400: malformed JSON, invalid types/metrics/commands, unsupported identity or incompatible attempt.
-- 404: puzzle or attempt not found.
-- 409: the attempt already has a solution, including when two identical submissions race (database unique constraint).
-- 503: database or internal service unavailable; internal error details stay on the server.
-Services throw typed errors from `src/backend/errors.ts` (`ValidationError`, `NotFoundError`, `ConflictError`), and `apiError` in `src/backend/http.ts` maps each type to its status. Status codes never depend on error message text, so messages can be reworded safely.
-
-HTTP writes currently support anonymous play only (`userId` omitted or null). Profile, streak and leaderboard data remain samples; historical database browsing and accounts have no HTTP API yet. Success and scores are still client-reported. Server-side replay verification, rankings, interrupted-run tracking and durable submission retries are not implemented.
+See [release and publishing](../../docs/iteration-two-release.md) for database setup, supported versions, capacity, worker recovery, cancellation and acceptance.

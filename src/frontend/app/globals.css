@@ -445,6 +445,104 @@ button:disabled {
   border-radius: var(--ui-r-md);
   background: var(--ui-turf-soft);
 }
+.sidebar-tabs {
+  display: flex;
+  flex-shrink: 0;
+  gap: 4px;
+  margin-bottom: 16px;
+  padding: 4px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-paper);
+}
+.sidebar-tabs button {
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+.sidebar-tabs button[aria-selected='true'] {
+  background: var(--ui-green);
+  color: var(--ui-white);
+}
+.sidebar-tabs button:hover:not([aria-selected='true']) {
+  background: var(--ui-turf-soft);
+  color: var(--ui-ink);
+}
+.pending-run-count {
+  min-width: 20px;
+  padding: 2px 5px;
+  border-radius: 99px;
+  background: var(--ui-yellow);
+  color: var(--ui-ink);
+  font-size: 0.75rem;
+}
+.control-column > [role='tabpanel'][hidden] {
+  display: none;
+}
+.runs-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  overflow-wrap: anywhere;
+}
+.runs-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 2px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+.runs-content h2,
+.runs-content p,
+.runs-summary {
+  margin: 0;
+}
+.runs-content h2 {
+  font-size: 1.125rem;
+}
+.runs-summary {
+  display: grid;
+  gap: 12px;
+}
+.runs-summary dt,
+.runs-note {
+  color: var(--ui-muted);
+  font-size: 0.8125rem;
+}
+.runs-summary dd {
+  margin: 2px 0 0;
+  color: var(--ui-ink);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.run-history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.run-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.run-card .panel-actions {
+  margin: 0;
+}
 .toolkit-title {
   display: flex;
   align-items: center;
@@ -763,6 +861,42 @@ button:disabled {
   margin: 0;
   padding: 0;
   list-style: none;
+}
+.leaderboard-snapshot,
+.leaderboard-updated,
+.leaderboard-percentile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.leaderboard-snapshot {
+  gap: 12px;
+}
+.leaderboard-snapshot p {
+  margin: 0;
+}
+.leaderboard-updated > span {
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+}
+.leaderboard-updated time {
+  color: var(--ui-ink);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+.leaderboard-personal {
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ui-line);
+}
+.leaderboard-personal p {
+  margin: 0;
+}
+.leaderboard-percentile strong {
+  color: var(--ui-green);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
 }
 .ranking-row {
   display: grid;
@@ -1197,5 +1331,169 @@ button:disabled {
   .nav-button {
     min-width: 40px;
     min-height: 40px;
+  }
+}
+/* Iteration two panels use the existing paper/turf palette and modal shell. */
+.published-archive .archive-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+.api-notice:empty {
+  display: none;
+}
+.practice-course {
+  width: 100%;
+  text-align: left;
+}
+.copy-fallback {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.copy-fallback textarea {
+  width: 100%;
+  min-height: 140px;
+  box-sizing: border-box;
+  padding: 8px;
+  border: 1px solid var(--ui-line);
+  border-radius: 6px;
+  background: var(--ui-paper);
+  color: var(--ui-ink);
+  font: inherit;
+  resize: vertical;
+}
+.panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-block: 8px;
+}
+.panel-actions button,
+.copy-result > button,
+.modal-body form button,
+.modal-body > button,
+.modal-stack > button,
+.api-notice button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #acc2a6;
+  border-radius: 8px;
+  color: #244b34;
+  background: #f8faf3;
+  cursor: pointer;
+}
+.modal-body label,
+.selected-field-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.modal-body input,
+.modal-body select,
+.modal-body textarea,
+.selected-field-controls input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 8px;
+  color: #243b2b;
+  background: #fffdf5;
+  border: 1px solid #a7baa1;
+  border-radius: 6px;
+  font: inherit;
+}
+.modal-body textarea {
+  min-height: 180px;
+  resize: vertical;
+}
+.selected-field-controls {
+  min-width: 0;
+  margin: 8px 0;
+  padding: 12px;
+  border: 1px solid #a7baa1;
+  border-radius: 10px;
+}
+.field-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.run-timer {
+  font-variant-numeric: tabular-nums;
+}
+.run-controls p {
+  margin: 2px 0;
+  font-size: 0.8rem;
+}
+.selected-field-controls {
+  flex-shrink: 0;
+}
+@media (min-width: 960px) {
+  .setup-tools {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 2px;
+  }
+  .setup-tools .tile-list {
+    flex: 1 0 auto;
+    overflow: visible;
+  }
+  .setup-tools .tile-option {
+    scroll-margin-block: 4px;
+  }
+  .control-column .run-controls {
+    flex: 0 0 auto;
+  }
+  .selected-field-controls {
+    padding: 6px;
+    font-size: 0.75rem;
+  }
+  .selected-field-controls .field-inputs {
+    gap: 4px;
+  }
+  .selected-field-controls input {
+    min-height: 32px;
+    padding: 4px;
+  }
+  .selected-field-controls .panel-actions {
+    margin: 4px 0;
+    gap: 4px;
+  }
+  .selected-field-controls .panel-actions button {
+    min-height: 28px;
+    padding: 4px 6px;
+  }
+}
+.api-notice {
+  overflow-wrap: anywhere;
+}
+.modal-body {
+  overflow-wrap: anywhere;
+}
+.modal-body .ranking-player {
+  min-width: 0;
+}
+.modal-body .ranking-player small {
+  white-space: normal;
+}
+.modal-body form {
+  display: grid;
+  gap: 10px;
+}
+button:disabled {
+  cursor: default;
+}
+@media (max-width: 400px) {
+  .modal-body .ranking-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0, 1fr) 40px;
+    gap: 6px;
+  }
+  .modal-body .ranking-player small {
+    line-height: 1.5;
   }
 }
