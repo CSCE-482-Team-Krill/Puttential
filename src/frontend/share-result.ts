@@ -44,7 +44,7 @@ export function shareResult(input: ShareInput) {
     board.availability.publicationStatus === 'active' &&
     BigInt(board.availability.revision) >= BigInt(availability.revision);
   const lines = [
-    `Puttential — ${date} — ${scope === 'daily' ? 'Daily' : 'Archive'} ${result.outcome === 'success' ? 'solved' : result.outcome}`,
+    `⛳ Puttential — ${date} — ${scope === 'daily' ? 'Daily' : 'Archive'} ${result.outcome === 'success' ? 'solved' : result.outcome}`,
     verified ? 'Verified historical result' : 'Unverified result',
   ];
   if (result.metrics) {

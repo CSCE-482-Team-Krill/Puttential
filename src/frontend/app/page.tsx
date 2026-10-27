@@ -467,7 +467,7 @@ export default function Home() {
         origin: window.location.origin,
       });
     }
-    return `Puttential — ${p?.date ?? 'Practice'} — ${p ? 'Unverified' : 'Practice — unranked'}\n${puzzle.result?.solved ? 'Solved' : (puzzle.result?.outcome ?? 'Finished')}\nForce ${puzzle.result?.forceCost ?? 0} · Tiles ${puzzle.result?.tiles ?? 0}\nBall time ${(puzzle.result?.seconds ?? 0).toFixed(2)}s${p ? `\n${window.location.origin}/?date=${p.date}` : ''}`;
+    return `⛳ Puttential — ${p?.date ?? 'Practice'} — ${p ? 'Unverified' : 'Practice — unranked'}\n${puzzle.result?.solved ? 'Solved' : (puzzle.result?.outcome ?? 'Finished')}\nForce ${puzzle.result?.forceCost ?? 0} · Tiles ${puzzle.result?.tiles ?? 0}\nBall time ${(puzzle.result?.seconds ?? 0).toFixed(2)}s${p ? `\n${window.location.origin}/?date=${p.date}` : ''}`;
   }
   const nav: { name: Exclude<Panel, 'result' | null>; label: string; icon: IconName }[] = [
     { name: 'archive', label: 'Calendar', icon: 'calendar' },
