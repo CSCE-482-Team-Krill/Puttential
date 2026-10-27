@@ -35,6 +35,7 @@ import { ProfilePanel } from '../panels/profile';
 import { ResultPanel } from '../panels/result';
 import { RunsPanel } from '../panels/runs';
 import { shareResult } from '../share-result';
+import { markTutorialSeen, shouldOpenTutorial, Tutorial } from '../tutorial';
 
 const PRACTICE_LEVELS = starterLevels.map((level) => ({ level, day: 'Practice course' }));
 export default function Home() {
@@ -48,6 +49,14 @@ export default function Home() {
   const [panel, setPanel] = useState<Panel>(null);
   const [sidebarTab, setSidebarTab] = useState<'toolkit' | 'runs'>('toolkit');
   const [preferences, setPreferences] = usePreferences();
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  useEffect(() => {
+    if (shouldOpenTutorial()) setTutorialOpen(true);
+  }, []);
+  const closeTutorial = useCallback(() => {
+    markTutorialSeen();
+    setTutorialOpen(false);
+  }, []);
   const [player, setPlayer] = useState<Player | null>(null);
   const playerRef = useRef(player);
   playerRef.current = player;
@@ -754,6 +763,10 @@ export default function Home() {
           currentLevel={level}
           chooseLevel={(next) => void chooseLocal(next)}
           tileCost={TILE_COST}
+          showTutorial={() => {
+            setPanel(null);
+            setTutorialOpen(true);
+          }}
           courseImport={
             <LevelImport onLoad={(next, bounds) => void chooseLocal(next, bounds, 'local')} />
           }
@@ -823,6 +836,7 @@ export default function Home() {
                   : {})}
         />
       )}
+      {tutorialOpen && <Tutorial close={closeTutorial} reducedMotion={preferences.reducedMotion} />}
     </div>
   );
 }

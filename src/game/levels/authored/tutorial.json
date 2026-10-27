@@ -1,0 +1,254 @@
+{
+  "formatVersion": 1,
+  "id": "tutorial",
+  "version": 1,
+  "gravity": {
+    "x": 0,
+    "y": 0
+  },
+  "dynamicBodies": [
+    {
+      "id": "ball",
+      "position": {
+        "x": -7.4,
+        "y": -3
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "ball-piece",
+          "shape": {
+            "kind": "circle",
+            "radius": 0.5
+          }
+        }
+      ]
+    }
+  ],
+  "staticBodies": [
+    {
+      "id": "left-boundary",
+      "position": {
+        "x": -10.25,
+        "y": 0
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "left-boundary-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 13
+          }
+        }
+      ]
+    },
+    {
+      "id": "right-boundary",
+      "position": {
+        "x": 10.25,
+        "y": 0
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "right-boundary-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 13
+          }
+        }
+      ]
+    },
+    {
+      "id": "bottom-boundary",
+      "position": {
+        "x": 0,
+        "y": -6.25
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "bottom-boundary-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 21,
+            "height": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "top-boundary",
+      "position": {
+        "x": 0,
+        "y": 6.25
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "top-boundary-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 21,
+            "height": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "divider",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "divider-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 20,
+            "height": 0.5
+          }
+        }
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "id": "launch-repulsor",
+      "shape": {
+        "kind": "rectangle",
+        "width": 3,
+        "height": 3
+      },
+      "position": {
+        "x": -3,
+        "y": -4
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "repulsor",
+        "source": {
+          "x": 0,
+          "y": 0
+        },
+        "strength": 30
+      }
+    },
+    {
+      "id": "portal-in",
+      "shape": {
+        "kind": "rectangle",
+        "width": 1.6,
+        "height": 1.6
+      },
+      "position": {
+        "x": 2,
+        "y": -3
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "portal",
+        "pairId": "tunnel",
+        "rotateVelocity": false,
+        "delaySeconds": 0.25,
+        "cooldownSeconds": 0.75
+      }
+    },
+    {
+      "id": "portal-out",
+      "shape": {
+        "kind": "rectangle",
+        "width": 1.6,
+        "height": 1.6
+      },
+      "position": {
+        "x": -8.2,
+        "y": 3
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "portal",
+        "pairId": "tunnel",
+        "rotateVelocity": false,
+        "delaySeconds": 0.25,
+        "cooldownSeconds": 0.75
+      }
+    },
+    {
+      "id": "lava-pit",
+      "shape": {
+        "kind": "rectangle",
+        "width": 6,
+        "height": 5.75
+      },
+      "position": {
+        "x": 7,
+        "y": -3.125
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "lava"
+      }
+    },
+    {
+      "id": "water-strip",
+      "shape": {
+        "kind": "rectangle",
+        "width": 1.5,
+        "height": 5.75
+      },
+      "position": {
+        "x": -1,
+        "y": 3.125
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "water",
+        "drag": 1.5,
+        "sinkSpeed": 0.06
+      }
+    }
+  ],
+  "goal": {
+    "bodyId": "ball",
+    "minX": 6.5,
+    "maxX": 10,
+    "minY": 1,
+    "maxY": 5,
+    "holdSeconds": 1
+  },
+  "prediction": {
+    "maxTicks": 2400,
+    "sampleEveryTicks": 12
+  }
+}

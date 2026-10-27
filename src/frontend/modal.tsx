@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { Dispatch, SetStateAction, ReactNode } from 'react';
+import type { Dispatch, SetStateAction, ReactNode, RefObject } from 'react';
 import type { Level } from '../game';
 import { Icon } from './icon';
 import type { RunResult } from './puzzle';
@@ -109,6 +109,8 @@ type Props = {
   previewMode?: boolean;
   courseImport?: ReactNode;
   body?: ReactNode;
+  /** Replays the first-visit walkthrough from Help. */
+  showTutorial?: () => void;
 };
 
 function SettingSwitch({
@@ -136,32 +138,10 @@ function SettingSwitch({
   );
 }
 
-export function Modal({
-  panel,
-  close,
-  preferences,
-  setPreferences,
-  result,
-  levels,
-  currentLevel,
-  chooseLevel,
-  tileCost,
-  previewMode = false,
-  courseImport,
-  body,
-}: Props) {
-  const dialogRef = useRef<HTMLElement>(null);
+/** Focus, Escape and Tab containment shared by every modal dialog. */
+export function useDialog(dialogRef: RefObject<HTMLElement | null>, close: () => void) {
   const closeRef = useRef(close);
   closeRef.current = close;
-  const titles: Record<Exclude<Panel, null>, string> = {
-    archive: 'Calendar',
-    stats: 'Profile',
-    leaderboard: 'Leaderboard',
-    settings: 'Settings',
-    help: 'Help',
-    result: result?.solved === false ? 'So close' : 'Nice work!',
-  };
-
   useEffect(() => {
     const previousFocus =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -203,7 +183,34 @@ export function Modal({
       document.body.style.overflow = previousOverflow;
       previousFocus?.focus();
     };
-  }, []);
+  }, [dialogRef]);
+}
+
+export function Modal({
+  panel,
+  close,
+  preferences,
+  setPreferences,
+  result,
+  levels,
+  currentLevel,
+  chooseLevel,
+  tileCost,
+  previewMode = false,
+  courseImport,
+  body,
+  showTutorial,
+}: Props) {
+  const dialogRef = useRef<HTMLElement>(null);
+  useDialog(dialogRef, close);
+  const titles: Record<Exclude<Panel, null>, string> = {
+    archive: 'Calendar',
+    stats: 'Profile',
+    leaderboard: 'Leaderboard',
+    settings: 'Settings',
+    help: 'Help',
+    result: result?.solved === false ? 'So close' : 'Nice work!',
+  };
 
   function togglePreference(key: keyof Preferences) {
     setPreferences((current) => ({ ...current, [key]: !current[key] }));
@@ -236,6 +243,17 @@ export function Modal({
 
         {panel === 'help' && (
           <div className="modal-body modal-stack">
+            {showTutorial && (
+              <button className="tutorial-launch" onClick={showTutorial}>
+                <span className="tutorial-launch-icon" aria-hidden="true">
+                  <Icon name="play" size={20} />
+                </span>
+                <span>
+                  <strong>Watch the tutorial</strong>
+                  <small>Watch a full shot step by step, then try it yourself.</small>
+                </span>
+              </button>
+            )}
             {HELP_SECTIONS.map(({ title, content }) => (
               <details className="help-section" key={title}>
                 <summary>
