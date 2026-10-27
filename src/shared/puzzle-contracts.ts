@@ -57,7 +57,15 @@ export type Placement = {
 };
 export type SavedResult = {
   runId: string;
-  outcome: 'success' | 'stopped' | 'water' | 'lava' | 'timeout' | 'aborted' | 'interrupted';
+  outcome:
+    | 'success'
+    | 'stopped'
+    | 'water'
+    | 'lava'
+    | 'out-of-bounds'
+    | 'timeout'
+    | 'aborted'
+    | 'interrupted';
   verification: 'verified' | 'not-applicable';
   metrics: Metrics | null;
   dailyEligible: boolean;

@@ -1,3 +1,4 @@
+import type { Bounds } from '../geometry/polygon';
 import type { Vec2 } from '../types';
 
 /**
@@ -93,6 +94,8 @@ export type Level = Readonly<{
   id: string;
   version: number;
   gravity: Vec2;
+  /** Playable area, independent of physical walls. Older levels infer this from geometry. */
+  bounds?: Bounds;
   dynamicBodies: readonly DynamicBodyDefinition[];
   staticBodies: readonly StaticBodyDefinition[];
   fields: readonly FieldZoneDefinition[];

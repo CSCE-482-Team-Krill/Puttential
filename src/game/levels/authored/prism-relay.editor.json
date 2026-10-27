@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "85f145a1d5d20002427e252c7fe6f8552292b399bd6654d7cc10fffad39ebfe2",
+  "editor": {
+    "name": "Prism Relay",
+    "arena": {
+      "bounds": {
+        "minX": -8,
+        "maxX": 8,
+        "minY": -5,
+        "maxY": 5
+      },
+      "walls": [
+        "left-rail",
+        "right-rail",
+        "bottom-rail",
+        "top-rail"
+      ],
+      "thickness": 0.5
+    }
+  }
+}

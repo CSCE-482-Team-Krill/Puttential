@@ -67,7 +67,7 @@ function saved(x: any): boolean {
     typeof x.dailyEligible === 'boolean' &&
     (['aborted', 'interrupted'].includes(x.outcome)
       ? x.verification === 'not-applicable' && x.metrics === null && !x.dailyEligible
-      : ['success', 'stopped', 'water', 'lava', 'timeout'].includes(x.outcome) &&
+      : ['success', 'stopped', 'water', 'lava', 'out-of-bounds', 'timeout'].includes(x.outcome) &&
         x.verification === 'verified' &&
         metrics(x.metrics))
   );
