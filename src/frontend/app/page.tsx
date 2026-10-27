@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { starterLevels, levelName } from '../../game';
@@ -14,12 +14,7 @@ import type { IconName } from '../icon';
 import { Modal, usePreferences } from '../modal';
 import type { Panel } from '../modal';
 import { ApiError, puzzleApi } from '../api';
-import {
-  selectableFields,
-  selectedFieldCount,
-  displayedForceCost,
-  TILE_COST,
-} from '../score-display';
+import { selectableFields, selectedFieldCount, displayedForceCost } from '../score-display';
 import { bootstrapGuest } from '../guest-session';
 import { localContext, publishedContext, dailyDelay } from '../course-context';
 import type { CourseContext } from '../course-context';
@@ -37,7 +32,6 @@ import { RunsPanel } from '../panels/runs';
 import { shareResult } from '../share-result';
 import { markTutorialSeen, shouldOpenTutorial, Tutorial } from '../tutorial';
 
-const LEGACY_LEVELS = starterLevels.map((level) => ({ level, day: 'Legacy course' }));
 export default function Home() {
   const [context, setContext] = useState<CourseContext | null>(null);
   const contextRef = useRef(context);
@@ -766,11 +760,7 @@ export default function Home() {
           close={() => setPanel(null)}
           preferences={preferences}
           setPreferences={setPreferences}
-          result={puzzle.result}
-          levels={LEGACY_LEVELS}
-          currentLevel={level}
-          chooseLevel={(next) => void chooseLocal(next, undefined, 'legacy')}
-          tileCost={TILE_COST}
+          resultSolved={puzzle.result?.solved !== false}
           showTutorial={() => {
             setPanel(null);
             setTutorialOpen(true);
@@ -791,13 +781,13 @@ export default function Home() {
                     />
                     <h3>Legacy courses</h3>
                     <p>Courses from an earlier version of Puttential.</p>
-                    {LEGACY_LEVELS.map((entry) => (
+                    {starterLevels.map((course) => (
                       <button
                         className="modal-row legacy-course"
-                        key={entry.level.id}
-                        onClick={() => void chooseLocal(entry.level, undefined, 'legacy')}
+                        key={course.id}
+                        onClick={() => void chooseLocal(course, undefined, 'legacy')}
                       >
-                        {levelName(entry.level)}
+                        {levelName(course)}
                       </button>
                     ))}
                   </>

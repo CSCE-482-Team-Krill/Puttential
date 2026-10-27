@@ -83,7 +83,7 @@ npm.cmd run courses:publish -- schedule
 npm.cmd run game
 ```
 
-**http://127.0.0.1:3000/modal-preview** is a development-only review page, with clearly labeled example courses and six example leaderboard rows. It returns **404 in production**. The real Profile and Leaderboard use persisted guest progress and verified results. Settings persist on this device; audio preferences are not connected to playback.
+**http://127.0.0.1:3000/modal-preview** is a development-only review page, with clearly labeled example courses and six example leaderboard rows. It returns **404 in production**. The real Profile and Leaderboard use persisted guest progress and verified results. Display settings persist on this device.
 
 For a production preview, stop the development server with Ctrl+C, then:
 
@@ -123,7 +123,7 @@ The older attempt/solution prototype endpoints remain unranked and isolated from
 - `src/backend/`: services, API types, request validation, Prisma integration and seed script.
 - `src/game/`: framework-independent simulation, geometry, catalog and level codecs. See [the game API](src/game/README.md).
 - `level-editor/`: desktop authoring UI, history and local save API.
-- `scripts/`: logo generation tools. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-logo.ps1` on Windows, then `node scripts/render-logo.mjs` for raster exports and proof sheets under `artifacts/logo/`.
+- `scripts/`: logo generation tools. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-logo.ps1` on Windows, then `node scripts/render-logo.mjs` to regenerate the PNG, monochrome and reversed exports in `src/frontend/public/`.
 
 Run workspace commands from the repository root. `db:generate` and `db:migrate` use `prisma7.config.ts`; `db:seed` publishes the reviewed opening schedule.
 

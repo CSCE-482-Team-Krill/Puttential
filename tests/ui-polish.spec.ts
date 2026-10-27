@@ -31,8 +31,6 @@ test.beforeEach(async ({ context }) => {
     localStorage.setItem(
       'puttential-preferences',
       JSON.stringify({
-        muteMusic: false,
-        muteEffects: false,
         reducedMotion: true,
         showPreview: true,
       }),
@@ -619,7 +617,7 @@ test('short dialogs scroll, trap Tab both ways, close on backdrop and retain pre
   await page.keyboard.press('Tab');
   await expect(close).toBeFocused();
   await page.getByRole('switch', { name: 'Show path preview' }).click();
-  await page.getByRole('switch', { name: 'Mute music' }).click();
+  await page.getByRole('switch', { name: 'Reduced motion' }).click();
   await page.mouse.click(2, 2);
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.reload();
@@ -628,11 +626,11 @@ test('short dialogs scroll, trap Tab both ways, close on backdrop and retain pre
     'aria-checked',
     'false',
   );
-  await expect(page.getByRole('switch', { name: 'Mute music' })).toHaveAttribute(
+  await expect(page.getByRole('switch', { name: 'Reduced motion' })).toHaveAttribute(
     'aria-checked',
-    'true',
+    'false',
   );
-  await expect(page.getByRole('dialog')).toContainText('Audio playback is not available yet.');
+  await expect(page.getByRole('dialog').getByRole('switch')).toHaveCount(2);
 });
 
 test('integrated import rejects corrupt/oversize data, retains pending file input across resize and respects camera bounds', async ({
@@ -819,7 +817,7 @@ test('rendered text and essential control colors retain contrast in each UI stat
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await measure('OFF switch thumb', '.switch span', 'background-color', 3);
-  await page.getByRole('switch', { name: 'Mute music' }).click();
+  await page.getByRole('switch', { name: 'Reduced motion' }).click();
   await measure('ON switch thumb', '.switch.on span', 'background-color', 3);
   const table = [
     '# Rendered UI contrast audit',
