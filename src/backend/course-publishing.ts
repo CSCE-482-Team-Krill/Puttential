@@ -8,16 +8,16 @@ import { parseLevel, createGame } from '../game';
 import { validDate, decodePuzzle } from '../shared/response-validation';
 import { puzzleResponse, verifyRun } from './competitive';
 import type { Placement, PuzzleRules } from '../shared/puzzle-contracts';
- 
+
 const json = (value: unknown) => value as Prisma.InputJsonValue;
 const OPENING_COURSES = 10;
- 
+
 /** The same date always gets the same opening course, whichever day the schedule runs. */
 export function openingIndexForDate(date: string): number {
   const day = Math.floor(Date.parse(`${date}T00:00:00Z`) / 86_400_000);
   return ((day % OPENING_COURSES) + OPENING_COURSES) % OPENING_COURSES;
 }
- 
+
 /** Validates and inserts one dated course. Existing dates are never overwritten. */
 export async function publishCourse(
   date: string,
@@ -33,13 +33,13 @@ export async function publishCourse(
     JSON.stringify(solutions[0]) === JSON.stringify(solutions[1])
   )
     throw new Error('Publishing requires a date, title and two distinct solutions.');
- 
+
   const existing = await prisma.puzzle.findUnique({
     where: { date: new Date(`${date}T00:00:00Z`) },
   });
   if (existing)
     return `${date}: preserved existing course ${existing.id}${existing.rules ? '' : ' (legacy: not ranked until explicitly republished)'}`;
- 
+
   if (
     level.dynamicBodies.length > 32 ||
     level.staticBodies.length > 128 ||
@@ -66,7 +66,7 @@ export async function publishCourse(
     serverNow: `${date}T12:00:00Z`,
     nextDailyAt: `${shiftDate(date, 1)}T06:00:00Z`,
   });
- 
+
   const started = performance.now();
   const results = [];
   for (const placement of solutions) {
@@ -76,13 +76,16 @@ export async function publishCourse(
     results.push(result);
   }
   const replayMs = performance.now() - started;
-  if (replayMs > 5000) throw new Error('Reviewed replays exceed the five-second publishing budget.');
- 
+  if (replayMs > 5000)
+    throw new Error('Reviewed replays exceed the five-second publishing budget.');
+
   const benchmarkStart = performance.now(),
     benchmark = await createGame(level);
   try {
     benchmark.applySetup(
-      solutions[0]!.commands.map((c) => (c.type === 'set-field-enabled' ? { ...c, enabled: true } : c)),
+      solutions[0]!.commands.map((c) =>
+        c.type === 'set-field-enabled' ? { ...c, enabled: true } : c,
+      ),
     );
     for (let tick = 0; tick < rules.maxTicks; tick++) benchmark.step();
   } finally {
@@ -91,7 +94,7 @@ export async function publishCourse(
   const fullRunMs = performance.now() - benchmarkStart;
   if (fullRunMs > 3000)
     throw new Error('Full-cap replay exceeds the three-second publishing budget.');
- 
+
   try {
     await prisma.puzzle.create({
       data: {
@@ -118,32 +121,35 @@ export async function publishCourse(
   }
   return `${date}: published ${title}; two verified solutions (${Math.round(replayMs)}ms total); full-cap replay ${Math.round(fullRunMs)}ms`;
 }
- 
+
 /** Publishes the opening rotation for three past days, today and the next six days. */
 export async function publishSchedule(today = centralDateString()): Promise<string[]> {
   const lines: string[] = [];
   for (let offset = -3; offset <= 6; offset++) {
     const date = shiftDate(today, offset);
     const course = openingCourse(openingIndexForDate(date));
-    lines.push(await publishCourse(date, course.level, course.rules, course.title, course.solutions));
+    lines.push(
+      await publishCourse(date, course.level, course.rules, course.title, course.solutions),
+    );
   }
   return lines;
 }
- 
+
 /** Throws if today or any of the next six days has no reviewed, active course. */
 export async function checkSchedule(today = centralDateString()): Promise<string[]> {
   const lines: string[] = [];
   for (let offset = 0; offset <= 6; offset++) {
     const date = shiftDate(today, offset),
       p = await prisma.puzzle.findUnique({ where: { date: new Date(`${date}T00:00:00Z`) } });
-    if (!p || !p.rules || p.canceledAt) throw new Error(`Missing or canceled reviewed course: ${date}`);
+    if (!p || !p.rules || p.canceledAt)
+      throw new Error(`Missing or canceled reviewed course: ${date}`);
     // Validate future courses without exposing them through public HTTP.
     decodePuzzle({ ...puzzleResponse(p, new Date(`${date}T18:00:00Z`)) });
     lines.push(`${date}: ready (${p.title})`);
   }
   return lines;
 }
- 
+
 /** Retries queued verifications (up to 100) and removes expired guest-admission counters. */
 export async function recoverRuns(): Promise<string> {
   await prisma.competitiveRun.updateMany({

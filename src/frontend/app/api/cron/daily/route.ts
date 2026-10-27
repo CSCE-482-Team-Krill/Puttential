@@ -9,9 +9,8 @@ export async function GET(request: Request) {
     return new Response('Unauthorized', { status: 401 });
 
   try {
-    const { publishSchedule, recoverRuns, checkSchedule } = await import(
-      '../../../../../backend/course-publishing'
-    );
+    const { publishSchedule, recoverRuns, checkSchedule } =
+      await import('../../../../../backend/course-publishing');
     const published = await publishSchedule();
     const recovered = await recoverRuns();
     const ready = await checkSchedule();

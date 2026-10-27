@@ -16,7 +16,13 @@ async function main() {
     const spec = JSON.parse(await readFile(file, 'utf8'));
     const level = parseLevel(spec.configuration);
     console.log(
-      await publishCourse(dateArg, level, spec.rules ?? defaultRules(level), spec.title, spec.solutions),
+      await publishCourse(
+        dateArg,
+        level,
+        spec.rules ?? defaultRules(level),
+        spec.title,
+        spec.solutions,
+      ),
     );
   } else if (command === 'check') {
     for (const line of await checkSchedule()) console.log(line);
