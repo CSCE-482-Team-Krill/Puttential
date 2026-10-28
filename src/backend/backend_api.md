@@ -2,19 +2,19 @@
 
 Next.js serves all routes on the game origin with private, no-store responses. The runtime contract and validators live in `src/shared/puzzle-contracts.ts` and `src/shared/response-validation.ts`. Responses never include author solutions or player placement commands.
 
-| Method | Path | Behavior |
-| --- | --- | --- |
-| GET | /api/puzzles/today | Published Central-date course, immutable rules, availability and next midnight |
-| GET | /api/puzzles/by-date/YYYY-MM-DD | Published historical/current course; future dates are hidden |
-| POST | /api/guest | Reuse or create an opaque HttpOnly guest session |
-| GET / PATCH | /api/me | Read guest / update nickname with expectedGuestId |
-| GET | /api/me/progress?puzzleId=... | Persisted starts, frozen first solve, best daily/archive and revisions |
-| POST | /api/runs | Idempotent counted start with expected guest, UUID request ID and canonical Placement |
-| GET | /api/runs/by-request/requestId | Recover the current guest's ambiguous start |
-| GET | /api/runs/runId | Read owned lifecycle and current availability; recover expired verification leases |
-| POST | /api/runs/runId/complete | Persist one immutable completion receipt, then perform server replay |
-| GET | /api/puzzles?month=YYYY-MM&limit=20&cursor=... | Nonfuture archive summaries with current guest progress |
-| GET | /api/puzzles/puzzleId/leaderboard?scope=daily&view=top | Verified standings, ties, percentile, me and finality |
+| Method      | Path                                                   | Behavior                                                                              |
+| ----------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| GET         | /api/puzzles/today                                     | Published Central-date course, immutable rules, availability and next midnight        |
+| GET         | /api/puzzles/by-date/YYYY-MM-DD                        | Published historical/current course; future dates are hidden                          |
+| POST        | /api/guest                                             | Reuse or create an opaque HttpOnly guest session                                      |
+| GET / PATCH | /api/me                                                | Read guest / update nickname with expectedGuestId                                     |
+| GET         | /api/me/progress?puzzleId=...                          | Persisted starts, frozen first solve, best daily/archive and revisions                |
+| POST        | /api/runs                                              | Idempotent counted start with expected guest, UUID request ID and canonical Placement |
+| GET         | /api/runs/by-request/requestId                         | Recover the current guest's ambiguous start                                           |
+| GET         | /api/runs/runId                                        | Read owned lifecycle and current availability; recover expired verification leases    |
+| POST        | /api/runs/runId/complete                               | Persist one immutable completion receipt, then perform server replay                  |
+| GET         | /api/puzzles?month=YYYY-MM&limit=20&cursor=...         | Nonfuture archive summaries with current guest progress                               |
+| GET         | /api/puzzles/puzzleId/leaderboard?scope=daily&view=top | Verified standings, ties, percentile, me and finality                                 |
 
 Leaderboard scope is `daily` or `archive`; view is `top` or `around-me`. Pagination accepts 1?50 rows and signed cursors bound to guest, puzzle, scope, view and board revision. An invalidated board returns 409 BOARD_REVISION_CHANGED; a different viewer returns 409 LEADERBOARD_VIEWER_CHANGED.
 

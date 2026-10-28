@@ -1,6 +1,6 @@
-import bar from './bar-around-corner.json';
-import radial from './radial-relay.json';
-import tutorial from './authored/tutorial.json';
+import bar from './legacy/bar-around-corner.json';
+import radial from './legacy/radial-relay.json';
+import tutorial from './tutorial.json';
 import { parseLevel } from './parse';
 import { documentFromLevel } from './document';
 const starters = [

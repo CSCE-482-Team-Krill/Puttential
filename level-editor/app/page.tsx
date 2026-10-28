@@ -494,9 +494,9 @@ export default function Editor() {
               <section>
                 <h3>Open course</h3>
                 <label className="property">
-                  <span>Game starters</span>
+                  <span>Legacy courses</span>
                   <select
-                    aria-label="Game starters"
+                    aria-label="Legacy courses"
                     value=""
                     onChange={(e) => {
                       try {
@@ -507,7 +507,7 @@ export default function Editor() {
                     }}
                   >
                     <option value="" disabled>
-                      Choose a starter…
+                      Choose a legacy course…
                     </option>
                     {starterLevels.map((level, i) => (
                       <option value={i} key={level.id}>

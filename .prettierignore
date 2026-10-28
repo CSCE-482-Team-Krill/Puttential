@@ -1,7 +1,6 @@
 node_modules/
 .next/
 **/.next/
+**/next-env.d.ts
 generated/
 package-lock.json
-ui_ux_research/design_a/
-ui_ux_research/design_b/

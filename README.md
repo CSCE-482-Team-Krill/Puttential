@@ -54,7 +54,7 @@ For a production build, run `npm run game:build`, then `npm run game:start` with
 
 ## Vercel deployment
 
-Set the Vercel project's **Root Directory** to `src/frontend`, with **Next.js** as the framework. Enable **Include source files outside of the Root Directory in the Build Step** so the build can access the shared engine, backend, Prisma schema and root workspace dependencies. The former `ui_ux_research/design_c` directory is documentation only.
+Set the Vercel project's **Root Directory** to `src/frontend`, with **Next.js** as the framework. Enable **Include source files outside of the Root Directory in the Build Step** so the build can access the shared engine, backend, Prisma schema and root workspace dependencies.
 
 The checked-in `src/frontend/vercel.json` runs `npm run build`; its `prebuild` generates the ignored Prisma Client before Next.js compiles API routes. Use the root npm workspace lockfile and the default install command. Keep the Output Directory at its Next.js default (`.next`).
 
@@ -83,7 +83,7 @@ npm.cmd run courses:publish -- schedule
 npm.cmd run game
 ```
 
-**http://127.0.0.1:3000/modal-preview** is a development-only review page, with clearly labeled example courses and six example leaderboard rows. It returns **404 in production**. The real Profile and Leaderboard use persisted guest progress and verified results. Settings persist on this device; audio preferences are not connected to playback.
+**http://127.0.0.1:3000/modal-preview** is a development-only review page, with clearly labeled example courses and six example leaderboard rows. It returns **404 in production**. The real Profile and Leaderboard use persisted guest progress and verified results. Display settings persist on this device.
 
 For a production preview, stop the development server with Ctrl+C, then:
 
@@ -102,7 +102,7 @@ npm.cmd run game:build
 npm.cmd run test:ui:production
 ```
 
-The production smoke script temporarily serves the built app on **127.0.0.1:3002**, checks `/` is 200 and `/modal-preview` is 404, then stops its server. Previous visual evidence is in [artifacts/ui-polish](artifacts/ui-polish/implementation-notes.md); revision 3.1 evidence is in [artifacts/iteration-two](artifacts/iteration-two/implementation-evidence.md). Browser tests intercept API calls and do not prove database integration. Select a toolkit tile to edit X/Y without a pointer; rotation requires E0.
+The production smoke script temporarily serves the built app on **127.0.0.1:3002**, checks `/` is 200 and `/modal-preview` is 404, then stops its server. Tests recreate review evidence under `artifacts/`; earlier captures and verification records remain available in Git history. Browser tests intercept API calls and do not prove database integration. Select a toolkit tile to edit X/Y without a pointer; rotation requires E0.
 
 ## Integration status
 
@@ -123,7 +123,7 @@ The older attempt/solution prototype endpoints remain unranked and isolated from
 - `src/backend/`: services, API types, request validation, Prisma integration and seed script.
 - `src/game/`: framework-independent simulation, geometry, catalog and level codecs. See [the game API](src/game/README.md).
 - `level-editor/`: desktop authoring UI, history and local save API.
-- `ui_ux_research/`: research and independent A/B prototypes. Design C moved to `src/frontend`.
+- `scripts/`: logo generation tools. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-logo.ps1` on Windows, then `node scripts/render-logo.mjs` to regenerate the PNG, monochrome and reversed exports in `src/frontend/public/`.
 
 Run workspace commands from the repository root. `db:generate` and `db:migrate` use `prisma7.config.ts`; `db:seed` publishes the reviewed opening schedule.
 
@@ -139,4 +139,4 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Browser tests start/reuse both apps. Most UI regressions intercept HTTP; the unmocked daily browser test requires `TEST_DATABASE_URL` and servers using the matching `DATABASE_URL`. Run `npm run test:integration` against a disposable migrated and provisioned PostgreSQL database; CI provides one. `npm run format` uses the repository Prettier configuration.
+Browser tests start/reuse both apps. Most UI regressions intercept HTTP; the unmocked daily browser test requires `TEST_DATABASE_URL` and servers using the matching `DATABASE_URL`. Run `npm run test:integration` against a disposable migrated and provisioned PostgreSQL database; CI provides one. `npm run format` uses the repository Prettier configuration, including backend, shared code and scripts. CI runs `npm run format:check` without modifying files; test files are outside this check, and generated Next.js declarations are ignored.
