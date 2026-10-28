@@ -3,7 +3,14 @@ import { prisma } from './prisma';
 import { parseLevel } from '../game';
 import { defaultRules } from '../game/run-evaluation';
 import { cancelPuzzle } from './competitive';
-import { checkSchedule, publishCourse, publishSchedule, recoverRuns } from './course-publishing';
+import {
+  checkAuthoredCourses,
+  checkSchedule,
+  clearUnplayedFrom,
+  publishCourse,
+  publishSchedule,
+  recoverRuns,
+} from './course-publishing';
 
 /** Command-line entry point. The same functions also run from the daily cron route. */
 async function main() {
@@ -26,6 +33,11 @@ async function main() {
     );
   } else if (command === 'check') {
     for (const line of await checkSchedule()) console.log(line);
+  } else if (command === 'check-authored') {
+    for (const line of await checkAuthoredCourses()) console.log(line);
+  } else if (command === 'clear-unplayed') {
+    if (!file) throw new Error('Usage: npm run courses:publish -- clear-unplayed YYYY-MM-DD');
+    for (const line of await clearUnplayedFrom(file)) console.log(line);
   } else if (command === 'recover') {
     console.log(await recoverRuns());
   } else if (command === 'cancel') {
@@ -33,7 +45,10 @@ async function main() {
       throw new Error('Usage: npm run courses:publish -- cancel YYYY-MM-DD "Reason"');
     await cancelPuzzle(file, dateArg);
     console.log(`${file}: canceled; historical verification retained and ranking removed.`);
-  } else throw new Error('Commands: schedule, course, check, recover, cancel');
+  } else
+    throw new Error(
+      'Commands: schedule, course, check, check-authored, clear-unplayed, recover, cancel',
+    );
 }
 
 main()
