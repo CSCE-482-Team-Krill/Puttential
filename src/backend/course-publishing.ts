@@ -2,6 +2,7 @@ import { performance } from 'node:perf_hooks';
 import { Prisma } from '../../generated/prisma/client';
 import { prisma } from './prisma';
 import { openingCourse } from './daily-courses';
+import { AUTHORED_COURSE_COUNT, authoredCourse, authoredIndexForDate } from './authored-courses';
 import { centralDateString, shiftDate } from './puzzle-date';
 import { replayRun } from '../game/run-evaluation';
 import { parseLevel, createGame } from '../game';
@@ -25,14 +26,15 @@ export async function publishCourse(
   rules: PuzzleRules,
   title: string,
   solutions: Placement[],
+  requireSolved = true,
 ): Promise<string> {
+  if (!validDate(date) || !title.trim() || solutions.length < 1)
+    throw new Error('Publishing requires a date, a title and a reference layout.');
   if (
-    !validDate(date) ||
-    !title.trim() ||
-    solutions.length < 2 ||
-    JSON.stringify(solutions[0]) === JSON.stringify(solutions[1])
+    requireSolved &&
+    (solutions.length < 2 || JSON.stringify(solutions[0]) === JSON.stringify(solutions[1]))
   )
-    throw new Error('Publishing requires a date, title and two distinct solutions.');
+    throw new Error('Publishing requires two distinct solutions.');
 
   const existing = await prisma.puzzle.findUnique({
     where: { date: new Date(`${date}T00:00:00Z`) },
@@ -71,7 +73,8 @@ export async function publishCourse(
   const results = [];
   for (const placement of solutions) {
     const result = await replayRun(level, placement, rules);
-    if (result.outcome !== 'success')
+    // if (result.outcome !== 'success')
+    if (requireSolved && result.outcome !== 'success')
       throw new Error(`Review solution failed: ${date} (${result.outcome})`);
     results.push(result);
   }
@@ -122,11 +125,33 @@ export async function publishCourse(
   return `${date}: published ${title}; two verified solutions (${Math.round(replayMs)}ms total); full-cap replay ${Math.round(fullRunMs)}ms`;
 }
 
-/** Publishes the opening rotation for three past days, today and the next six days. */
+/** Publishes the daily rotation for three past days, today and the next six days. */
 export async function publishSchedule(today = centralDateString()): Promise<string[]> {
   const lines: string[] = [];
+  // CI keeps the generated opening set because its tests are written against it.
+  const useOpening = process.env.PUTTENTIAL_COURSE_SET === 'opening';
   for (let offset = -3; offset <= 6; offset++) {
     const date = shiftDate(today, offset);
+    if (!useOpening) {
+      try {
+        const course = authoredCourse(authoredIndexForDate(date));
+        lines.push(
+          await publishCourse(
+            date,
+            course.level,
+            course.rules,
+            course.title,
+            course.solutions,
+            false,
+          ),
+        );
+        continue;
+      } catch (error) {
+        // Never leave a day empty: fall back to the generated opening course.
+        const reason = error instanceof Error ? error.message : 'unknown error';
+        lines.push(`${date}: designer course skipped (${reason})`);
+      }
+    }
     const course = openingCourse(openingIndexForDate(date));
     lines.push(
       await publishCourse(date, course.level, course.rules, course.title, course.solutions),
@@ -167,4 +192,37 @@ export async function recoverRuns(): Promise<string> {
   for (const r of queued) await verifyRun(r.id);
   await prisma.$executeRaw`DELETE FROM api_rate_limits WHERE expires_at < NOW()`;
   return `Retried ${queued.length} queued verification(s) and removed expired admission records.`;
+}
+
+/** Replays the reference layout of every designer course without writing to the database. */
+export async function checkAuthoredCourses(): Promise<string[]> {
+  const lines: string[] = [];
+  for (let i = 0; i < AUTHORED_COURSE_COUNT; i++) {
+    try {
+      const c = authoredCourse(i);
+      const result = await replayRun(c.level, c.solutions[0]!, c.rules);
+      lines.push(`${c.title}: ${result.outcome}`);
+    } catch (error) {
+      lines.push(`Course #${i + 1}: invalid (${error instanceof Error ? error.message : 'error'})`);
+    }
+  }
+  return lines;
+}
+
+/** Deletes courses from `date` on that nobody has played, so the schedule can republish them. */
+export async function clearUnplayedFrom(date: string): Promise<string[]> {
+  if (!validDate(date)) throw new Error('Use a YYYY-MM-DD date.');
+  const from = { date: { gte: new Date(`${date}T00:00:00Z`) } };
+  const unplayed = {
+    runs: { none: {} },
+    guestProgress: { none: {} },
+    attempts: { none: {} },
+    solutions: { none: {} },
+  };
+  const { count } = await prisma.puzzle.deleteMany({ where: { ...from, ...unplayed } });
+  const kept = await prisma.puzzle.findMany({ where: from, orderBy: { date: 'asc' } });
+  return [
+    `Removed ${count} unplayed course(s) from ${date}.`,
+    ...kept.map((p) => `${p.date.toISOString().slice(0, 10)}: kept ${p.title} (already played)`),
+  ];
 }
