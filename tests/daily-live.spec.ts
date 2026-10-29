@@ -27,13 +27,8 @@ test('real daily browser flow persists a verified result and shares it across tw
       await expect(page.getByRole('dialog')).toContainText('Nickname saved.');
       await page.keyboard.press('Escape');
       await page.locator('.tile-option').filter({ hasText: 'Gentle' }).click();
-      await expect(page.getByLabel('Selected tile angle')).toBeEnabled();
-      const angle = page.getByLabel('Selected tile angle');
-      const initialAngle = await angle.inputValue();
-      const rotatedAngle = String((Number(initialAngle) + 15) % 360);
-      await angle.fill(rotatedAngle);
-      await expect(angle).toHaveValue(rotatedAngle);
-      await angle.fill(initialAngle);
+      await expect(page.getByLabel('Selected tile angle')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /^Rotate (left|right)$/ })).toHaveCount(0);
       await page.getByRole('button', { name: 'Play', exact: true }).click();
       await expect(page.getByRole('dialog', { name: 'Nice work!' })).toBeVisible({
         timeout: 20000,

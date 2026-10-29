@@ -43,7 +43,8 @@ test('published costs, unsupported engine, truthful guest profile and responsive
   await page.locator('.tile-option').first().click();
   await page.locator('.tile-option').last().click();
   await expect(page.locator('.toolkit-note')).toContainText('Force cost 5');
-  await expect(page.getByLabel('Selected tile angle')).toBeDisabled();
+  await expect(page.getByLabel('Selected tile angle')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Rotate (left|right)$/ })).toHaveCount(0);
   await page.getByLabel('Selected tile X', { exact: true }).fill('2');
   await expect(page.getByLabel('Selected tile X', { exact: true })).toHaveValue('2');
   const saved = savedFixture();

@@ -863,8 +863,7 @@ button:disabled {
   list-style: none;
 }
 .leaderboard-snapshot,
-.leaderboard-updated,
-.leaderboard-percentile {
+.leaderboard-updated {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -891,12 +890,6 @@ button:disabled {
 }
 .leaderboard-personal p {
   margin: 0;
-}
-.leaderboard-percentile strong {
-  color: var(--ui-green);
-  font-size: 1.5rem;
-  line-height: 1.2;
-  font-variant-numeric: tabular-nums;
 }
 .ranking-row {
   display: grid;
@@ -1415,7 +1408,7 @@ button:disabled {
 }
 .field-inputs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 .run-timer {
@@ -1458,14 +1451,6 @@ button:disabled {
   .selected-field-controls input {
     min-height: 32px;
     padding: 4px;
-  }
-  .selected-field-controls .panel-actions {
-    margin: 4px 0;
-    gap: 4px;
-  }
-  .selected-field-controls .panel-actions button {
-    min-height: 28px;
-    padding: 4px 6px;
   }
 }
 .api-notice {
