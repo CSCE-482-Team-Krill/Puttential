@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { starterLevels, levelName } from '../../game';
@@ -14,12 +14,7 @@ import type { IconName } from '../icon';
 import { Modal, usePreferences } from '../modal';
 import type { Panel } from '../modal';
 import { ApiError, puzzleApi } from '../api';
-import {
-  selectableFields,
-  selectedFieldCount,
-  displayedForceCost,
-  TILE_COST,
-} from '../score-display';
+import { selectableFields, selectedFieldCount, displayedForceCost } from '../score-display';
 import { bootstrapGuest } from '../guest-session';
 import { localContext, publishedContext, dailyDelay } from '../course-context';
 import type { CourseContext } from '../course-context';
@@ -35,8 +30,8 @@ import { ProfilePanel } from '../panels/profile';
 import { ResultPanel } from '../panels/result';
 import { RunsPanel } from '../panels/runs';
 import { shareResult } from '../share-result';
+import { markTutorialSeen, shouldOpenTutorial, Tutorial } from '../tutorial';
 
-const PRACTICE_LEVELS = starterLevels.map((level) => ({ level, day: 'Practice course' }));
 export default function Home() {
   const [context, setContext] = useState<CourseContext | null>(null);
   const contextRef = useRef(context);
@@ -48,6 +43,14 @@ export default function Home() {
   const [panel, setPanel] = useState<Panel>(null);
   const [sidebarTab, setSidebarTab] = useState<'toolkit' | 'runs'>('toolkit');
   const [preferences, setPreferences] = usePreferences();
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  useEffect(() => {
+    if (shouldOpenTutorial()) setTutorialOpen(true);
+  }, []);
+  const closeTutorial = useCallback(() => {
+    markTutorialSeen();
+    setTutorialOpen(false);
+  }, []);
   const [player, setPlayer] = useState<Player | null>(null);
   const playerRef = useRef(player);
   playerRef.current = player;
@@ -71,6 +74,7 @@ export default function Home() {
   const staleBoundary = useRef(false);
   const level = context?.level ?? starterLevels[0]!;
   const p = context?.puzzle;
+  const legacy = context?.source === 'legacy';
   const puzzle = usePuzzle(level, {
     ...(!p || deliveredEngine.supports(p.rules) ? { adapter: deliveredEngine } : {}),
     ...(p ? { rules: p.rules } : {}),
@@ -264,7 +268,7 @@ export default function Home() {
   async function chooseLocal(
     next: Level,
     bounds?: Bounds,
-    source: 'practice' | 'local' = 'practice',
+    source: 'legacy' | 'practice' | 'local' = 'practice',
   ) {
     if (!(await leaveOwned())) return;
     ++selectedGeneration.current;
@@ -468,7 +472,7 @@ export default function Home() {
         origin: window.location.origin,
       });
     }
-    return `⛳ Puttential — ${p?.date ?? 'Practice'} — ${p ? 'Unverified' : 'Practice — unranked'}\n${puzzle.result?.solved ? 'Solved' : (puzzle.result?.outcome ?? 'Finished')}\nForce ${puzzle.result?.forceCost ?? 0} · Tiles ${puzzle.result?.tiles ?? 0}\nBall time ${(puzzle.result?.seconds ?? 0).toFixed(2)}s${p ? `\n${window.location.origin}/?date=${p.date}` : ''}`;
+    return `⛳ Puttential — ${p?.date ?? (legacy ? levelName(level) : 'Practice')} — ${p ? 'Unverified' : legacy ? 'Legacy course' : 'Practice — unranked'}\n${puzzle.result?.solved ? 'Solved' : (puzzle.result?.outcome ?? 'Finished')}\nForce ${puzzle.result?.forceCost ?? 0} · Tiles ${puzzle.result?.tiles ?? 0}\nBall time ${(puzzle.result?.seconds ?? 0).toFixed(2)}s${p ? `\n${window.location.origin}/?date=${p.date}` : ''}`;
   }
   const nav: { name: Exclude<Panel, 'result' | null>; label: string; icon: IconName }[] = [
     { name: 'archive', label: 'Calendar', icon: 'calendar' },
@@ -519,9 +523,11 @@ export default function Home() {
               <button onClick={() => void refreshToday(!context)} disabled={loading}>
                 Retry daily course
               </button>
-              <button onClick={() => void chooseLocal(starterLevels[0]!)}>Play practice</button>
+              <button onClick={() => void chooseLocal(starterLevels[0]!, undefined, 'legacy')}>
+                Play legacy course
+              </button>
             </div>
-            {!loading && !context && <p>Practice courses still work; those runs are unranked.</p>}
+            {!loading && !context && <p>Legacy courses are still available to play.</p>}
           </div>
         )}
         {context && (
@@ -569,7 +575,9 @@ export default function Home() {
                         ? 'Archive challenge'
                         : context.source === 'local'
                           ? 'Local course — unranked'
-                          : 'Practice challenge — unranked'}{' '}
+                          : legacy
+                            ? 'Legacy course'
+                            : 'Practice challenge — unranked'}{' '}
                     {p && <b>{p.date}</b>}
                   </span>
                 </div>
@@ -687,7 +695,9 @@ export default function Home() {
                     Force cost {cost} · {placed} tiles.{' '}
                     {p
                       ? 'Use the published tile costs to improve your solution.'
-                      : 'Practice costs 1 point per active block.'}
+                      : legacy
+                        ? 'Legacy courses cost 1 point per active block.'
+                        : 'Practice costs 1 point per active block.'}
                   </p>
                 </div>
                 <section
@@ -699,6 +709,7 @@ export default function Home() {
                   tabIndex={0}
                 >
                   <RunsPanel
+                    legacy={legacy}
                     puzzleId={p?.id}
                     progress={progress}
                     records={records}
@@ -749,11 +760,11 @@ export default function Home() {
           close={() => setPanel(null)}
           preferences={preferences}
           setPreferences={setPreferences}
-          result={puzzle.result}
-          levels={PRACTICE_LEVELS}
-          currentLevel={level}
-          chooseLevel={(next) => void chooseLocal(next)}
-          tileCost={TILE_COST}
+          resultSolved={puzzle.result?.solved !== false}
+          showTutorial={() => {
+            setPanel(null);
+            setTutorialOpen(true);
+          }}
           courseImport={
             <LevelImport onLoad={(next, bounds) => void chooseLocal(next, bounds, 'local')} />
           }
@@ -768,14 +779,15 @@ export default function Home() {
                       choose={(date) => void chooseDate(date)}
                       reconcileGuest={reconcileGuest}
                     />
-                    <h3>Practice — unranked</h3>
-                    {PRACTICE_LEVELS.map((entry) => (
+                    <h3>Legacy courses</h3>
+                    <p>Courses from an earlier version of Puttential.</p>
+                    {starterLevels.map((course) => (
                       <button
-                        className="modal-row practice-course"
-                        key={entry.level.id}
-                        onClick={() => void chooseLocal(entry.level)}
+                        className="modal-row legacy-course"
+                        key={course.id}
+                        onClick={() => void chooseLocal(course, undefined, 'legacy')}
                       >
-                        {levelName(entry.level)}
+                        {levelName(course)}
                       </button>
                     ))}
                   </>
@@ -810,6 +822,7 @@ export default function Home() {
                   ? {
                       body: (
                         <ResultPanel
+                          legacy={legacy}
                           result={puzzle.result}
                           record={record}
                           progress={progress}
@@ -823,6 +836,7 @@ export default function Home() {
                   : {})}
         />
       )}
+      {tutorialOpen && <Tutorial close={closeTutorial} reducedMotion={preferences.reducedMotion} />}
     </div>
   );
 }

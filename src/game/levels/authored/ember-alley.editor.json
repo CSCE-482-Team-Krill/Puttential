@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "869656758505e7d055e0b7f1196ce96d1d859ea365ab946e5ffa905dfee2a393",
+  "editor": {
+    "name": "Ember Alley",
+    "arena": {
+      "bounds": {
+        "minX": -8,
+        "maxX": 8,
+        "minY": -5,
+        "maxY": 5
+      },
+      "walls": [
+        "left-rail",
+        "right-rail",
+        "bottom-rail",
+        "top-rail"
+      ],
+      "thickness": 0.5
+    }
+  }
+}

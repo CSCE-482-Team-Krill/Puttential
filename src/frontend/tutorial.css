@@ -1,0 +1,185 @@
+/* First-visit tutorial: one scripted shot on its own course, then optional free play. */
+.modal.modal-tutorial {
+  width: min(100%, 1040px);
+}
+.tutorial-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.tutorial-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tutorial-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border: 1px solid var(--ui-line);
+  border-radius: 999px;
+  background: var(--ui-white);
+  color: var(--ui-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  transition:
+    background-color 160ms ease-out,
+    border-color 160ms ease-out,
+    color 160ms ease-out;
+}
+.tutorial-steps li span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ui-turf-soft);
+  font-size: 0.75rem;
+}
+.tutorial-steps li.active {
+  border-color: var(--ui-green);
+  background: var(--ui-turf);
+  color: var(--ui-ink);
+}
+.tutorial-steps li.active span,
+.tutorial-steps li.complete span {
+  background: var(--ui-green);
+  color: var(--ui-white);
+}
+.tutorial-steps li.complete {
+  color: var(--ui-green);
+}
+.tutorial-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 240px;
+  gap: 12px;
+  align-items: start;
+}
+.course.tutorial-course {
+  aspect-ratio: 21 / 13;
+}
+.tutorial-toolkit .tile-list {
+  margin-top: 8px;
+}
+.tutorial-toolkit .tile-option:disabled {
+  background: var(--ui-white);
+  cursor: default;
+}
+.tutorial-toolkit .tile-option.selected:disabled {
+  background: var(--ui-turf);
+}
+.tutorial-toolkit.pulse .tile-option {
+  animation: tutorial-pulse 900ms ease-in-out;
+}
+@keyframes tutorial-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 209, 102, 0);
+  }
+  45% {
+    box-shadow: 0 0 0 6px rgba(255, 209, 102, 0.85);
+  }
+}
+.tutorial-run {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.tutorial-run .play-button {
+  width: 100%;
+}
+.tutorial-log {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 280px;
+  margin: 12px 0 0;
+  padding: 12px 0 0;
+  overflow-y: auto;
+  border-top: 1px solid var(--ui-line);
+  list-style: none;
+  scroll-behavior: smooth;
+}
+.tutorial-log li {
+  padding: 4px 0 4px 10px;
+  border-left: 3px solid var(--ui-line);
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  animation: tutorial-line-in 240ms ease-out;
+}
+.tutorial-log li.current {
+  border-left-color: var(--ui-green);
+  color: var(--ui-ink);
+  font-weight: 600;
+}
+@keyframes tutorial-line-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+.tutorial-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.tutorial-launch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px;
+  border: 1px solid var(--ui-green);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-turf);
+  color: var(--ui-ink);
+  text-align: left;
+}
+.tutorial-launch:hover {
+  background: var(--ui-turf-soft);
+}
+.tutorial-launch > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tutorial-launch strong {
+  font-size: 0.875rem;
+}
+.tutorial-launch small {
+  color: var(--ui-muted);
+  font-size: 0.78125rem;
+}
+.tutorial-launch-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--ui-green);
+  color: var(--ui-white);
+}
+@media (max-width: 759px) {
+  .tutorial-stage {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tutorial-toolkit .tile-option {
+    min-height: 64px;
+  }
+  .tutorial-log {
+    max-height: 168px;
+  }
+  .tutorial-actions {
+    justify-content: stretch;
+  }
+  .tutorial-actions > button {
+    flex: 1 1 auto;
+  }
+}

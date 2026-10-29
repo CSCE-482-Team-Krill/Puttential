@@ -4,12 +4,14 @@ import type { PuzzleProgress } from '../../shared/puzzle-contracts';
 import type { RecoveryRecord } from '../progress-storage';
 import { CopyResult } from './copy-result';
 export function ResultPanel({
+  legacy = false,
   result,
   record,
   progress,
   compose,
   retry,
 }: {
+  legacy?: boolean;
   result: RunResult | null;
   record: RecoveryRecord | undefined;
   progress: PuzzleProgress | undefined;
@@ -31,9 +33,14 @@ export function ResultPanel({
                 ? 'The ball sank in water.'
                 : result?.failure === 'lava'
                   ? 'The ball burnt in lava.'
-                  : 'The ball stopped short of the goal.'}
+                  : result?.failure === 'out-of-bounds'
+                    ? 'An object left the course. Keep at least part of every object inside the board.'
+                    : 'The ball stopped short of the goal.'}
       </p>
-      <p role="status">{record?.message ?? 'Practice — unranked. This result is not submitted.'}</p>
+      <p role="status">
+        {record?.message ??
+          (legacy ? 'Legacy course' : 'Practice — unranked. This result is not submitted.')}
+      </p>
       {result && (
         <div className="result-grid">
           <div>

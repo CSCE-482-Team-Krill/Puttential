@@ -1,5 +1,6 @@
-import bar from './bar-around-corner.json';
-import radial from './radial-relay.json';
+import bar from './legacy/bar-around-corner.json';
+import radial from './legacy/radial-relay.json';
+import tutorial from './tutorial.json';
 import { parseLevel } from './parse';
 import { documentFromLevel } from './document';
 const starters = [
@@ -7,6 +8,7 @@ const starters = [
   { level: parseLevel(radial), suffix: 'rail' },
 ];
 export const starterLevels = starters.map((entry) => entry.level);
+export const tutorialLevel = parseLevel(tutorial);
 export function starterDocument(index: number) {
   const starter = starters[index];
   if (!starter) throw new Error('Unknown starter');

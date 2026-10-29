@@ -113,51 +113,6 @@ button:disabled {
 .brand-dot {
   color: var(--ui-green);
 }
-.brand-mark {
-  position: relative;
-  display: block;
-  flex-shrink: 0;
-  width: 42px;
-  height: 42px;
-}
-.brand-ball {
-  position: absolute;
-  left: 2px;
-  top: 17px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 1px solid var(--ui-ink);
-  background: var(--ui-paper);
-}
-.brand-ball::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: 5px;
-  width: 5px;
-  height: 5px;
-  border-left: 1px solid var(--ui-muted-decoration);
-  border-top: 1px solid var(--ui-muted-decoration);
-  border-radius: 50%;
-}
-.brand-flag {
-  position: absolute;
-  left: 28px;
-  top: 3px;
-  width: 2px;
-  height: 31px;
-  background: var(--ui-ink);
-}
-.brand-flag::after {
-  content: '';
-  position: absolute;
-  left: 2px;
-  top: 0;
-  border-top: 6px solid transparent;
-  border-bottom: 6px solid transparent;
-  border-left: 12px solid var(--ui-accent);
-}
 .main-nav {
   display: flex;
   flex-wrap: wrap;
@@ -1007,9 +962,6 @@ button:disabled {
   padding: 24px 16px;
   text-align: center;
 }
-.result-mark {
-  margin: 0 auto 16px;
-}
 .result-body > p {
   color: var(--ui-muted);
   font-size: 0.875rem;
@@ -1318,9 +1270,6 @@ button:disabled {
   .brand {
     font-size: 1.125rem;
   }
-  .brand > .brand-mark {
-    display: none;
-  }
   .nav-button {
     min-width: 40px;
     min-height: 40px;
@@ -1333,7 +1282,7 @@ button:disabled {
 .api-notice:empty {
   display: none;
 }
-.practice-course {
+.legacy-course {
   width: 100%;
   text-align: left;
 }

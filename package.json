@@ -7,7 +7,8 @@
     "game:build": "npm run build --workspace=puttential-frontend",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
-    "format": "prettier --write level-editor src/frontend src/game/levels/codec.ts src/game/objects/catalog.ts tests",
+    "format": "prettier --write level-editor src/frontend src/backend src/shared scripts src/game/levels/codec.ts src/game/objects/catalog.ts tests",
+    "format:check": "prettier --check level-editor src/frontend src/backend src/shared scripts src/game/levels/codec.ts src/game/objects/catalog.ts",
     "test:e2e": "playwright test",
     "test:ui:production": "node tests/ui-polish-production-smoke.mjs",
     "game:start": "npm run start --workspace=puttential-frontend -- --hostname 127.0.0.1",
@@ -25,7 +26,8 @@
     "prettier": "^3.6.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
-    "@types/node": "26.6.2"
+    "@types/node": "26.6.2",
+    "sharp": "^0.35.5"
   },
   "dependencies": {
     "@dimforge/rapier2d-compat": "0.20.0",

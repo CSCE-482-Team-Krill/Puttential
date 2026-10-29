@@ -142,7 +142,7 @@ export class RunEvaluator {
     this.distance += game.movement()[this.level.goal.bodyId] ?? 0;
     this.goal = advanceGoal(this.goal, state);
     const target = state.bodies.find((b) => b.id === this.level.goal.bodyId);
-    const failure = target?.burnt ? 'lava' : target?.destroyed;
+    const failure = state.failure?.reason ?? (target?.burnt ? 'lava' : target?.destroyed);
     const stopped =
       state.bodies.every((b) => b.sleeping || b.destroyed) &&
       !this.goal.inside &&

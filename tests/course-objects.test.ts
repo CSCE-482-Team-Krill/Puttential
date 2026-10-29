@@ -79,10 +79,10 @@ test('water: slows moving bodies, sinks only fully submerged resting bodies, and
   );
 });
 
-test('lava: any contact fails, including grazing and fast crossings; a burnt ball cannot score', async () => {
+test('lava: center entry and fast crossings burn the ball; a burnt ball cannot score', async () => {
   for (const [x, vx] of [
     [0, 0],
-    [2.39, 0],
+    [1.99, 0],
     [-3, 900],
   ]) {
     const game = await createGame(level({ kind: 'lava' }, { x: x!, y: 0 }, { x: vx!, y: 0 }));
@@ -108,6 +108,7 @@ test('lava: any contact fails, including grazing and fast crossings; a burnt bal
   try {
     safe.step();
     assert.equal(safe.getRenderState().bodies[0]!.destroyed, undefined);
+    assert.equal(safe.getRenderState().bodies[0]!.burnt, false);
   } finally {
     safe.destroy();
   }

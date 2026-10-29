@@ -44,7 +44,7 @@ export function arenaGeometry(arena: Arena) {
   ];
 }
 
-/** Strict authoring limits, separate from simulation (a moving body can leave an open course). */
+/** Initial geometry fits the board; runtime permits overhang until every piece is outside. */
 export function validateDocument(value: unknown): LevelDocument {
   const doc = parseDocument(value);
   const { bounds } = doc.editor.arena;
@@ -111,7 +111,8 @@ export function documentFromLevel(level: Level, walls: readonly string[] = []): 
 export function resizeArena(document: LevelDocument, bounds: Bounds): LevelDocument {
   const next = structuredClone(document);
   next.editor.arena.bounds = bounds;
-  const geometry = arenaGeometry(next.editor.arena);
+  next.level.bounds = { ...bounds };
+  const geometry = next.editor.arena.walls.length ? arenaGeometry(next.editor.arena) : [];
   next.level.staticBodies = next.level.staticBodies.map((body) => {
     const index = next.editor.arena.walls.indexOf(body.id);
     if (index < 0) return body;
@@ -123,5 +124,44 @@ export function resizeArena(document: LevelDocument, bounds: Bounds): LevelDocum
       pieces: [{ ...body.pieces[0]!, shape: shape.shape }],
     };
   });
+  return validateDocument(next);
+}
+
+/** Toggle only the declared outer walls; arbitrary obstacles are never removed or relabeled. */
+export function setLevelBorders(document: LevelDocument, enabled: boolean): LevelDocument {
+  const next = structuredClone(document);
+  const arena = next.editor.arena;
+  next.level.bounds = { ...arena.bounds };
+  if (enabled === (arena.walls.length === 4)) return validateDocument(next);
+  if (!enabled) {
+    const ids = new Set(arena.walls);
+    next.level.staticBodies = next.level.staticBodies.filter((body) => !ids.has(body.id));
+    arena.walls = [];
+  } else {
+    const ids = new Set(
+      [...next.level.staticBodies, ...next.level.dynamicBodies, ...next.level.fields].map(
+        (o) => o.id,
+      ),
+    );
+    const walls = ['left', 'right', 'bottom', 'top'].map((side) => {
+      const prefix = `${side}-rail`;
+      let id = prefix,
+        suffix = 1;
+      while (ids.has(id)) id = `${prefix}-${suffix++}`;
+      ids.add(id);
+      return id;
+    });
+    arena.walls = walls;
+    next.level.staticBodies = [
+      ...next.level.staticBodies,
+      ...arenaGeometry(arena).map((geometry, i) => ({
+        id: walls[i]!,
+        position: geometry.position,
+        angle: 0,
+        material: { restitution: 0.8 },
+        pieces: [{ id: `${walls[i]}-piece`, shape: geometry.shape }],
+      })),
+    ];
+  }
   return validateDocument(next);
 }

@@ -17,18 +17,18 @@ Open **http://127.0.0.1:3001**. No database, account or environment configuratio
 
 Paths below are relative to the repository root:
 
-| File                                        | Purpose                                                                             |
-| ------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `src/game/levels/authored/<id>.json`        | Editor-saved game data, loaded with the engine's `parseLevel`.                      |
-| `src/game/levels/authored/<id>.editor.json` | Companion editor name, board bounds, managed wall IDs/thickness and game-file hash. |
-| `src/game/levels/bar-around-corner.json`    | Bundled Bar Around Corner starter.                                                  |
-| `src/game/levels/radial-relay.json`         | Bundled Radial Relay starter, including its circular ball.                          |
+| File                                            | Purpose                                                                             |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `src/game/levels/authored/<id>.json`            | Editor-saved game data, loaded with the engine's `parseLevel`.                      |
+| `src/game/levels/authored/<id>.editor.json`     | Companion editor name, board bounds, managed wall IDs/thickness and game-file hash. |
+| `src/game/levels/legacy/bar-around-corner.json` | Legacy Bar Around Corner course from an earlier game version.                       |
+| `src/game/levels/legacy/radial-relay.json`      | Legacy Radial Relay course, including its circular ball.                            |
 
-The **Repository library** lists authored levels. **Game starters** loads the bundled courses with their managed wall mappings. Saving a starter creates an authored copy; it does not overwrite the bundled starter file.
+The **Repository library** lists authored levels. **Legacy courses** loads courses from an earlier game version with their managed wall mappings. Saving a legacy course creates an authored copy; it does not overwrite the bundled legacy file.
 
 ## Author a course
 
-- Start a new course, open a game starter, import JSON, or open a saved repository level.
+- Start a new course, open a legacy course, import JSON, or open a saved repository level.
 - Drag a preset from the palette, or select it and click on the course. Use the object list to select overlapping objects, the goal, or disabled fields.
 - Ctrl/Cmd-click objects on the canvas or in the object list to toggle multiple selections. Right-drag a rectangle to select fully enclosed objects; Ctrl/Cmd-right-drag adds a region. Managed walls are excluded. Drag a selected object to move the whole group.
 - Drag objects to move them. Coral handles resize and rotate; green edge handles resize the board. Numeric controls support precise transforms. Board width/height changes are centered; dragging an edge keeps the opposite edge fixed.
@@ -37,9 +37,13 @@ The **Repository library** lists authored levels. **Game starters** loads the bu
 - Changing **Shape type** to Circle starts with radius `0.4`; Rectangle starts at `1 × 1`. Set the desired dimensions afterward. Converting to Polygon uses the current outline, including a polygon approximation when converting a circle.
 - Enable **Show vertex handles** to drag vertices. The inspector also edits coordinates, inserts/deletes vertices, and adds/removes convex pieces. **Replace with a custom outline** accepts one local `x,y` pair per line and uses the game's triangulator to turn a concave solid into convex pieces. This replaces existing pieces and their density overrides.
 - Body pieces must be convex and counter-clockwise. Fields may be concave, with either winding. Neither supports holes or self-intersection, matching the engine. Force sources/centers must stay inside their field polygon.
-- Board bounds include the boundary walls' outer edges. Every complete shape, including circles and disabled fields, and the goal must stay inside. Invalid placements, rotations, geometry edits and board shrinks are rejected. Overlap is allowed. Bounds constrain authoring; moving bodies obey game physics during play.
-- Managed boundary walls are edited with Board controls. Imported documents may declare no managed walls; resizing then changes editing bounds only. The editor does not guess which arbitrary obstacles are boundaries.
+- **Board → Level borders** adds or removes the managed outer walls. Borders are optional; turning them off preserves the playable area and all other objects, with one undo step. Board width/height remain editable without walls.
+- Initial geometry, including complete circles, disabled fields and the goal, must fit within the board. Invalid placements, rotations, geometry edits and board shrinks are rejected. During play, overhang is allowed: a body fails the level only once all of its pieces are completely outside the playable area. Touching the boundary remains valid.
+- The failure rule applies to every moving body, including bodies other than the goal target. The shared engine checks actual circle and polygon geometry, rather than just an object’s center or bounding box. Reset restores the initial positions and clears the failure.
+- Managed boundary walls are edited with Board controls. Imported documents may declare no managed walls; resizing changes the playable area without creating physical walls. The toggle never deletes arbitrary imported obstacles. Open through Repository library to retain managed-wall metadata.
 - **Playtest** creates the main game's Rapier world. It uses the same timestep, forces, collisions, prediction, shared frontend goal tracking and player controls as Design C. Stop/reset and return to editing are available even for a course that never settles. Test placements do not change the authored course.
+
+Playable bounds are saved in the game JSON independently of wall geometry, so an open course keeps its dimensions when loaded in the game or imported without the editor sidecar. Older files without explicit bounds use their initial geometry as the playable area; older sidecar-only board sizes are retained when reopened in the editor.
 
 Goal completion checks the target body's position against the goal bounds for the configured hold time, after every engine tick. It does not require the entire body to fit inside the goal. Authoring bounds still apply to the whole shape.
 
@@ -55,8 +59,8 @@ Object copy/paste uses an editor clipboard for the current tab, including betwee
 
 Use **Fields & hazards** in the palette. These objects start enabled and stay fixed during play; they are excluded from the player’s force tile inventory and score.
 
-- **Water** applies heavy drag in proportion to overlap. A fully submerged body sinks once its linear and angular speeds fall below the configured threshold (default `0.06`). Drag defaults to `12`; shallow contact slows the ball without sinking it. The shared canvas uses the supplied blue texture as a repeating surface, with a slight dip and a translucent surface layer over the body.
-- **Lava** instantly zeros linear and angular velocity and chars the body black. The remains stay visible and stationary beneath the repeating orange texture, and remain a solid collider. Rapier shape casts also detect fast crossings. The shot still fails.
+- **Water** applies heavy drag in proportion to overlap once the body’s center of mass enters the zone. A fully submerged body sinks once its linear and angular speeds fall below the configured threshold (default `0.06`). Drag defaults to `12`; rim-only contact has no effect; partial immersion with the center inside slows the ball without sinking it. The shared canvas uses the supplied blue texture as a repeating surface, with a slight dip and a translucent surface layer over the body.
+- **Lava** zeros linear and angular velocity and chars the body black when its center of mass enters the zone. Rim-only contact is safe. The remains stay visible and stationary beneath the repeating orange texture, and remain a solid collider. The swept center path also detects fast crossings of thin lava zones. The shot still fails.
 - **Portal pair** places two oval ends, two units apart, in one undo step. Both must fit on the board. Each end shares its partner’s **Portal pair ID**; a pair can have at most two ends. A lone or disabled partner is inactive. A captured body waits at the entry for **Teleport delay (seconds)** (default `0.25`) before emerging. Its incoming linear and angular velocity are preserved; **Rotate velocity with exit** rotates velocity and body angle by the difference between endpoint orientations. This option applies to the selected entry end. After emerging, **Teleport cooldown (seconds)** (default `0.75`) blocks all portals. The body must also leave the pair before it can re-enter it. Timing settings apply to the selected entry end. Each pair has its own color in both apps; selection adds a dashed marker and keeps the ring color.
 
 Hazard failure prevents goal completion and is reported in playtest and the game. Reset restores the ball and portal state. Decorative animation respects Reduced motion.

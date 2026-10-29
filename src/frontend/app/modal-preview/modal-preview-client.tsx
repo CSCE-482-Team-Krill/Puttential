@@ -1,22 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import type { Level } from '../../../game';
 import { Modal, usePreferences } from '../../modal';
 import type { Panel } from '../../modal';
 import { Icon } from '../../icon';
 import { BrandLogo } from '../../brand-logo';
 import type { IconName } from '../../icon';
-import { TILE_COST } from '../../score-display';
-
-// This preview needs course identities only; it does not initialize the engine.
-const courses = [
-  { id: 'bar-around-corner', day: 'Today' },
-  { id: 'radial-relay', day: 'Yesterday' },
-  { id: 'spin-cycle', day: 'Sep 20' },
-  { id: 'key-turn', day: 'Sep 19' },
-  { id: 'corner-pocket', day: 'Sep 18' },
-].map(({ id, day }) => ({ level: { id } as Level, day }));
+import { EXAMPLE_COURSES, PreviewPanel } from './preview-panels';
 
 const panels: {
   panel: Exclude<Panel, 'result' | null>;
@@ -32,7 +22,7 @@ const panels: {
 
 export default function ModalPreview() {
   const [panel, setPanel] = useState<Panel>(null);
-  const [level, setLevel] = useState(courses[0]!.level);
+  const [course, setCourse] = useState<string>(EXAMPLE_COURSES[0].id);
   const [preferences, setPreferences] = usePreferences();
 
   return (
@@ -67,7 +57,7 @@ export default function ModalPreview() {
               <p>Open a panel above to review its layout and interactions.</p>
             </div>
           </div>
-          <p className="modal-footnote">Selected course: {level.id.split('-').join(' ')}</p>
+          <p className="modal-footnote">Selected course: {course.split('-').join(' ')}</p>
         </section>
       </main>
       {panel && (
@@ -77,12 +67,18 @@ export default function ModalPreview() {
           close={() => setPanel(null)}
           preferences={preferences}
           setPreferences={setPreferences}
-          result={null}
-          levels={courses}
-          currentLevel={level}
-          chooseLevel={setLevel}
-          tileCost={TILE_COST}
-          previewMode
+          {...(panel === 'stats' || panel === 'leaderboard' || panel === 'archive'
+            ? {
+                body: (
+                  <PreviewPanel
+                    panel={panel}
+                    currentCourse={course}
+                    chooseCourse={setCourse}
+                    close={() => setPanel(null)}
+                  />
+                ),
+              }
+            : {})}
         />
       )}
     </div>

@@ -88,8 +88,8 @@ test('author, constrain, save, reopen and play the same course in both apps', as
     expect(saved.dynamicBodies[0].pieces[0].shape).toEqual({ kind: 'circle', radius: 0.4 });
     expect(saved.formatVersion).toBe(1);
     expect(saved.editor).toBeUndefined();
-    await mkdir('level-editor/screenshots', { recursive: true });
-    await page.screenshot({ path: 'level-editor/screenshots/editor.png', fullPage: true });
+    await mkdir('artifacts/editor', { recursive: true });
+    await page.screenshot({ path: 'artifacts/editor/editor.png', fullPage: true });
     await page.getByRole('button', { name: 'Playtest', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
     await page.locator('.tile-option').click();
@@ -109,9 +109,9 @@ test('author, constrain, save, reopen and play the same course in both apps', as
       route.fulfill({ status: 404, json: { error: 'No daily fixture' } }),
     );
     await game.goto('http://127.0.0.1:3000');
-    await game.getByRole('button', { name: 'Play practice', exact: true }).click();
+    await game.getByRole('button', { name: 'Play legacy course', exact: true }).click();
     await expect(game.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
-    await game.screenshot({ path: 'level-editor/screenshots/game.png', fullPage: true });
+    await game.screenshot({ path: 'artifacts/editor/game.png', fullPage: true });
     await game.getByRole('button', { name: 'Settings', exact: true }).click();
     await game.getByLabel('Open local course').setInputFiles(file);
     await expect(
@@ -141,9 +141,9 @@ test('starter geometry, undo and malformed imports keep an editable document', a
   await page.goto('http://127.0.0.1:3001');
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.getByLabel('Game starters').selectOption('0');
+  await page.getByLabel('Legacy courses').selectOption('0');
   await expect(page.getByRole('heading', { name: 'Bar Around Corner', exact: true })).toBeVisible();
-  await page.getByLabel('Game starters').selectOption('1');
+  await page.getByLabel('Legacy courses').selectOption('1');
   await expect(page.getByRole('heading', { name: 'Radial Relay', exact: true })).toBeVisible();
   await page.locator('.object-list').getByRole('button', { name: 'ball', exact: true }).click();
   await expect(page.getByRole('spinbutton', { name: 'Radius', exact: true })).toHaveValue('0.35');

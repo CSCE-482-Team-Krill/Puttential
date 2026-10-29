@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "levelRevision": "cf69a869d32f5fd3cb197f0467fa85b7d8764b28485696f178b75f7cfb1a56db",
+  "editor": {
+    "name": "Open Water Hop",
+    "arena": {
+      "bounds": {
+        "minX": -8,
+        "maxX": 8,
+        "minY": -5,
+        "maxY": 5
+      },
+      "walls": [],
+      "thickness": 0.5
+    }
+  }
+}

@@ -601,99 +601,103 @@ export async function leaderboard(
     cursor = decodeCursor(params.get('cursor'), secret);
   if (!['daily', 'archive'].includes(scope) || !['top', 'around-me'].includes(view))
     return fail(400, 'INVALID_BOARD', 'Invalid leaderboard view.');
-  return prisma.$transaction(async (tx) => {
-    const p = await lockPuzzle(tx, puzzleId),
-      revision = String(p.boardRevision);
-    if (cursor && cursor.guest !== guest.id)
-      return fail(409, 'LEADERBOARD_VIEWER_CHANGED', 'The page belongs to a different guest.');
-    if (cursor && (cursor.puzzle !== p.id || cursor.scope !== scope || cursor.view !== view))
-      return fail(400, 'INVALID_CURSOR', 'The page belongs to a different board.');
-    if (cursor && cursor.revision !== revision)
-      return fail(409, 'BOARD_REVISION_CHANGED', 'Standings changed. Refresh to continue.');
-    const rows = p.canceledAt
-      ? []
-      : await tx.guestProgress.findMany({
-          where: {
-            puzzleId,
-            ...(scope === 'daily'
-              ? { bestDaily: { not: Prisma.DbNull } }
-              : { bestArchive: { not: Prisma.DbNull } }),
-          },
-          include: { guest: true },
-        });
-    const values = rows.map((r) => ({
-      guest: r.guest,
-      first: r.firstSolveAttempts!,
-      result: (scope === 'daily' ? r.bestDaily : r.bestArchive) as SavedResult,
-    }));
-    values.sort(
-      (a, b) =>
-        compareScore(score(a.result, a.first), score(b.result, b.first)) ||
-        a.result.savedAt.localeCompare(b.result.savedAt) ||
-        a.guest.id.localeCompare(b.guest.id),
-    );
-    let rank = 1;
-    const ranked = values.map((value, index) => {
-      if (
-        index &&
-        compareScore(
-          score(value.result, value.first),
-          score(values[index - 1]!.result, values[index - 1]!.first),
-        )
-      )
-        rank = index + 1;
-      return {
-        rank,
-        player: player(value.guest),
-        metrics: value.result.metrics!,
-        firstSolveAttempts: value.first,
-        percentile: 0,
-        bestRunId: value.result.runId,
-      };
-    });
-    for (let i = 0; i < ranked.length;) {
-      let end = i + 1;
-      while (end < ranked.length && ranked[end]!.rank === ranked[i]!.rank) end++;
-      for (let j = i; j < end; j++)
-        ranked[j]!.percentile = (100 * (ranked.length - end)) / ranked.length;
-      i = end;
-    }
-    const meIndex = ranked.findIndex((r) => r.player.id === guest.id),
-      me = ranked[meIndex] ?? null;
-    const offset =
-      cursor?.offset ??
-      (view === 'around-me' && meIndex >= 0 ? Math.max(0, meIndex - Math.floor(limit / 2)) : 0);
-    const now = await databaseNow(tx),
-      closed = now >= centralMidnight(shiftDate(p.date.toISOString().slice(0, 10), 1));
-    const pending =
-      p.canceledAt || scope !== 'daily'
-        ? 0
-        : await tx.competitiveRun.count({
-            where: { puzzleId, state: 'processing', dailyEligible: true },
+  return prisma.$transaction(
+    async (tx) => {
+      const p = await published(tx, puzzleId),
+        revision = String(p.boardRevision);
+      if (cursor && cursor.guest !== guest.id)
+        return fail(409, 'LEADERBOARD_VIEWER_CHANGED', 'The page belongs to a different guest.');
+      if (cursor && (cursor.puzzle !== p.id || cursor.scope !== scope || cursor.view !== view))
+        return fail(400, 'INVALID_CURSOR', 'The page belongs to a different board.');
+      if (cursor && cursor.revision !== revision)
+        return fail(409, 'BOARD_REVISION_CHANGED', 'Standings changed. Refresh to continue.');
+      const rows = p.canceledAt
+        ? []
+        : await tx.guestProgress.findMany({
+            where: {
+              puzzleId,
+              ...(scope === 'daily'
+                ? { bestDaily: { not: Prisma.DbNull } }
+                : { bestArchive: { not: Prisma.DbNull } }),
+            },
+            include: { guest: true },
           });
-    return {
-      viewerGuestId: guest.id,
-      puzzleId,
-      scope: scope as Scope,
-      view: view as 'top' | 'around-me',
-      availability: availability(p),
-      boardRevision: revision,
-      rows: ranked.slice(offset, offset + limit).map(({ bestRunId, ...row }) => row),
-      me,
-      totalPlayers: ranked.length,
-      nextCursor:
-        offset + limit < ranked.length
-          ? encodeCursor(
-              { guest: guest.id, puzzle: p.id, scope, view, revision, offset: offset + limit },
-              secret,
-            )
-          : null,
-      asOf: now.toISOString(),
-      submissionClosed: scope === 'daily' && closed,
-      pendingEligibleCount: pending,
-      final: !p.canceledAt && scope === 'daily' && closed && pending === 0,
-    };
-  });
+      const values = rows.map((r) => ({
+        guest: r.guest,
+        first: r.firstSolveAttempts!,
+        result: (scope === 'daily' ? r.bestDaily : r.bestArchive) as SavedResult,
+      }));
+      values.sort(
+        (a, b) =>
+          compareScore(score(a.result, a.first), score(b.result, b.first)) ||
+          a.result.savedAt.localeCompare(b.result.savedAt) ||
+          a.guest.id.localeCompare(b.guest.id),
+      );
+      let rank = 1;
+      const ranked = values.map((value, index) => {
+        if (
+          index &&
+          compareScore(
+            score(value.result, value.first),
+            score(values[index - 1]!.result, values[index - 1]!.first),
+          )
+        )
+          rank = index + 1;
+        return {
+          rank,
+          player: player(value.guest),
+          metrics: value.result.metrics!,
+          firstSolveAttempts: value.first,
+          percentile: 0,
+          bestRunId: value.result.runId,
+        };
+      });
+      for (let i = 0; i < ranked.length;) {
+        let end = i + 1;
+        while (end < ranked.length && ranked[end]!.rank === ranked[i]!.rank) end++;
+        for (let j = i; j < end; j++)
+          ranked[j]!.percentile = (100 * (ranked.length - end)) / ranked.length;
+        i = end;
+      }
+      const meIndex = ranked.findIndex((r) => r.player.id === guest.id),
+        me = ranked[meIndex] ?? null;
+      const offset =
+        cursor?.offset ??
+        (view === 'around-me' && meIndex >= 0 ? Math.max(0, meIndex - Math.floor(limit / 2)) : 0);
+      const now = await databaseNow(tx),
+        closed = now >= centralMidnight(shiftDate(p.date.toISOString().slice(0, 10), 1));
+      const pending =
+        p.canceledAt || scope !== 'daily'
+          ? 0
+          : await tx.competitiveRun.count({
+              where: { puzzleId, state: 'processing', dailyEligible: true },
+            });
+      return {
+        viewerGuestId: guest.id,
+        puzzleId,
+        scope: scope as Scope,
+        view: view as 'top' | 'around-me',
+        availability: availability(p),
+        boardRevision: revision,
+        rows: ranked.slice(offset, offset + limit).map(({ bestRunId, ...row }) => row),
+        me,
+        totalPlayers: ranked.length,
+        nextCursor:
+          offset + limit < ranked.length
+            ? encodeCursor(
+                { guest: guest.id, puzzle: p.id, scope, view, revision, offset: offset + limit },
+                secret,
+              )
+            : null,
+        asOf: now.toISOString(),
+        submissionClosed: scope === 'daily' && closed,
+        pendingEligibleCount: pending,
+        final: !p.canceledAt && scope === 'daily' && closed && pending === 0,
+      };
+    },
+    // A consistent snapshot without blocking starts and completions on this puzzle.
+    { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+  );
 }
 export async function archive(guest: Guest, params: URLSearchParams) {
   const secret = await cursorSecret();

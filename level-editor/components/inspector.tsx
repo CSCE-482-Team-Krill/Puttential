@@ -434,13 +434,14 @@ export function Inspector({
           <h3>{forceDefinition(object.force.kind).label}</h3>
           {object.force.kind === 'water' && (
             <p className="muted">
-              Heavy drag while touching water. A fully submerged body sinks when it comes to rest.
+              Heavy drag starts when the object’s center enters the water. A fully submerged body
+              sinks when it comes to rest.
             </p>
           )}
           {object.force.kind === 'lava' && (
             <p className="muted">
-              Contact stops and chars the ball, leaving blackened remains beneath the surface. The
-              shot fails.
+              The object’s center must enter the lava before it stops and chars. Grazing the edge is
+              safe; entering it fails the shot.
             </p>
           )}
           {object.force.kind === 'portal' && (
