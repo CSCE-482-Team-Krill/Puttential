@@ -468,7 +468,6 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
     getPlacement,
     play,
     rewind,
-    rotationAvailable: !!options.adapter && !!rules?.rotationAllowed,
     resetLayout: () => {
       if (modeRef.current !== 'setup') return;
       const game = gameRef.current;
@@ -488,7 +487,6 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
       }
     },
     moveField: (id: string, position: Vec2) => updateField(id, { position }),
-    rotateField: (id: string, angle: number) => updateField(id, { angle }),
     toggleField: (id: string) => {
       selectField(id);
       updateField(id, { enabled: !draftRef.current[id]?.enabled });

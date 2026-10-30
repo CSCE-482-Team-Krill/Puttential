@@ -137,22 +137,12 @@ export function LeaderboardPanel({
             </ol>
             <div className="leaderboard-personal modal-stack">
               {board.me ? (
-                <>
-                  <p>
-                    Your rank: <strong>#{board.me.rank}</strong>
-                  </p>
-                  <p className="leaderboard-percentile">
-                    <strong>{board.me.percentile.toFixed(1)}%</strong>
-                    <span>of ranked players are strictly behind you.</span>
-                  </p>
-                </>
+                <p>
+                  Your rank: <strong>#{board.me.rank}</strong>
+                </p>
               ) : (
                 <p>Solve this course to get a rank.</p>
               )}
-              <p className="modal-footnote">
-                Ties share rank. Percentile uses all {board.totalPlayers} ranked players in this
-                board, including ties.
-              </p>
             </div>
             {board.nextCursor && (
               <button disabled={busy} onClick={() => void load(true)}>
