@@ -797,10 +797,12 @@ export default function Home() {
               ? {
                   body: (
                     <LeaderboardPanel
+                      key={`${p?.id ?? 'none'}/${player?.id ?? 'none'}`}
                       puzzle={p}
                       player={player}
                       state={state}
                       reconcileGuest={reconcileGuest}
+                      runActive={startingPlay || puzzle.mode === 'running'}
                     />
                   ),
                 }

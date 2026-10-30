@@ -889,6 +889,41 @@ button:disabled {
   font-size: 0.75rem;
   font-weight: 500;
 }
+.watch-replay {
+  grid-column: 2 / -1;
+  justify-self: start;
+  min-height: 36px;
+  font-size: 0.8125rem;
+}
+.replay-viewer h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.replay-back {
+  align-self: flex-start;
+}
+.replay-course {
+  position: relative;
+  width: 100%;
+  height: clamp(220px, 42vh, 420px);
+  min-height: 220px;
+  overflow: hidden;
+  border: 1px solid var(--ui-line);
+  border-radius: 12px;
+}
+.replay-controls {
+  flex-wrap: wrap;
+  align-items: end;
+}
+.replay-controls label {
+  display: flex;
+  gap: 4px;
+  flex-direction: column;
+}
+.replay-time {
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+}
 .archive-row {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr) auto;
