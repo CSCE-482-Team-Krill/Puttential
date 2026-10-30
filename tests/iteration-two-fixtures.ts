@@ -156,6 +156,7 @@ export function boardFixture(p = puzzleFixture(), viewer = playerFixture.id): Le
     totalPlayers: 1,
     nextCursor: null,
     asOf: p.serverNow,
+    replayAccess: { available: false, unlocksAt: p.nextDailyAt },
     submissionClosed: false,
     pendingEligibleCount: 0,
     final: false,

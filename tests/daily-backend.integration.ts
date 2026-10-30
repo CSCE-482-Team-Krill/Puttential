@@ -8,6 +8,7 @@ import {
   decodeRun,
   decodeBoard,
   decodeArchive,
+  decodeReplay,
 } from '../src/shared/response-validation';
 import type { Placement } from '../src/shared/puzzle-contracts';
 import { openingCourse } from '../src/backend/daily-courses';
@@ -67,6 +68,14 @@ test('real PostgreSQL daily flow: ownership, replay, idempotency, ties, optimiza
   assert.equal(unauthenticated.status, 401);
   assert.equal((await call('me', 'GET', undefined, a.cookie)).status, 200);
   const p = decodePuzzle(await (await call('puzzles/today')).json());
+  const lockedReplay = await call(
+    `puzzles/${p.id}/replays/${a.player.id}?scope=archive`,
+    'GET',
+    undefined,
+    b.cookie,
+  );
+  assert.equal(lockedReplay.status, 403);
+  assert.equal((await lockedReplay.json()).code, 'REPLAY_LOCKED');
   const stored = await prisma.puzzle.findUniqueOrThrow({ where: { id: p.id } });
   const solutions = (stored.authorSolution as any).solutions as Placement[];
   const start = (g: typeof a, placement: Placement, requestId = randomUUID()) =>
@@ -263,6 +272,64 @@ test('real PostgreSQL daily flow: ownership, replay, idempotency, ties, optimiza
   );
   assert.ok(archiveBoard.totalPlayers >= 1);
   assert.equal(archiveBoard.me?.player.id, a.player.id);
+  assert.equal(archiveBoard.replayAccess.available, true);
+  const beforeReplay = await prisma.guestProgress.findUniqueOrThrow({
+    where: { guestId_puzzleId: { guestId: a.player.id, puzzleId: old.id } },
+  });
+  const replayResponse = await call(
+    `puzzles/${old.id}/replays/${a.player.id}?scope=archive`,
+    'GET',
+    undefined,
+    b.cookie,
+  );
+  assert.equal(replayResponse.status, 200);
+  assert.match(replayResponse.headers.get('cache-control')!, /private, no-store/);
+  const replay = decodeReplay(await replayResponse.json());
+  assert.equal(replay.viewerGuestId, b.player.id);
+  assert.equal(replay.player.id, a.player.id);
+  assert.equal(replay.result.runId, archived.runId);
+  assert.deepEqual(replay.placement, oldPlacement);
+  assert.equal((await call(`runs/${archived.runId}`, 'GET', undefined, b.cookie)).status, 404);
+  assert.equal(
+    (await call(`puzzles/${old.id}/replays/${a.player.id}?scope=daily`, 'GET', undefined, b.cookie))
+      .status,
+    404,
+  );
+  assert.equal(
+    (
+      await call(
+        `puzzles/${old.id}/replays/${a.player.id}?scope=invalid`,
+        'GET',
+        undefined,
+        b.cookie,
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await call(
+        `puzzles/${old.id}/replays/${b.player.id}?scope=archive`,
+        'GET',
+        undefined,
+        b.cookie,
+      )
+    ).status,
+    404,
+  );
+  assert.equal((await call(`puzzles/${old.id}/replays/${a.player.id}?scope=archive`)).status, 401);
+  assert.deepEqual(
+    await prisma.guestProgress.findUniqueOrThrow({
+      where: { guestId_puzzleId: { guestId: a.player.id, puzzleId: old.id } },
+    }),
+    beforeReplay,
+  );
+  assert.ok(!JSON.stringify(archiveBoard).includes('commands'));
+  assert.ok(
+    !JSON.stringify(
+      await (await call(`runs/${archived.runId}`, 'GET', undefined, a.cookie)).json(),
+    ).includes('commands'),
+  );
   const crossOrigin = await competitiveHandler(
     new Request(`${origin}/api/guest`, {
       method: 'POST',
@@ -324,6 +391,12 @@ test('a committed pre-cutoff receipt survives worker loss and blocks finality un
   assert.equal(before.submissionClosed, true);
   assert.equal(before.pendingEligibleCount, 1);
   assert.equal(before.final, false);
+  assert.equal(before.replayAccess.available, true);
+  assert.equal(
+    (await call(`puzzles/${p.id}/replays/${g.player.id}?scope=daily`, 'GET', undefined, g.cookie))
+      .status,
+    404,
+  );
   await prisma.competitiveRun.update({
     where: { id: accepted.runId },
     data: { leaseUntil: new Date(Date.now() - 1000) },
@@ -341,6 +414,12 @@ test('a committed pre-cutoff receipt survives worker loss and blocks finality un
   assert.equal(after.pendingEligibleCount, 0);
   assert.equal(after.final, true);
   assert.equal(after.totalPlayers, 1);
+  const historicalReplay = decodeReplay(
+    await (
+      await call(`puzzles/${p.id}/replays/${g.player.id}?scope=daily`, 'GET', undefined, g.cookie)
+    ).json(),
+  );
+  assert.equal(historicalReplay.result.runId, accepted.runId);
   const unfinished = decodeRun(
     await (
       await call(
@@ -374,4 +453,102 @@ test('a committed pre-cutoff receipt survives worker loss and blocks finality un
   );
   assert.equal(canceled.totalPlayers, 0);
   assert.equal(canceled.final, false);
+  assert.equal(canceled.replayAccess.available, false);
+  assert.equal(
+    (await call(`puzzles/${p.id}/replays/${g.player.id}?scope=daily`, 'GET', undefined, g.cookie))
+      .status,
+    410,
+  );
+});
+
+test('replay reads select the latest scoped best and reject invalid referenced runs', async () => {
+  const owner = await guest(),
+    viewer = await guest(),
+    course = openingCourse(0);
+  const date = shiftDate(centralDateString(), -61);
+  const p = await prisma.puzzle.create({
+    data: {
+      date: new Date(`${date}T00:00:00Z`),
+      seed: 'replay-selection',
+      title: 'Replay selection',
+      difficulty: 1,
+      configuration: course.level as any,
+      rules: course.rules as any,
+    },
+  });
+  puzzles.push(p.id);
+  const solve = async (index: number) => {
+    const started = decodeRun(
+      await (
+        await call(
+          'runs',
+          'POST',
+          {
+            expectedGuestId: owner.player.id,
+            requestId: randomUUID(),
+            puzzleId: p.id,
+            placement: course.solutions[index],
+          },
+          owner.cookie,
+        )
+      ).json(),
+    );
+    const finished = decodeRun(
+      await (
+        await call(
+          `runs/${started.runId}/complete`,
+          'POST',
+          {
+            expectedGuestId: owner.player.id,
+            kind: 'terminal',
+          },
+          owner.cookie,
+        )
+      ).json(),
+    );
+    assert.equal(finished.state, 'saved');
+    if (finished.state !== 'saved') throw new Error('Expected a verified solution');
+    assert.equal(finished.result.outcome, 'success');
+    return finished;
+  };
+  const original = await solve(0);
+  const staleBoard = decodeBoard(
+    await (
+      await call(`puzzles/${p.id}/leaderboard?scope=archive`, 'GET', undefined, viewer.cookie)
+    ).json(),
+  );
+  const improved = await solve(1);
+  assert.notEqual(improved.progress.bestArchive?.runId, original.runId);
+  const path = `puzzles/${p.id}/replays/${owner.player.id}?scope=archive`;
+  const replay = decodeReplay(await (await call(path, 'GET', undefined, viewer.cookie)).json());
+  assert.equal(replay.result.runId, improved.progress.bestArchive?.runId);
+  assert.notDeepEqual(replay.result.metrics, staleBoard.rows[0]!.metrics);
+  const target = replay.result.runId;
+  const stored = await prisma.competitiveRun.findUniqueOrThrow({ where: { id: target } });
+  const otherPuzzle = await prisma.puzzle.findFirstOrThrow({ where: { id: { not: p.id } } });
+  for (const data of [
+    { state: 'processing' },
+    { state: 'rejected' },
+    { result: { ...replay.result, outcome: 'stopped' } },
+    { result: { ...replay.result, verification: 'not-applicable' } },
+    { guestId: viewer.player.id },
+    { puzzleId: otherPuzzle.id },
+  ]) {
+    await prisma.competitiveRun.update({ where: { id: target }, data: data as any });
+    assert.equal((await call(path, 'GET', undefined, viewer.cookie)).status, 404);
+    await prisma.competitiveRun.update({
+      where: { id: target },
+      data: {
+        state: stored.state,
+        result: stored.result as any,
+        guestId: stored.guestId,
+        puzzleId: stored.puzzleId,
+      },
+    });
+  }
+  assert.equal(
+    (await call(`puzzles/missing/replays/${owner.player.id}`, 'GET', undefined, viewer.cookie))
+      .status,
+    404,
+  );
 });
