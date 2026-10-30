@@ -51,6 +51,11 @@ export function usePreferences() {
 
 const HELP_SECTIONS = [
   {
+    title: 'Solution replays',
+    content:
+      'Leaderboard best solutions, including existing saved solutions, are shared automatically after the course’s daily window closes at Central midnight. Open a daily or archive leaderboard and choose Watch replay. Replays are read-only and do not count as attempts. Archive rankings remain open after replays unlock. Playback requires a compatible engine version.',
+  },
+  {
     title: 'Objective',
     content:
       'Guide the ball (or course object) into the goal and keep it there until the goal fills. Aim for the lowest force cost you can.',

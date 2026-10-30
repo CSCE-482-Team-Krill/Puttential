@@ -129,6 +129,16 @@ export type RunResponse = RunBase &
       }
   );
 export type Scope = 'daily' | 'archive';
+export type ReplayAccess = { available: boolean; unlocksAt: string };
+export type ReplayResponse = {
+  viewerGuestId: string;
+  puzzleId: string;
+  scope: Scope;
+  player: Player;
+  placement: Placement;
+  result: SavedResult;
+  availability: PuzzleAvailability;
+};
 export type BoardView = 'top' | 'around-me';
 export type LeaderboardRow = {
   rank: number;
@@ -149,6 +159,7 @@ export type LeaderboardResponse = {
   totalPlayers: number;
   nextCursor: string | null;
   asOf: string;
+  replayAccess: ReplayAccess;
   submissionClosed: boolean;
   pendingEligibleCount: number;
   final: boolean;

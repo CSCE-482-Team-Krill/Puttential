@@ -5,6 +5,7 @@ import { prisma } from './prisma';
 import { centralDateString, centralMidnight, shiftDate, nextDailyAt } from './puzzle-date';
 import { parseLevel } from '../game';
 import { validatePlacement, replayRun } from '../game/run-evaluation';
+import { replayAccess } from './replay-access';
 import {
   validDate,
   validNickname,
@@ -22,6 +23,7 @@ import type {
   Scope,
   LeaderboardResponse,
   Placement,
+  ReplayResponse,
 } from '../shared/puzzle-contracts';
 
 type Tx = Prisma.TransactionClient;
@@ -690,6 +692,7 @@ export async function leaderboard(
               )
             : null,
         asOf: now.toISOString(),
+        replayAccess: replayAccess(p.date.toISOString().slice(0, 10), now, !!p.canceledAt),
         submissionClosed: scope === 'daily' && closed,
         pendingEligibleCount: pending,
         final: !p.canceledAt && scope === 'daily' && closed && pending === 0,
@@ -699,6 +702,67 @@ export async function leaderboard(
     { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
   );
 }
+/** Only this read endpoint exposes another guest's canonical placement, after daily close. */
+export async function readReplay(
+  guest: Guest,
+  puzzleId: string,
+  playerId: string,
+  params: URLSearchParams,
+): Promise<ReplayResponse> {
+  const scope = params.get('scope') ?? 'daily';
+  if (scope !== 'daily' && scope !== 'archive')
+    return fail(400, 'INVALID_BOARD', 'Invalid leaderboard scope.');
+  return prisma.$transaction(
+    async (tx) => {
+      const p = await published(tx, puzzleId);
+      if (!p.rules) return fail(404, 'NOT_FOUND', 'Course not found.');
+      if (p.canceledAt) return fail(410, 'PUZZLE_CANCELED', 'This course was canceled.');
+      const now = await databaseNow(tx);
+      if (!replayAccess(p.date.toISOString().slice(0, 10), now).available)
+        return fail(
+          403,
+          'REPLAY_LOCKED',
+          'Replays unlock after this course’s daily window closes at Central midnight.',
+        );
+      const progress = await tx.guestProgress.findUnique({
+        where: { guestId_puzzleId: { guestId: playerId, puzzleId } },
+      });
+      const best = (
+        scope === 'daily' ? progress?.bestDaily : progress?.bestArchive
+      ) as SavedResult | null;
+      if (!best || best.verification !== 'verified' || best.outcome !== 'success')
+        return fail(404, 'NOT_FOUND', 'No verified solution is available.');
+      const run = await tx.competitiveRun.findUnique({
+        where: { id: best.runId },
+        include: { guest: true },
+      });
+      const result = run?.result as SavedResult | null;
+      if (
+        !run ||
+        run.guestId !== playerId ||
+        run.puzzleId !== puzzleId ||
+        run.state !== 'saved' ||
+        !result ||
+        result.runId !== run.id ||
+        result.verification !== 'verified' ||
+        result.outcome !== 'success' ||
+        (scope === 'daily' && !result.dailyEligible)
+      )
+        return fail(404, 'NOT_FOUND', 'No verified solution is available.');
+      return {
+        viewerGuestId: guest.id,
+        puzzleId,
+        scope,
+        player: player(run.guest),
+        placement: run.placement as Placement,
+        result,
+        availability: availability(p),
+      };
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.RepeatableRead },
+  );
+}
+
 export async function archive(guest: Guest, params: URLSearchParams) {
   const secret = await cursorSecret();
   const month = params.get('month'),

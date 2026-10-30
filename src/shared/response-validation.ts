@@ -7,6 +7,7 @@ import type {
   ProgressResponse,
   PuzzleResponse,
   RunResponse,
+  ReplayResponse,
 } from '../shared/puzzle-contracts';
 import type { StartRunRequest } from '../shared/puzzle-contracts';
 
@@ -221,11 +222,19 @@ export function decodeBoard(x: unknown): LeaderboardResponse {
       integer(x.totalPlayers) &&
       nullable(x.nextCursor, text) &&
       instant(x.asOf) &&
+      obj(x.replayAccess) &&
+      typeof x.replayAccess.available === 'boolean' &&
+      instant(x.replayAccess.unlocksAt) &&
       typeof x.submissionClosed === 'boolean' &&
       integer(x.pendingEligibleCount) &&
       typeof x.final === 'boolean',
   );
   check(!x.final || (x.scope === 'daily' && x.submissionClosed && x.pendingEligibleCount === 0));
+  check(
+    !x.replayAccess.available ||
+      (x.availability.publicationStatus === 'active' &&
+        Date.parse(x.asOf) >= Date.parse(x.replayAccess.unlocksAt)),
+  );
   check(x.totalPlayers !== 0 || (x.me === null && x.rows.length === 0));
   check(
     x.availability.publicationStatus !== 'canceled' ||
@@ -238,6 +247,44 @@ export function decodeBoard(x: unknown): LeaderboardResponse {
   check(new Set(x.rows.map((v: any) => v.player.id)).size === x.rows.length);
   return x as LeaderboardResponse;
 }
+export function decodeReplay(x: unknown): ReplayResponse {
+  check(
+    obj(x) &&
+      text(x.viewerGuestId) &&
+      text(x.puzzleId) &&
+      ['daily', 'archive'].includes(x.scope) &&
+      player(x.player) &&
+      availability(x.availability, x.puzzleId) &&
+      x.availability.publicationStatus === 'active' &&
+      saved(x.result) &&
+      x.result.verification === 'verified' &&
+      x.result.outcome === 'success' &&
+      (x.scope !== 'daily' || x.result.dailyEligible),
+  );
+  const p = x.placement;
+  check(
+    obj(p) &&
+      text(p.levelId) &&
+      integer(p.levelVersion) &&
+      text(p.rulesVersion) &&
+      text(p.simulationVersion) &&
+      Array.isArray(p.commands) &&
+      p.commands.length <= LIMITS.commands &&
+      p.commands.every(
+        (c: any, i: number) =>
+          obj(c) &&
+          text(c.fieldId) &&
+          c.sequence === i &&
+          (c.type === 'move-field'
+            ? Number.isSafeInteger(c.xQ) && Number.isSafeInteger(c.yQ)
+            : c.type === 'set-field-angle'
+              ? integer(c.angleQ, 0, 3599)
+              : c.type === 'set-field-enabled' && typeof c.enabled === 'boolean'),
+      ),
+  );
+  return x as ReplayResponse;
+}
+
 export function decodeArchive(x: unknown): ArchiveResponse {
   check(
     obj(x) &&
