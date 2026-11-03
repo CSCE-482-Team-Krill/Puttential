@@ -131,6 +131,8 @@ for (const width of [1500, 320]) {
     await expect(elapsed).toContainText('0.00s /');
     await expect(page.getByLabel('Replay speed')).toHaveValue('0.5');
     await page.getByLabel('Replay speed').selectOption('2');
+    await expect(page.getByLabel('Replay speed')).toHaveValue('2');
+    await page.getByLabel('Replay speed').selectOption('4');
     await play.click();
     await expect(
       page.getByText('Replay complete — verified solution.', { exact: true }),

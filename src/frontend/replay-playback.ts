@@ -5,7 +5,7 @@ import { RunEvaluator, validatePlacement } from '../game/run-evaluation';
 import { advanceGoal, initialGoal } from '../game/goal-progress';
 import type { Placement, PuzzleRules, SavedResult } from '../shared/puzzle-contracts';
 
-export type ReplaySpeed = 0.5 | 1 | 2;
+export type ReplaySpeed = 0.5 | 1 | 2 | 4;
 export type ReplayStatus = 'paused' | 'playing' | 'ended' | 'error';
 const MAX_STEPS_PER_FRAME = 16;
 

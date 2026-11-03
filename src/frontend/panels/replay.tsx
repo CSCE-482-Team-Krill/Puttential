@@ -126,6 +126,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
                 <option value="0.5">0.5×</option>
                 <option value="1">1×</option>
                 <option value="2">2×</option>
+                <option value="4">4×</option>
               </select>
             </label>
           </div>

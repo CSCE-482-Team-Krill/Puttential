@@ -42,7 +42,7 @@ test('spectator playback matches verification at each speed, pauses and restarts
   const { course, result } = await verifiedResult();
   const placement = structuredClone(course.solutions[0]!);
   const before = structuredClone(placement);
-  for (const speed of [0.5, 1, 2] as const) {
+  for (const speed of [0.5, 1, 2, 4] as const) {
     const replay = await ReplayPlayback.create(course.level, course.rules, placement, result);
     try {
       assert.equal(replay.status, 'paused');
