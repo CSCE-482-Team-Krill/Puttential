@@ -902,6 +902,19 @@ button:disabled {
 .replay-back {
   align-self: flex-start;
 }
+.replay-player:fullscreen {
+  width: 100%;
+  height: 100%;
+  padding: clamp(12px, 2vw, 24px);
+  overflow-y: auto;
+  background: var(--ui-paper);
+}
+.replay-player:fullscreen .replay-course {
+  flex: 1 0 160px;
+  height: auto;
+  min-height: 160px;
+  aspect-ratio: auto;
+}
 .replay-course {
   position: relative;
   width: 100%;

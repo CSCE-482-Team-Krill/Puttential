@@ -131,13 +131,19 @@ export function useDialog(dialogRef: RefObject<HTMLElement | null>, close: () =>
     dialogRef.current?.focus();
 
     const onKey = (event: KeyboardEvent) => {
+      const focusRoot =
+        document.fullscreenElement && dialogRef.current?.contains(document.fullscreenElement)
+          ? document.fullscreenElement
+          : dialogRef.current;
       if (event.key === 'Escape') {
+        // Let the browser exit fullscreen before Escape can dismiss the dialog.
+        if (document.fullscreenElement) return;
         event.preventDefault();
         closeRef.current();
       }
       if (event.key !== 'Tab') return;
       const elements = Array.from(
-        dialogRef.current?.querySelectorAll<HTMLElement>(
+        focusRoot?.querySelectorAll<HTMLElement>(
           'button:not(:disabled), summary, a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
         ) ?? [],
       ).filter((element) => element.getClientRects().length > 0);
@@ -146,13 +152,13 @@ export function useDialog(dialogRef: RefObject<HTMLElement | null>, close: () =>
       if (!first || !last) return;
       if (
         event.shiftKey &&
-        (document.activeElement === first || document.activeElement === dialogRef.current)
+        (document.activeElement === first || document.activeElement === focusRoot)
       ) {
         event.preventDefault();
         last.focus();
       } else if (
         !event.shiftKey &&
-        (document.activeElement === last || document.activeElement === dialogRef.current)
+        (document.activeElement === last || document.activeElement === focusRoot)
       ) {
         event.preventDefault();
         first.focus();

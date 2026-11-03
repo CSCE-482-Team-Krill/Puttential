@@ -13,11 +13,37 @@ import { ReplayPlayback } from '../replay-playback';
 import type { ReplaySpeed } from '../replay-playback';
 
 function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: ReplayResponse }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const fullscreenButtonRef = useRef<HTMLButtonElement>(null);
+  const [fullscreen, setFullscreen] = useState(false);
+  const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
+  const [fullscreenError, setFullscreenError] = useState('');
   const playback = useRef<ReplayPlayback | null>(null);
   const frameRef = useRef<RenderState | null>(null);
   const goalRef = useRef(initialGoal(puzzle.configuration.goal));
   const [error, setError] = useState('');
   const [, update] = useState(0);
+  useEffect(() => {
+    setFullscreenAvailable(document.fullscreenEnabled);
+    const onFullscreenChange = () => {
+      const active = document.fullscreenElement === containerRef.current;
+      setFullscreen(active);
+      if (!active) fullscreenButtonRef.current?.focus();
+    };
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+
+  async function toggleFullscreen() {
+    setFullscreenError('');
+    try {
+      if (document.fullscreenElement === containerRef.current) await document.exitFullscreen();
+      else await containerRef.current?.requestFullscreen();
+    } catch {
+      setFullscreenError('Fullscreen is unavailable. Please try again.');
+    }
+  }
+
   useEffect(() => {
     let canceled = false;
     let frame = 0;
@@ -74,7 +100,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
   const current = playback.current;
   if (error) return <p role="alert">{error}</p>;
   return (
-    <div className="modal-stack">
+    <div className="modal-stack replay-player" ref={containerRef}>
       <div className="course replay-course">
         <CourseCanvas
           level={puzzle.configuration}
@@ -129,7 +155,17 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
                 <option value="4">4×</option>
               </select>
             </label>
+            <button
+              ref={fullscreenButtonRef}
+              disabled={!fullscreenAvailable}
+              title={fullscreenAvailable ? undefined : 'Fullscreen is unavailable in this browser.'}
+              aria-pressed={fullscreen}
+              onClick={() => void toggleFullscreen()}
+            >
+              {fullscreen ? 'Exit fullscreen' : 'Fullscreen replay'}
+            </button>
           </div>
+          {fullscreenError && <p role="alert">{fullscreenError}</p>}
           <p className="replay-time" aria-label="Replay elapsed time">
             {(current.frame.tick * FIXED_DT).toFixed(2)}s /{' '}
             {((replay.result.metrics?.completionTick ?? 0) * FIXED_DT).toFixed(2)}s

@@ -127,6 +127,42 @@ for (const width of [1500, 320]) {
     await page.evaluate(() => window.dispatchEvent(new Event('focus')));
     await page.waitForTimeout(150);
     await expect(elapsed).toHaveText(paused!);
+    const courseHeight = await page.locator('.replay-course').evaluate((el) => el.clientHeight);
+    await page.getByRole('button', { name: 'Fullscreen replay', exact: true }).click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => document.fullscreenElement?.classList.contains('replay-player')),
+      )
+      .toBe(true);
+    const exitFullscreen = page.getByRole('button', { name: 'Exit fullscreen', exact: true });
+    await expect(exitFullscreen).toHaveAttribute('aria-pressed', 'true');
+    await expect(elapsed).toHaveText(paused!);
+    await expect(page.getByLabel('Replay speed')).toHaveValue('0.5');
+    await expect
+      .poll(() => page.locator('.replay-course').evaluate((el) => el.clientHeight))
+      .toBeGreaterThan(courseHeight);
+    await page.keyboard.press('Tab');
+    await expect(play).toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(exitFullscreen).toBeFocused();
+    await page.screenshot({ path: `${artifacts}/replay-fullscreen-${width}.png` });
+    await exitFullscreen.click();
+    await expect.poll(() => page.evaluate(() => document.fullscreenElement === null)).toBe(true);
+    await expect(
+      page.getByRole('button', { name: 'Fullscreen replay', exact: true }),
+    ).toBeFocused();
+    await expect(elapsed).toHaveText(paused!);
+    // The browser can also exit fullscreen independently of the viewer's button.
+    await page.getByRole('button', { name: 'Fullscreen replay', exact: true }).click();
+    await expect(exitFullscreen).toBeVisible();
+    await page.evaluate(() => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    });
+    await expect(page.getByRole('dialog')).toHaveCount(1);
+    await page.evaluate(() => document.exitFullscreen());
+    await expect(
+      page.getByRole('button', { name: 'Fullscreen replay', exact: true }),
+    ).toBeVisible();
     await page.getByRole('button', { name: 'Restart replay' }).click();
     await expect(elapsed).toContainText('0.00s /');
     await expect(page.getByLabel('Replay speed')).toHaveValue('0.5');
