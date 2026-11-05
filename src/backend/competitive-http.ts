@@ -101,6 +101,13 @@ export async function competitiveHandler(request: Request): Promise<Response> {
       request.method === 'POST'
     )
       result = await api.completeRun(guest, path[1]!, input);
+    else if (
+      path[0] === 'puzzles' &&
+      path[2] === 'replays' &&
+      path.length === 4 &&
+      request.method === 'GET'
+    )
+      result = await api.readReplay(guest, path[1]!, path[3]!, url.searchParams);
     else if (path.join('/') === 'puzzles' && request.method === 'GET')
       result = await api.archive(guest, url.searchParams);
     else if (

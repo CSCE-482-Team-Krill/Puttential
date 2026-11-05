@@ -561,6 +561,7 @@ test('production data stays unavailable; development preview has six labeled exa
     await expect(dialog).toBeVisible();
     if (name === 'Help')
       await expect(dialog.locator('summary')).toHaveText([
+        'Solution replays',
         'Objective',
         'How to play',
         'Scoring',

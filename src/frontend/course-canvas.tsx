@@ -43,6 +43,7 @@ export type Props = Readonly<{
   selectedField?: string | null;
   placementBounds?: Bounds;
   editingLocked?: boolean;
+  ariaLabel?: string;
 }>;
 
 export type View = Readonly<{ scale: number; originX: number; originY: number; bounds: Bounds }>;
@@ -457,7 +458,9 @@ export function CourseCanvas(props: Props) {
     <canvas
       ref={canvasRef}
       className={`course-canvas ${props.mode === 'setup' ? 'editable' : ''}`}
-      aria-label="Puzzle course. Drag force fields to move them before pressing Play."
+      aria-label={
+        props.ariaLabel ?? 'Puzzle course. Drag force fields to move them before pressing Play.'
+      }
       onPointerDown={(event) => {
         if (
           propsRef.current.editingLocked ||
