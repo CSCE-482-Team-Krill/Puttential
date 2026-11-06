@@ -16,7 +16,8 @@
     "db:migrate": "prisma migrate deploy --config prisma7.config.ts",
     "db:seed": "tsx src/backend/publish.ts",
     "courses:publish": "tsx src/backend/publish.ts",
-    "test:integration": "tsx --test tests/*.integration.ts"
+    "test:integration": "tsx --test tests/*.integration.ts",
+    "community:profile": "tsx scripts/check-community-profile.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",

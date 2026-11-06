@@ -29,6 +29,7 @@ jobs:
       - run: npm run format:check
       - run: npm run db:generate
       - run: npm run typecheck
+      - run: npm run community:profile
       - run: npm test
       - run: npm run db:migrate
       - run: npm run courses:publish -- schedule
