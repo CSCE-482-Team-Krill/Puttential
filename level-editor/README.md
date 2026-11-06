@@ -2,6 +2,13 @@
 
 The desktop editor uses the main game's renderer, force controls, prediction and Rapier simulation. It saves directly into `src/game/levels/authored/`.
 
+The browser-safe shell, model, canvas, inspector, playtest and styles live in
+`src/editor/`. This workspace injects `editor/repository-adapter.ts` for repository
+HTTP requests, legacy starters and the existing local recovery key. Its filesystem
+library and `/api/levels` handler remain trusted local server code. Shared gameplay
+presentation lives in `src/frontend/gameplay/gameplay-view.tsx`; daily sessions and
+competitive persistence remain owned by the daily page.
+
 ## Run locally
 
 Use Node 22.12 or newer. From the repository root:

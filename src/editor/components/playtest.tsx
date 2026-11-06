@@ -1,10 +1,10 @@
 'use client';
 import { useMemo } from 'react';
-import { decodeLevel } from '../../src/game';
-import type { LevelDocument } from '../../src/game';
-import { CourseCanvas } from '../../src/frontend/course-canvas';
-import { usePuzzle } from '../../src/frontend/puzzle';
-import { ForceToolkit, PlayButton } from '../../src/frontend/player-controls';
+import { decodeLevel } from '../../game';
+import type { LevelDocument } from '../../game';
+import { GameplayCanvas } from '../../frontend/gameplay/gameplay-view';
+import { usePuzzle } from '../../frontend/puzzle';
+import { ForceToolkit, PlayButton } from '../../frontend/player-controls';
 
 export function Playtest({ document, onClose }: { document: LevelDocument; onClose: () => void }) {
   const level = useMemo(
@@ -24,14 +24,10 @@ export function Playtest({ document, onClose }: { document: LevelDocument; onClo
           <button onClick={onClose}>Return to editor</button>
         </div>
         <div className="course playtest-course">
-          <CourseCanvas
+          <GameplayCanvas
             level={level}
-            frameRef={puzzle.frameRef}
-            goalRef={puzzle.goalRef}
-            draft={puzzle.draft}
-            mode={puzzle.mode}
-            trail={puzzle.trail}
-            onMoveField={puzzle.moveField}
+            puzzle={puzzle}
+            selectFields={false}
             camera={{
               bounds,
               zoom: 1,

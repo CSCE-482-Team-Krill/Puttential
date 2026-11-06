@@ -4,9 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { starterLevels, levelName } from '../../game';
 import type { Bounds, Level } from '../../game';
 import type { Player, PuzzleResponse, Scope } from '../../shared/puzzle-contracts';
-import { ForceToolkit, PlayButton, SelectedFieldControls } from '../player-controls';
+import { GameplayCanvas, GameplayToolkit, GameplayRunControls } from '../gameplay/gameplay-view';
 import { LevelImport } from '../level-import';
-import { CourseCanvas } from '../course-canvas';
 import { usePuzzle } from '../puzzle';
 import { Icon } from '../icon';
 import { BrandLogo } from '../brand-logo';
@@ -507,6 +506,7 @@ export default function Home() {
               aria-expanded={panel === item.name}
               aria-label={item.label}
               title={item.label}
+              disabled={item.name === 'leaderboard' && (loading || !context)}
               onClick={() => setPanel(item.name)}
             >
               <Icon name={item.icon} size={20} />
@@ -596,17 +596,11 @@ export default function Home() {
               </div>
               <section className="course-stage" aria-labelledby="course-title">
                 <div className="course">
-                  <CourseCanvas
+                  <GameplayCanvas
                     level={level}
-                    goalRef={puzzle.goalRef}
-                    frameRef={puzzle.frameRef}
-                    draft={puzzle.draft}
-                    mode={puzzle.mode}
-                    trail={preferences.showPreview ? puzzle.trail : []}
-                    onMoveField={puzzle.moveField}
-                    onSelectField={puzzle.selectField}
-                    selectedField={puzzle.selectedField}
-                    editingLocked={locked}
+                    puzzle={puzzle}
+                    showPreview={preferences.showPreview}
+                    locked={locked}
                     {...(p ? { placementBounds: p.rules.placementBounds } : {})}
                     {...(importBounds
                       ? {
@@ -684,13 +678,12 @@ export default function Home() {
                     </div>
                     <p>Turn a block ON, then drag its field on the course.</p>
                   </div>
-                  <ForceToolkit
+                  <GameplayToolkit
                     level={level}
                     puzzle={puzzle}
                     {...(p ? { costs: p.rules.tileCosts } : {})}
                     locked={locked}
                   />
-                  <SelectedFieldControls level={level} puzzle={puzzle} locked={locked} />
                   <p className="toolkit-note">
                     Force cost {cost} · {placed} tiles.{' '}
                     {p
@@ -729,25 +722,14 @@ export default function Home() {
                     }
                   />
                 </section>
-                <section className="run-controls" aria-label="Run controls">
-                  <PlayButton
-                    puzzle={puzzle}
-                    pending={locked && puzzle.mode !== 'running'}
-                    disabled={puzzle.mode === 'setup' && !!p && !canRank}
-                    onPlay={() => void play()}
-                    onStop={() => void stop()}
-                  />
-                  <p className="run-timer" role="timer">
-                    {(puzzle.tick / 120).toFixed(2)}s / {(puzzle.maxTicks / 120).toFixed(2)}s
-                  </p>
-                  <button
-                    className="text-button"
-                    disabled={locked || puzzle.mode !== 'setup'}
-                    onClick={puzzle.resetLayout}
-                  >
-                    <Icon name="reset" size={17} /> Reset layout
-                  </button>
-                </section>
+                <GameplayRunControls
+                  puzzle={puzzle}
+                  locked={locked}
+                  pending={locked && puzzle.mode !== 'running'}
+                  disabled={puzzle.mode === 'setup' && !!p && !canRank}
+                  onPlay={() => void play()}
+                  onStop={() => void stop()}
+                />
               </aside>
             </div>
           </>

@@ -122,7 +122,8 @@ The older attempt/solution prototype endpoints remain unranked and isolated from
 - `src/frontend/`: shared canvas, controls, icons, modals, API client and simulation hook; also the runnable frontend workspace.
 - `src/backend/`: services, API types, request validation, Prisma integration and seed script.
 - `src/game/`: framework-independent simulation, geometry, catalog and level codecs. See [the game API](src/game/README.md).
-- `level-editor/`: desktop authoring UI, history and local save API.
+- `src/editor/`: shared browser editor, model, history, canvas, inspector and playtest.
+- `level-editor/`: trusted localhost wrapper, repository persistence adapter and local save API.
 - `scripts/`: logo generation tools. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-logo.ps1` on Windows, then `node scripts/render-logo.mjs` to regenerate the PNG, monochrome and reversed exports in `src/frontend/public/`.
 
 Run workspace commands from the repository root. `db:generate` and `db:migrate` use `prisma7.config.ts`; `db:seed` publishes the reviewed opening schedule.

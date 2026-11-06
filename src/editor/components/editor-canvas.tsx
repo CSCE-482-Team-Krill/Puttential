@@ -1,11 +1,11 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
-import { CourseCanvas, toCanvas, toWorld, polygonPath } from '../../src/frontend/course-canvas';
-import type { View } from '../../src/frontend/course-canvas';
-import { portalPairColors } from '../../src/frontend/portal-colors';
-import { levelFrame } from '../../src/frontend/level-frame';
-import { decodeLevel, pointInPolygon, polygonBounds, resizeArena } from '../../src/game';
-import type { LevelDocument, Vec2 } from '../../src/game';
+import { CourseCanvas, toCanvas, toWorld, polygonPath } from '../../frontend/course-canvas';
+import type { View } from '../../frontend/course-canvas';
+import { portalPairColors } from '../../frontend/portal-colors';
+import { levelFrame } from '../../frontend/level-frame';
+import { decodeLevel, pointInPolygon, polygonBounds, resizeArena } from '../../game';
+import type { LevelDocument, Vec2 } from '../../game';
 import {
   sameSelection,
   selectableObjects,
@@ -24,8 +24,8 @@ import {
   place,
   presets,
   scaleObject,
-} from '../editor/model';
-import type { Selection } from '../editor/model';
+} from '../model';
+import type { Selection } from '../model';
 
 type Props = {
   document: LevelDocument;
