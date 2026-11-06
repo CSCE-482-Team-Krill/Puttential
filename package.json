@@ -6,9 +6,14 @@
     "game": "npm run dev --workspace=puttential-frontend -- --hostname 127.0.0.1",
     "game:build": "npm run build --workspace=puttential-frontend",
     "typecheck": "tsc --noEmit",
+    "pretest": "npm run community:engine",
     "test": "tsx --test tests/*.test.ts",
-    "format": "prettier --write level-editor src/editor src/frontend src/backend src/shared scripts src/game/levels/codec.ts src/game/objects/catalog.ts tests",
-    "format:check": "prettier --check level-editor src/editor src/frontend src/backend src/shared scripts src/game/levels/codec.ts src/game/objects/catalog.ts",
+    "community:engine": "tsx scripts/build-community-engine.ts",
+    "community:profile": "tsx scripts/check-community-profile.ts",
+    "test:community:browser": "npm run community:engine && playwright test --config playwright.community.config.ts",
+    "format": "prettier --write level-editor src/editor src/frontend src/backend src/shared src/community-verifier scripts src/game/levels/codec.ts src/game/objects/catalog.ts tests",
+    "format:check": "prettier --check level-editor src/editor src/frontend src/backend src/shared src/community-verifier scripts src/game/levels/codec.ts src/game/objects/catalog.ts",
+    "pretest:e2e": "npm run community:engine",
     "test:e2e": "playwright test",
     "test:ui:production": "node tests/ui-polish-production-smoke.mjs",
     "game:start": "npm run start --workspace=puttential-frontend -- --hostname 127.0.0.1",
@@ -16,8 +21,7 @@
     "db:migrate": "prisma migrate deploy --config prisma7.config.ts",
     "db:seed": "tsx src/backend/publish.ts",
     "courses:publish": "tsx src/backend/publish.ts",
-    "test:integration": "tsx --test tests/*.integration.ts",
-    "community:profile": "tsx scripts/check-community-profile.ts"
+    "test:integration": "tsx --test tests/*.integration.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
