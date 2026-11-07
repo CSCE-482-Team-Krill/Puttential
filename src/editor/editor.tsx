@@ -25,7 +25,15 @@ import type { CopiedObject, History, Selection } from './model';
 
 const message = (error: unknown) =>
   error instanceof Error ? error.message : 'The operation could not be completed';
-export function Editor({ persistence }: { persistence: EditorPersistence }) {
+export function Editor({
+  persistence,
+  active = true,
+  onExit,
+}: {
+  persistence: EditorPersistence;
+  active?: boolean;
+  onExit?: () => void;
+}) {
   const [history, setHistory] = useState<History>(() => ({
     past: [],
     present: freshDocument(),
@@ -51,6 +59,9 @@ export function Editor({ persistence }: { persistence: EditorPersistence }) {
   const [playtest, setPlaytest] = useState<LevelDocument | null>(null);
   const file = useRef<HTMLInputElement | null>(null);
   const clipboard = useRef<CopiedObject[] | null>(null);
+  useEffect(() => {
+    if (!active) setPlaytest(null);
+  }, [active]);
   const inspectorPane = useRef<HTMLElement | null>(null);
   useEffect(() => {
     inspectorPane.current?.scrollTo({ top: 0 });
@@ -159,6 +170,24 @@ export function Editor({ persistence }: { persistence: EditorPersistence }) {
       setBusy(false);
     }
   }
+  function exportDocument() {
+    try {
+      const document = validateDocument(doc);
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(document, null, 2)], { type: 'application/json' }),
+      );
+      const link = window.document.createElement('a');
+      link.href = url;
+      link.download = `${document.level.id}.json`;
+      window.document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+      setError('');
+    } catch (cause) {
+      setError(message(cause));
+    }
+  }
   function replace(next: LevelDocument, stored?: { revision: string }) {
     if (dirty && !window.confirm('Replace this document? Save first to keep your current work.'))
       return;
@@ -243,7 +272,7 @@ export function Editor({ persistence }: { persistence: EditorPersistence }) {
   }
   useEffect(() => {
     function key(e: KeyboardEvent) {
-      if (playtest) return;
+      if (!active || playtest || document.querySelector('[aria-modal="true"]')) return;
       const target = e.target as HTMLElement;
       if (target.matches('input,textarea,select') || target.isContentEditable) return;
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c' && selection) {
@@ -288,9 +317,13 @@ export function Editor({ persistence }: { persistence: EditorPersistence }) {
   return (
     <div className="site-wrap editor-wrap">
       <header className="site-header editor-header">
-        <a className="brand" href="/">
-          Puttential<span className="brand-dot">.</span>
-        </a>
+        {onExit ? (
+          <button onClick={onExit}>Back to game</button>
+        ) : (
+          <a className="brand" href="/">
+            Puttential<span className="brand-dot">.</span>
+          </a>
+        )}
         <span className="editor-badge">Level editor</span>
         <span className="save-state">{dirty ? 'Unsaved changes' : persistence.labels.saved}</span>
         <button disabled={busy || !!playtest} onClick={() => replace(freshDocument())}>
@@ -298,6 +331,9 @@ export function Editor({ persistence }: { persistence: EditorPersistence }) {
         </button>
         <button disabled={busy || !!playtest} onClick={() => file.current?.click()}>
           Import JSON
+        </button>
+        <button disabled={busy || !!playtest} onClick={exportDocument}>
+          Export JSON
         </button>
         <button
           className="primary-button save-button"
