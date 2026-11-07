@@ -1,6 +1,7 @@
 import type { LevelDocument } from '../game/levels/codec';
 
 export type StoredEditorDocument = { document: LevelDocument; revision: string; warning?: string };
+export type RecoveredEditorDocument = { document: LevelDocument; revision: string | null };
 /** Browser capabilities only. Repository filesystem/Prisma modules never enter this interface. */
 export interface EditorPersistence {
   list(): Promise<string[]>;
@@ -11,7 +12,11 @@ export interface EditorPersistence {
   ): Promise<StoredEditorDocument & { path?: string }>;
   importFile(file: File): Promise<LevelDocument>;
   recovery: {
-    read(): LevelDocument | null | Promise<LevelDocument | null>;
+    read():
+      | LevelDocument
+      | RecoveredEditorDocument
+      | null
+      | Promise<LevelDocument | RecoveredEditorDocument | null>;
     write(document: LevelDocument): void | Promise<void>;
   };
   labels: { save: string; saved: string; library: string; starters: string };

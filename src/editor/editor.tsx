@@ -46,6 +46,7 @@ export function Editor({ persistence }: { persistence: EditorPersistence }) {
   const [saved, setSaved] = useState<{ id: string; revision: string; text: string } | null>(null);
   const [recovery, setRecovery] = useState<LevelDocument | null>(null),
     [recoveryChecked, setRecoveryChecked] = useState(false);
+  const [recoveryRevision, setRecoveryRevision] = useState<string | null>(null);
   const [recoveryError, setRecoveryError] = useState('');
   const [playtest, setPlaytest] = useState<LevelDocument | null>(null);
   const file = useRef<HTMLInputElement | null>(null);
@@ -85,8 +86,12 @@ export function Editor({ persistence }: { persistence: EditorPersistence }) {
     let canceled = false;
     Promise.resolve()
       .then(() => persistence.recovery.read())
-      .then((document) => {
-        if (!canceled) setRecovery(document);
+      .then((recovered) => {
+        if (canceled) return;
+        if (recovered && 'document' in recovered) {
+          setRecovery(recovered.document);
+          setRecoveryRevision(recovered.revision);
+        } else setRecovery(recovered);
       })
       .catch((cause) => {
         if (!canceled) setRecoveryError(message(cause));
@@ -332,7 +337,11 @@ export function Editor({ persistence }: { persistence: EditorPersistence }) {
             onClick={() => {
               setHistory({ past: [], present: recovery, future: [] });
               setRecovery(null);
-              setSaved(null);
+              setSaved(
+                recoveryRevision
+                  ? { id: recovery.level.id, revision: recoveryRevision, text: '' }
+                  : null,
+              );
             }}
           >
             Restore draft
