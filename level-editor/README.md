@@ -2,6 +2,8 @@
 
 The desktop editor uses the main game's renderer, force controls, prediction and Rapier simulation. It saves directly into `src/game/levels/authored/`.
 
+The main website also includes this shared editor in its **Editor** tab. That version saves drafts on the current device and imports/exports JSON. It runs entirely within `npm run game`; use this separate workspace when you need direct repository file saving.
+
 The browser-safe shell, model, canvas, inspector, playtest and styles live in
 `src/editor/`. This workspace injects `editor/repository-adapter.ts` for repository
 HTTP requests, legacy starters and the existing local recovery key. Its filesystem
