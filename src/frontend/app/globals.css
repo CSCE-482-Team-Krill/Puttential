@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;500;600;700;800&display=swap');
 
-/* Frontend-only theme. The editor continues to own its game.css import. */
+/* Main website theme; editor-specific rules are scoped to its shared shell. */
 :root {
   /* Reference palette, with darker companions for readable text and controls. */
   --ui-page: #dff3d9;
@@ -138,6 +138,7 @@ button:disabled {
   font-size: 0.75rem;
   font-weight: 600;
   line-height: 1.3;
+  text-decoration: none;
 }
 .nav-button svg {
   width: 20px;
@@ -148,6 +149,33 @@ button:disabled {
   color: var(--ui-green-strong);
   background: var(--ui-turf-soft);
 }
+.community-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  text-align: center;
+}
+.community-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--ui-turf);
+  color: var(--ui-green);
+}
+.community-empty h3 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+.community-empty p {
+  max-width: 36ch;
+  margin: 0;
+  color: var(--ui-muted);
+  font-size: 0.875rem;
+}
 .dashboard {
   max-width: 1440px;
   margin: 0 auto;
@@ -157,6 +185,93 @@ button:disabled {
   border-radius: 0 0 var(--ui-r-lg) var(--ui-r-lg);
   background: var(--ui-paper);
   box-shadow: var(--ui-shadow-frame);
+}
+.dashboard[hidden] {
+  display: none;
+}
+.embedded-editor {
+  --ink: var(--ui-ink);
+  --muted: var(--ui-muted);
+  --glass-shadow: var(--ui-shadow-frame);
+  padding: 0;
+}
+.embedded-editor .editor-wrap {
+  display: block;
+  height: auto;
+  min-height: 100%;
+  padding: 0;
+  overflow: visible;
+  background: var(--ui-paper);
+}
+.embedded-editor .editor-header {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 64px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 8px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--ui-line);
+  border-radius: 0;
+}
+.embedded-editor .editor-layout {
+  min-height: 0;
+}
+.embedded-editor .editor-sidebar {
+  max-height: calc(100dvh - 240px);
+}
+.embedded-editor .editor-notices {
+  min-width: 0;
+}
+.embedded-editor .editor-course {
+  min-height: 320px;
+}
+.embedded-editor .editor-toolbar {
+  flex-wrap: wrap;
+}
+.embedded-editor .playtest-layout {
+  gap: 16px;
+  padding: 16px;
+}
+.embedded-editor .card-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.embedded-editor .playtest-course {
+  min-height: 320px;
+}
+@media (min-width: 960px) and (orientation: landscape) {
+  .dashboard.embedded-editor {
+    padding: 0;
+    overflow: auto;
+  }
+}
+@media (max-width: 959px) {
+  .embedded-editor .editor-layout {
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .embedded-editor .editor-toolbar {
+    min-width: 0;
+    padding: 12px;
+  }
+  .embedded-editor .editor-sidebar {
+    max-height: none;
+  }
+  .embedded-editor .editor-center {
+    grid-row: 1;
+  }
+  .embedded-editor .preset-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+  .embedded-editor .canvas-caption {
+    flex-wrap: wrap;
+  }
 }
 
 /* Keep the course mounted while the sidebar changes position across breakpoints. */
@@ -1214,6 +1329,13 @@ button:disabled {
   .loading-region {
     flex: 1;
     min-height: 0;
+  }
+}
+@media (min-width: 960px) and (max-width: 1199px) and (orientation: landscape) {
+  .nav-button {
+    flex-direction: column;
+    gap: 3px;
+    padding: 6px 8px;
   }
 }
 @media (max-width: 959px) {

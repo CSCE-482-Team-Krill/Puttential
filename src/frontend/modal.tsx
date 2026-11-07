@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, ReactNode, RefObject } from 'react';
 import { Icon } from './icon';
 
-export type Panel = 'archive' | 'stats' | 'leaderboard' | 'settings' | 'help' | 'result' | null;
+export type Panel =
+  'archive' | 'stats' | 'leaderboard' | 'community' | 'settings' | 'help' | 'result' | null;
 
 type Preferences = {
   reducedMotion: boolean;
@@ -189,6 +190,7 @@ export function Modal({
     archive: 'Calendar',
     stats: 'Profile',
     leaderboard: 'Leaderboard',
+    community: 'Community',
     settings: 'Settings',
     help: 'Help',
     result: resultSolved ? 'Nice work!' : 'So close',
@@ -248,6 +250,19 @@ export function Modal({
           </div>
         )}
 
+        {panel === 'community' && !body && (
+          <div className="modal-body community-empty">
+            <span className="community-empty-icon">
+              <Icon name="community" size={32} />
+            </span>
+            <h3>Community levels are coming soon</h3>
+            <p>Discover and play courses created by other players here.</p>
+            <p>
+              Uploads aren’t available yet. Open the Editor tab to create and playtest your own
+              courses. Drafts are saved on this device.
+            </p>
+          </div>
+        )}
         {body && <div className="modal-body modal-stack">{body}</div>}
         {panel === 'settings' && (
           <div className="modal-body modal-stack">

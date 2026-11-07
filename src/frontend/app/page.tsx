@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { starterLevels, levelName } from '../../game';
 import type { Bounds, Level } from '../../game';
 import type { Player, PuzzleResponse, Scope } from '../../shared/puzzle-contracts';
@@ -31,7 +32,14 @@ import { RunsPanel } from '../panels/runs';
 import { shareResult } from '../share-result';
 import { markTutorialSeen, shouldOpenTutorial, Tutorial } from '../tutorial';
 
+const EmbeddedEditor = dynamic(() => import('../embedded-editor'), {
+  ssr: false,
+  loading: () => <p role="status">Loading level editor…</p>,
+});
+
 export default function Home() {
+  const [view, setView] = useState<'game' | 'editor'>('game');
+  const [editorVisited, setEditorVisited] = useState(false);
   const [context, setContext] = useState<CourseContext | null>(null);
   const contextRef = useRef(context);
   contextRef.current = context;
@@ -250,6 +258,7 @@ export default function Home() {
           current?.key === next.key ? { ...next, level: current.level } : next,
         );
         setImportBounds(null);
+        setView('game');
         setNotice('');
         setPanel(null);
         if (!sameContent) activeRequest.current = null;
@@ -274,6 +283,7 @@ export default function Home() {
     selectionAbort.current?.abort();
     setContext(localContext(next, source));
     setImportBounds(bounds ?? null);
+    setView('game');
     setPanel(null);
     setLoading(false);
     activeRequest.current = null;
@@ -473,9 +483,15 @@ export default function Home() {
     }
     return `⛳ Puttential — ${p?.date ?? (legacy ? levelName(level) : 'Practice')} — ${p ? 'Unverified' : legacy ? 'Legacy course' : 'Practice — unranked'}\n${puzzle.result?.solved ? 'Solved' : (puzzle.result?.outcome ?? 'Finished')}\nForce ${puzzle.result?.forceCost ?? 0} · Tiles ${puzzle.result?.tiles ?? 0}\nBall time ${(puzzle.result?.seconds ?? 0).toFixed(2)}s${p ? `\n${window.location.origin}/?date=${p.date}` : ''}`;
   }
-  const nav: { name: Exclude<Panel, 'result' | null>; label: string; icon: IconName }[] = [
+  const nav: {
+    name: Exclude<Panel, 'result' | null> | 'editor';
+    label: string;
+    icon: IconName;
+  }[] = [
     { name: 'archive', label: 'Calendar', icon: 'calendar' },
     { name: 'leaderboard', label: 'Leaderboard', icon: 'trophy' },
+    { name: 'community', label: 'Community', icon: 'community' },
+    { name: 'editor', label: 'Editor', icon: 'editor' },
     { name: 'settings', label: 'Settings', icon: 'settings' },
     { name: 'stats', label: 'Profile', icon: 'profile' },
     { name: 'help', label: 'Help', icon: 'help' },
@@ -492,6 +508,10 @@ export default function Home() {
           className="brand"
           aria-label="Puttential home"
           onClick={() => {
+            if (view === 'editor') {
+              setView('game');
+              return;
+            }
             if (daily) void chooseDate(daily.date);
             else void refreshToday(true);
           }}
@@ -499,23 +519,49 @@ export default function Home() {
           <BrandLogo />
         </button>
         <nav className="main-nav" aria-label="Main navigation">
-          {nav.map((item) => (
-            <button
-              key={item.name}
-              className={`nav-button ${panel === item.name ? 'active' : ''}`}
-              aria-expanded={panel === item.name}
-              aria-label={item.label}
-              title={item.label}
-              disabled={item.name === 'leaderboard' && (loading || !context)}
-              onClick={() => setPanel(item.name)}
-            >
-              <Icon name={item.icon} size={20} />
-              <span>{item.label}</span>
-            </button>
-          ))}
+          {nav.map(({ name, label, icon }) =>
+            name === 'editor' ? (
+              <button
+                key={name}
+                className={`nav-button ${view === 'editor' ? 'active' : ''}`}
+                aria-pressed={view === 'editor'}
+                aria-controls="editor-view"
+                aria-label="Editor"
+                title="Editor"
+                disabled={startingPlay}
+                onClick={async () => {
+                  if (view === 'editor') {
+                    setView('game');
+                    return;
+                  }
+                  if (!(await leaveOwned())) return;
+                  if (puzzle.mode === 'running') puzzle.rewind();
+                  setPanel(null);
+                  setEditorVisited(true);
+                  setView('editor');
+                }}
+              >
+                <Icon name={icon} size={20} />
+                <span>{label}</span>
+              </button>
+            ) : (
+              <button
+                key={name}
+                className={`nav-button ${panel === name ? 'active' : ''}`}
+                aria-expanded={panel === name}
+                aria-label={label}
+                title={label}
+                disabled={name === 'leaderboard' && (loading || !context)}
+                onClick={() => setPanel(name)}
+              >
+                <Icon name={icon} size={20} />
+                <span>{label}</span>
+              </button>
+            ),
+          )}
         </nav>
       </header>
-      <main className="dashboard">
+      <main className="dashboard" hidden={view !== 'game'}>
         {(notice || !context) && (
           <div className="api-notice" role="status">
             {loading && !context ? "Loading today's course…" : notice}
@@ -735,6 +781,16 @@ export default function Home() {
           </>
         )}
       </main>
+      {editorVisited && (
+        <section
+          id="editor-view"
+          className="dashboard embedded-editor"
+          aria-label="Level editor"
+          hidden={view !== 'editor'}
+        >
+          <EmbeddedEditor active={view === 'editor'} onExit={() => setView('game')} />
+        </section>
+      )}
       {panel && (
         <Modal
           key={`${panel}/${context?.key ?? 'loading'}/${player?.id ?? 'guest'}`}
