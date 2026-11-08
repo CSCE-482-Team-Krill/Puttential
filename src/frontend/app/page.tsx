@@ -29,6 +29,9 @@ import { LeaderboardPanel } from '../panels/leaderboard';
 import { ProfilePanel } from '../panels/profile';
 import { ResultPanel } from '../panels/result';
 import { RunsPanel } from '../panels/runs';
+import { CommunityPanel } from '../panels/community';
+import { communityApi } from '../community-api';
+import { communityMapUrl } from '../../shared/community-maps';
 import { shareResult } from '../share-result';
 import { markTutorialSeen, shouldOpenTutorial, Tutorial } from '../tutorial';
 
@@ -81,10 +84,12 @@ export default function Home() {
   const staleBoundary = useRef(false);
   const level = context?.level ?? starterLevels[0]!;
   const p = context?.puzzle;
+  const community = context?.community;
+  const courseRules = p?.rules ?? community?.rules;
   const legacy = context?.source === 'legacy';
   const puzzle = usePuzzle(level, {
-    ...(!p || deliveredEngine.supports(p.rules) ? { adapter: deliveredEngine } : {}),
-    ...(p ? { rules: p.rules } : {}),
+    ...(!courseRules || deliveredEngine.supports(courseRules) ? { adapter: deliveredEngine } : {}),
+    ...(courseRules ? { rules: courseRules } : {}),
     ...(context
       ? {
           storageKey: `puttential-draft-v1/${p ? (player?.id ?? 'unconfirmed') : 'local'}/${context.key}`,
@@ -168,7 +173,7 @@ export default function Home() {
       stateRef.current.applyAvailability(response.availability);
       setDaily(response);
       rollover.current = { puzzle: response, received: performance.now() };
-      setNotice('');
+      if (select || contextRef.current?.puzzle) setNotice('');
       if (select && generation === selectedGeneration.current) {
         const next = publishedContext(response);
         setContext((current) =>
@@ -211,7 +216,11 @@ export default function Home() {
     const unresolved = record && !record.intent && record.phase !== 'terminal';
     if (
       (executorRef.current.mode === 'running' || unresolved) &&
-      !window.confirm('Leave this run? It will end; an accepted ranked start still counts.')
+      !window.confirm(
+        contextRef.current?.puzzle
+          ? 'Leave this run? It will end; an accepted ranked start still counts.'
+          : 'Leave this run? It will end.',
+      )
     )
       return false;
     if (unresolved) await session?.cancel(record.start.requestId);
@@ -230,9 +239,11 @@ export default function Home() {
           window.history.pushState(
             null,
             '',
-            contextRef.current?.puzzle
-              ? `?date=${contextRef.current.puzzle.date}`
-              : window.location.pathname,
+            contextRef.current?.community
+              ? communityMapUrl(contextRef.current.community.id)
+              : contextRef.current?.puzzle
+                ? `?date=${contextRef.current.puzzle.date}`
+                : window.location.pathname,
           );
         return;
       }
@@ -273,6 +284,54 @@ export default function Home() {
     },
     [leaveOwned],
   );
+  const chooseCommunity = useCallback(
+    async (id: string, history = true) => {
+      if (contextRef.current?.community?.id !== id && !(await leaveOwned())) {
+        if (!history)
+          window.history.pushState(
+            null,
+            '',
+            contextRef.current?.community
+              ? communityMapUrl(contextRef.current.community.id)
+              : contextRef.current?.puzzle
+                ? `?date=${contextRef.current.puzzle.date}`
+                : window.location.pathname,
+          );
+        return;
+      }
+      const generation = ++selectedGeneration.current;
+      selectionAbort.current?.abort();
+      const controller = new AbortController();
+      selectionAbort.current = controller;
+      setLoading(true);
+      setNotice('Loading community map…');
+      try {
+        const map = await communityApi.read(id, controller.signal);
+        if (controller.signal.aborted || generation !== selectedGeneration.current) return;
+        const next = {
+          ...localContext(map.configuration, 'community'),
+          key: `community-v1/${map.id}`,
+          community: map,
+        };
+        setContext((current) =>
+          current?.community?.id === map.id ? { ...next, level: current.level } : next,
+        );
+        setImportBounds(map.rules.placementBounds);
+        setView('game');
+        setPanel(null);
+        setNotice(deliveredEngine.supports(map.rules) ? '' : ENGINE_UNAVAILABLE);
+        activeRequest.current = null;
+        if (history) window.history.pushState(null, '', communityMapUrl(map.id));
+      } catch (cause) {
+        if (!controller.signal.aborted && generation === selectedGeneration.current)
+          setNotice(cause instanceof Error ? cause.message : 'Community map unavailable.');
+      } finally {
+        if (!controller.signal.aborted && generation === selectedGeneration.current)
+          setLoading(false);
+      }
+    },
+    [leaveOwned],
+  );
   async function chooseLocal(
     next: Level,
     bounds?: Bounds,
@@ -291,12 +350,18 @@ export default function Home() {
     window.history.pushState(null, '', window.location.pathname);
   }
   useEffect(() => {
-    const requested = new URLSearchParams(window.location.search).get('date');
-    void refreshToday(!requested);
-    if (requested) void chooseDate(requested, false);
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get('date');
+    const communityId = params.get('community');
+    void refreshToday(!requested && !communityId);
+    if (communityId) void chooseCommunity(communityId, false);
+    else if (requested) void chooseDate(requested, false);
     const back = () => {
-      const date = new URLSearchParams(window.location.search).get('date');
-      if (date) void chooseDate(date, false);
+      const params = new URLSearchParams(window.location.search);
+      const date = params.get('date');
+      const communityId = params.get('community');
+      if (communityId) void chooseCommunity(communityId, false);
+      else if (date) void chooseDate(date, false);
       else
         void (async () => {
           if (await leaveOwned()) {
@@ -307,9 +372,11 @@ export default function Home() {
             window.history.pushState(
               null,
               '',
-              contextRef.current?.puzzle
-                ? `?date=${contextRef.current.puzzle.date}`
-                : window.location.pathname,
+              contextRef.current?.community
+                ? communityMapUrl(contextRef.current.community.id)
+                : contextRef.current?.puzzle
+                  ? `?date=${contextRef.current.puzzle.date}`
+                  : window.location.pathname,
             );
           }
         })();
@@ -320,7 +387,7 @@ export default function Home() {
       selectionAbort.current?.abort();
       dailyAbort.current?.abort();
     };
-  }, [refreshToday, chooseDate]);
+  }, [refreshToday, chooseDate, chooseCommunity]);
   useEffect(() => {
     const current = rollover.current;
     if (!current) return;
@@ -481,7 +548,7 @@ export default function Home() {
         origin: window.location.origin,
       });
     }
-    return `⛳ Puttential — ${p?.date ?? (legacy ? levelName(level) : 'Practice')} — ${p ? 'Unverified' : legacy ? 'Legacy course' : 'Practice — unranked'}\n${puzzle.result?.solved ? 'Solved' : (puzzle.result?.outcome ?? 'Finished')}\nForce ${puzzle.result?.forceCost ?? 0} · Tiles ${puzzle.result?.tiles ?? 0}\nBall time ${(puzzle.result?.seconds ?? 0).toFixed(2)}s${p ? `\n${window.location.origin}/?date=${p.date}` : ''}`;
+    return `⛳ Puttential — ${community?.title ?? p?.date ?? (legacy ? levelName(level) : 'Practice')} — ${p ? 'Unverified' : community ? 'Community — unranked' : legacy ? 'Legacy course' : 'Practice — unranked'}\n${puzzle.result?.solved ? 'Solved' : (puzzle.result?.outcome ?? 'Finished')}\nForce ${puzzle.result?.forceCost ?? 0} · Tiles ${puzzle.result?.tiles ?? 0}\nBall time ${(puzzle.result?.seconds ?? 0).toFixed(2)}s${community ? `\n${window.location.origin}${communityMapUrl(community.id)}` : p ? `\n${window.location.origin}/?date=${p.date}` : ''}`;
   }
   const nav: {
     name: Exclude<Panel, 'result' | null> | 'editor';
@@ -612,18 +679,20 @@ export default function Home() {
             <div className="game-layout">
               <div className="course-meta course-heading">
                 <div className="course-identity">
-                  <h1 id="course-title">{p?.title ?? levelName(level)}</h1>
+                  <h1 id="course-title">{community?.title ?? p?.title ?? levelName(level)}</h1>
                   <span className="challenge-label">
                     <Icon name="calendar" size={16} />{' '}
-                    {context.source === 'daily'
-                      ? 'Daily challenge'
-                      : context.source === 'archive'
-                        ? 'Archive challenge'
-                        : context.source === 'local'
-                          ? 'Local course — unranked'
-                          : legacy
-                            ? 'Legacy course'
-                            : 'Practice challenge — unranked'}{' '}
+                    {community
+                      ? `Community map by ${community.creatorName} — unranked`
+                      : context.source === 'daily'
+                        ? 'Daily challenge'
+                        : context.source === 'archive'
+                          ? 'Archive challenge'
+                          : context.source === 'local'
+                            ? 'Local course — unranked'
+                            : legacy
+                              ? 'Legacy course'
+                              : 'Practice challenge — unranked'}{' '}
                     {p && <b>{p.date}</b>}
                   </span>
                 </div>
@@ -772,7 +841,11 @@ export default function Home() {
                   puzzle={puzzle}
                   locked={locked}
                   pending={locked && puzzle.mode !== 'running'}
-                  disabled={puzzle.mode === 'setup' && !!p && !canRank}
+                  disabled={
+                    puzzle.mode === 'setup' &&
+                    ((!!p && !canRank) ||
+                      (!!community && !deliveredEngine.supports(community.rules)))
+                  }
                   onPlay={() => void play()}
                   onStop={() => void stop()}
                 />
@@ -806,74 +879,92 @@ export default function Home() {
           courseImport={
             <LevelImport onLoad={(next, bounds) => void chooseLocal(next, bounds, 'local')} />
           }
-          {...(panel === 'archive'
+          {...(panel === 'community'
             ? {
                 body: (
-                  <>
-                    <ArchivePanel
-                      player={player}
-                      {...(p ? { date: p.date } : {})}
-                      state={state}
-                      choose={(date) => void chooseDate(date)}
-                      reconcileGuest={reconcileGuest}
-                    />
-                    <h3>Legacy courses</h3>
-                    <p>Courses from an earlier version of Puttential.</p>
-                    {starterLevels.map((course) => (
-                      <button
-                        className="modal-row legacy-course"
-                        key={course.id}
-                        onClick={() => void chooseLocal(course, undefined, 'legacy')}
-                      >
-                        {levelName(course)}
-                      </button>
-                    ))}
-                  </>
+                  <CommunityPanel
+                    choose={(id) => void chooseCommunity(id)}
+                    create={() => {
+                      void (async () => {
+                        if (!(await leaveOwned())) return;
+                        if (puzzle.mode === 'running') puzzle.rewind();
+                        setPanel(null);
+                        setEditorVisited(true);
+                        setView('editor');
+                      })();
+                    }}
+                  />
                 ),
               }
-            : panel === 'leaderboard'
+            : panel === 'archive'
               ? {
                   body: (
-                    <LeaderboardPanel
-                      key={`${p?.id ?? 'none'}/${player?.id ?? 'none'}`}
-                      puzzle={p}
-                      player={player}
-                      state={state}
-                      reconcileGuest={reconcileGuest}
-                      runActive={startingPlay || puzzle.mode === 'running'}
-                    />
+                    <>
+                      <ArchivePanel
+                        player={player}
+                        {...(p ? { date: p.date } : {})}
+                        state={state}
+                        choose={(date) => void chooseDate(date)}
+                        reconcileGuest={reconcileGuest}
+                      />
+                      <h3>Legacy courses</h3>
+                      <p>Courses from an earlier version of Puttential.</p>
+                      {starterLevels.map((course) => (
+                        <button
+                          className="modal-row legacy-course"
+                          key={course.id}
+                          onClick={() => void chooseLocal(course, undefined, 'legacy')}
+                        >
+                          {levelName(course)}
+                        </button>
+                      ))}
+                    </>
                   ),
                 }
-              : panel === 'stats'
+              : panel === 'leaderboard'
                 ? {
                     body: (
-                      <ProfilePanel
+                      <LeaderboardPanel
+                        key={`${p?.id ?? 'none'}/${player?.id ?? 'none'}`}
+                        puzzle={p}
                         player={player}
-                        progress={progress}
-                        update={(next) =>
-                          setPlayer((current) => (current?.id === next.id ? next : current))
-                        }
-                        retry={reconcileGuest}
-                        memoryOnly={recoveryLimited}
+                        state={state}
+                        reconcileGuest={reconcileGuest}
+                        runActive={startingPlay || puzzle.mode === 'running'}
                       />
                     ),
                   }
-                : panel === 'result'
+                : panel === 'stats'
                   ? {
                       body: (
-                        <ResultPanel
-                          legacy={legacy}
-                          result={puzzle.result}
-                          record={record}
+                        <ProfilePanel
+                          player={player}
                           progress={progress}
-                          compose={() => compose()}
-                          retry={() => {
-                            if (record) void session?.retry(record.start.requestId);
-                          }}
+                          update={(next) =>
+                            setPlayer((current) => (current?.id === next.id ? next : current))
+                          }
+                          retry={reconcileGuest}
+                          memoryOnly={recoveryLimited}
                         />
                       ),
                     }
-                  : {})}
+                  : panel === 'result'
+                    ? {
+                        body: (
+                          <ResultPanel
+                            legacy={legacy}
+                            community={!!community}
+                            result={puzzle.result}
+                            record={record}
+                            progress={progress}
+                            compose={() => compose()}
+                            retry={() => {
+                              if (record) void session?.retry(record.start.requestId);
+                            }}
+                          />
+                        ),
+                      }
+                    : {})}
         />
       )}
       {tutorialOpen && <Tutorial close={closeTutorial} reducedMotion={preferences.reducedMotion} />}

@@ -255,11 +255,11 @@ export function Modal({
             <span className="community-empty-icon">
               <Icon name="community" size={32} />
             </span>
-            <h3>Community levels are coming soon</h3>
-            <p>Discover and play courses created by other players here.</p>
+            <h3>Community maps</h3>
+            <p>Discover and play courses created by other players.</p>
             <p>
-              Uploads aren’t available yet. Open the Editor tab to create and playtest your own
-              courses. Drafts are saved on this device.
+              Open the Editor tab to create a course. Playtest and solve it to publish it to
+              Community. Drafts are saved on this device.
             </p>
           </div>
         )}

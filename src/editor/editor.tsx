@@ -6,6 +6,7 @@ import { Icon } from '../frontend/icon';
 import { EditorCanvas } from './components/editor-canvas';
 import { Inspector, NumberInput } from './components/inspector';
 import { Playtest } from './components/playtest';
+import type { MapPublisher } from './components/publish-map';
 import type { EditorPersistence } from './persistence';
 import {
   sameSelection,
@@ -29,10 +30,12 @@ export function Editor({
   persistence,
   active = true,
   onExit,
+  publish,
 }: {
   persistence: EditorPersistence;
   active?: boolean;
   onExit?: () => void;
+  publish?: MapPublisher;
 }) {
   const [history, setHistory] = useState<History>(() => ({
     past: [],
@@ -396,11 +399,16 @@ export function Editor({
           <p>
             Select a preset or drag it onto the course. Every saved course uses the main game’s
             physics.
+            {publish && ' Playtest and solve your map to publish it to Community.'}
           </p>
         )}
       </div>
       {playtest ? (
-        <Playtest document={playtest} onClose={() => setPlaytest(null)} />
+        <Playtest
+          document={playtest}
+          onClose={() => setPlaytest(null)}
+          {...(publish ? { publish } : {})}
+        />
       ) : (
         <>
           <div className="editor-toolbar">

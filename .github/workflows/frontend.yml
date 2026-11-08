@@ -48,3 +48,4 @@ jobs:
             test-results/
             artifacts/iteration-two/
             artifacts/iteration-two-completion/
+            artifacts/community-publishing/
