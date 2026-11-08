@@ -1,5 +1,10 @@
 # Community editor implementation evidence
 
+**Current publishing approach:** [Community publishing MVP](community-publishing.md)
+supersedes the VM prerequisite below for the website's simple publishing flow.
+The remaining sections preserve the earlier isolated-verifier milestone evidence;
+they do not block the Vercel request-based MVP.
+
 Baseline: `b3c12425cca443a56af02e2c2a4e8430da035f83`, branch `community-editor`.
 The initial checkout was clean and HEAD equaled the baseline. The approved design
 sources are the v2 base plan, v3 A01–A16 and v4 B01–B09 under
