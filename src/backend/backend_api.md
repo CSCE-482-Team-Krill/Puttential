@@ -30,3 +30,11 @@ Errors are `{ error, code, retryable }`, with 400/413/415 for malformed requests
 The compatibility `POST /api/attempts` and `POST /api/solutions` routes retain their prototype payloads and write only legacy, unranked tables. They cannot populate competitive progress or standings. Do not use them for the daily frontend.
 
 See [release and publishing](../../docs/iteration-two-release.md) for database setup, supported versions, capacity, worker recovery, cancellation and acceptance.
+
+# Community maps
+
+`GET /api/community` lists published summaries with optional `cursor` pagination.
+`GET /api/community/:id` reads a public playable map without its author solution.
+`POST /api/community` verifies a solved editor document and publishes an immutable
+map using the existing guest cookie, origin checks and a retryable request ID.
+See [community publishing](../../docs/community-publishing.md) for the request and deployment details.

@@ -252,6 +252,16 @@ button:disabled {
   }
 }
 @media (max-width: 959px) {
+  .embedded-editor .playtest-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .embedded-editor .playtest-layout > * {
+    min-width: 0;
+  }
+  .embedded-editor .card-heading {
+    flex-wrap: wrap;
+    overflow-wrap: anywhere;
+  }
   .embedded-editor .editor-layout {
     min-width: 0;
     grid-template-columns: minmax(0, 1fr);
@@ -1480,6 +1490,7 @@ button:disabled {
   margin-block: 8px;
 }
 .panel-actions button,
+.community-map-card > button,
 .copy-result > button,
 .modal-body form button,
 .modal-body > button,
@@ -1600,4 +1611,44 @@ button:disabled {
   .modal-body .ranking-player small {
     line-height: 1.5;
   }
+}
+/* Community maps use the existing modal and game layout. */
+.community-map-card {
+  padding: 16px;
+  border: 1px solid var(--border, #d0dccb);
+  border-radius: 12px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.community-map-card h3 {
+  margin: 0 0 6px;
+}
+.community-map-card a {
+  color: inherit;
+}
+.community-description {
+  white-space: pre-wrap;
+}
+.community-publish {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #d0dccb;
+  overflow-wrap: anywhere;
+}
+.community-publish label {
+  display: grid;
+  gap: 6px;
+}
+.community-publish input,
+.community-publish textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 8px;
+}
+.community-publish textarea {
+  min-height: 80px;
+  resize: vertical;
 }

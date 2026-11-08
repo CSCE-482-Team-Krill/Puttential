@@ -5,13 +5,34 @@ import type { LevelDocument } from '../../game';
 import { GameplayCanvas } from '../../frontend/gameplay/gameplay-view';
 import { usePuzzle } from '../../frontend/puzzle';
 import { ForceToolkit, PlayButton } from '../../frontend/player-controls';
+import { deliveredEngine } from '../../frontend/engine-adapter';
+import { defaultRules } from '../../game/run-evaluation';
+import { PublishMap, type MapPublisher } from './publish-map';
 
-export function Playtest({ document, onClose }: { document: LevelDocument; onClose: () => void }) {
+export function Playtest({
+  document,
+  onClose,
+  publish,
+}: {
+  document: LevelDocument;
+  onClose: () => void;
+  publish?: MapPublisher;
+}) {
   const level = useMemo(
     () => decodeLevel({ ...document.level, bounds: document.editor.arena.bounds }),
     [document],
   );
-  const puzzle = usePuzzle(level);
+  const rules = useMemo(() => defaultRules(level), [level]);
+  const puzzle = usePuzzle(level, { adapter: deliveredEngine, rules });
+  const solution = puzzle.completedRun?.result.solved
+    ? {
+        levelId: level.id,
+        levelVersion: level.version,
+        simulationVersion: rules.simulationVersion,
+        rulesVersion: rules.rulesVersion,
+        commands: puzzle.completedRun.commands,
+      }
+    : null;
   const bounds = document.editor.arena.bounds;
   return (
     <section className="playtest-layout">
@@ -66,6 +87,7 @@ export function Playtest({ document, onClose }: { document: LevelDocument; onClo
           Test placements do not change the authored course. Physics and controls are shared with
           the game.
         </p>
+        {publish && <PublishMap document={document} placement={solution} publish={publish} />}
       </aside>
     </section>
   );

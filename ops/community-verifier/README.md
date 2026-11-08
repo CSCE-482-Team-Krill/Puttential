@@ -1,5 +1,9 @@
 # Verifier prototype and deployment gate
 
+The website's [community publishing MVP](../../docs/community-publishing.md) uses
+Vercel request-based verification and does not require this prototype's VM gate.
+The following requirements apply only to the earlier isolated-verifier design.
+
 The selected target is one Ubuntu 24.04 DigitalOcean VM, two vCPUs, 4 GiB RAM,
 with one credentialed supervisor and precisely two fixed execution units (`@0`, `@1`).
 No resource is provisioned and no production credential is changed by these files.
