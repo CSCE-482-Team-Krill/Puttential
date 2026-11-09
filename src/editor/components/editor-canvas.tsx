@@ -38,7 +38,7 @@ type Props = {
   preset: string | null;
   clearPreset: () => void;
   snap: boolean;
-  onCommit: (d: LevelDocument) => void;
+  onCommit: (d: LevelDocument, source: LevelDocument) => void;
   onError: (message: string) => void;
 };
 type Drag = {
@@ -428,7 +428,7 @@ export function EditorCanvas(props: Props) {
     }
     setMarquee(null);
     if (!cancel && d?.base === props.document && lastPreview.current)
-      props.onCommit(lastPreview.current);
+      props.onCommit(lastPreview.current, d.base);
     drag.current = null;
     lastPreview.current = null;
     setPreview(null);
@@ -438,7 +438,7 @@ export function EditorCanvas(props: Props) {
       const preset = presets.find((p) => p.id === id);
       if (!preset) throw new Error('Unknown preset');
       const result = place(props.document, preset, snapped(world));
-      props.onCommit(result.doc);
+      props.onCommit(result.doc, props.document);
       props.onSelect(result.selection);
       props.clearPreset();
       props.onError('');
