@@ -42,8 +42,16 @@ export const repositoryPersistence: EditorPersistence = {
   recovery: {
     read: () => {
       const raw = localStorage.getItem(recoveryKey);
-      return raw ? validateDocument(JSON.parse(raw)) : null;
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (data && 'document' in data) {
+        if (data.revision !== null && typeof data.revision !== 'string')
+          throw new Error('Invalid recovery revision');
+        return { document: validateDocument(data.document), revision: data.revision };
+      }
+      return validateDocument(data);
     },
-    write: (document) => localStorage.setItem(recoveryKey, JSON.stringify(document)),
+    write: (document, revision = null) =>
+      localStorage.setItem(recoveryKey, JSON.stringify({ document, revision })),
   },
 };

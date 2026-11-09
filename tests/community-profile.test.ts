@@ -297,3 +297,13 @@ test('explicit import conversions preserve originals and ignored static density 
     b.destroy();
   }
 });
+
+test('preview conversion clamps sampling independently of the prediction length', () => {
+  const original = freshDocument();
+  original.level.prediction = { maxTicks: 1200, sampleEveryTicks: 240 };
+  const converted = validateCommunityDocument(
+    convertCommunityImport(original, ['community-preview-limit']),
+  );
+  assert.deepEqual(converted.level.prediction, { maxTicks: 1200, sampleEveryTicks: 120 });
+  assert.equal(original.level.prediction.sampleEveryTicks, 240);
+});
