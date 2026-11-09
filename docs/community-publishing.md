@@ -22,6 +22,11 @@ creates a new map/link. Creator names use the existing guest profile nickname.
 Maps are listed newest first, 20 per page. Solutions and internal ownership fields
 are excluded from public responses.
 
+The publishing form journals its exact submission and request ID in sessionStorage
+before sending. If the server commits but its response is lost, reopening playtest
+and retrying the same solution/metadata in that tab retrieves the existing map.
+When browser storage is unavailable, retries are retained only while the form is open.
+
 ## Deploy on the existing Vercel project
 
 Use the existing root directory `src/frontend` and workspace install/build settings.
@@ -45,12 +50,26 @@ Builds do not automatically migrate databases. Generate the client locally with
 
 Requests are bounded to 256 KiB, use the existing community profile limits and
 replay at most 7,200 physics ticks. Imported preview lengths are capped at 1,200
-ticks without changing simulation behavior. Each guest may publish ten maps/hour.
+ticks without changing simulation behavior. Preview sampling intervals are independently capped
+at 120 ticks. Each guest may publish ten maps in a rolling hour; the final quota
+check and insert are serialized in the database so concurrent submissions cannot
+exceed it. Each guest may also start 30 solution checks per one-hour admission
+window, including unsuccessful proofs. Acknowledged publication retries bypass
+both limits. The API uses the shared strict UTF-8 JSON transport and rejects extra
+placement or command properties before replay.
 Verification uses the same setup/rotation and goal evaluation in editor and server.
 This MVP does not provide the earlier plan's OS isolation, fixed worker capacity,
 moderation dashboard, cloud drafts or community rankings. A platform timeout does
 not publish a map unless verification completed and the database insert committed;
 retrying the same submission retrieves that publication.
+
+The playtest panel shows unsupported community properties before publication and
+surfaces engine/setup errors. Device and repository recovery record the revision
+of the document being edited; loading another draft does not alter that revision.
+Device saves use the browser's Web Locks API where available to serialize
+cross-tab conflict checks. Browsers without Web Locks retain revision checks but
+cannot guarantee atomic simultaneous saves. Recovery remains device-local; it is
+not a cloud backup.
 
 ## Verification
 
