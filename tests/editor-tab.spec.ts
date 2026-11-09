@@ -97,3 +97,49 @@ test('Editor fits a phone viewport and preserves modal keyboard behavior', async
   await expect(community).toBeFocused();
   await expect(editor).toBeVisible();
 });
+
+test('community retries repeat the failed page, including a failed refresh', async ({ page }) => {
+  const map = (index: number) => ({
+    id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+    title: `Community course ${index}`,
+    description: '',
+    creatorName: 'Test creator',
+    createdAt: '2026-11-09T00:00:00.000Z',
+  });
+  const firstCursor = map(20).id,
+    secondCursor = map(40).id;
+  let failMore = true,
+    failRefresh = false;
+  const requests: string[] = [];
+  await page.route('**/api/community?*', async (route) => {
+    const cursor = new URL(route.request().url()).searchParams.get('cursor');
+    requests.push(cursor!);
+    if (failMore) {
+      failMore = false;
+      await route.fulfill({ status: 503, json: { error: 'Temporary page failure' } });
+    } else await route.fulfill({ json: { items: [map(21)], nextCursor: secondCursor } });
+  });
+  await page.route('**/api/community', async (route) => {
+    requests.push('first');
+    if (failRefresh) {
+      failRefresh = false;
+      await route.fulfill({ status: 503, json: { error: 'Temporary refresh failure' } });
+    } else
+      await route.fulfill({
+        json: { items: Array.from({ length: 20 }, (_, i) => map(i + 1)), nextCursor: firstCursor },
+      });
+  });
+  await page.goto('http://127.0.0.1:3000/');
+  await page.getByRole('button', { name: 'Community', exact: true }).click();
+  const panel = page.getByRole('dialog', { name: 'Community', exact: true });
+  await expect(panel.getByRole('article')).toHaveCount(20);
+  await panel.getByRole('button', { name: 'Load more maps' }).click();
+  await panel.getByRole('button', { name: 'Retry community' }).click();
+  await expect(panel.getByRole('article')).toHaveCount(21);
+  expect(requests.slice(-2)).toEqual([firstCursor, firstCursor]);
+  failRefresh = true;
+  await panel.getByRole('button', { name: 'Refresh maps' }).click();
+  await panel.getByRole('button', { name: 'Retry community' }).click();
+  await expect(panel.getByRole('article')).toHaveCount(20);
+  expect(requests.slice(-2)).toEqual(['first', 'first']);
+});

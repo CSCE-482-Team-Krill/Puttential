@@ -7,11 +7,12 @@ import type {
 import { parseLevel } from '../game/levels/parse';
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const timeout = AbortSignal.timeout(65_000);
   const response = await fetch(path, {
     credentials: 'same-origin',
     cache: 'no-store',
-    signal: AbortSignal.timeout(65_000),
     ...options,
+    signal: options.signal ? AbortSignal.any([options.signal, timeout]) : timeout,
   });
   const body = await response.json().catch(() => null);
   if (!response.ok)

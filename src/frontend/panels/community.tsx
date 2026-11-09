@@ -17,7 +17,9 @@ export function CommunityPanel({
   const [error, setError] = useState('');
   const [loaded, setLoaded] = useState(false);
   const controller = useRef<AbortController | null>(null);
+  const requestedCursor = useRef<string | undefined>(undefined);
   async function load(next?: string) {
+    requestedCursor.current = next;
     controller.current?.abort();
     const current = new AbortController();
     controller.current = current;
@@ -60,7 +62,7 @@ export function CommunityPanel({
       {error && (
         <p role="alert">
           {error}{' '}
-          <button disabled={busy} onClick={() => void load(cursor ?? undefined)}>
+          <button disabled={busy} onClick={() => void load(requestedCursor.current)}>
             Retry community
           </button>
         </p>

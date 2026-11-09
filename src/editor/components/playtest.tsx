@@ -8,6 +8,7 @@ import { ForceToolkit, PlayButton } from '../../frontend/player-controls';
 import { deliveredEngine } from '../../frontend/engine-adapter';
 import { defaultRules } from '../../game/run-evaluation';
 import { PublishMap, type MapPublisher } from './publish-map';
+import { convertCommunityImport, validateCommunityDocument } from '../../shared/community-profile';
 
 export function Playtest({
   document,
@@ -24,6 +25,15 @@ export function Playtest({
   );
   const rules = useMemo(() => defaultRules(level), [level]);
   const puzzle = usePuzzle(level, { adapter: deliveredEngine, rules });
+  const publicationError = useMemo(() => {
+    if (!publish) return '';
+    try {
+      validateCommunityDocument(convertCommunityImport(document, ['community-preview-limit']));
+      return '';
+    } catch (cause) {
+      return cause instanceof Error ? cause.message : 'This map does not meet community limits.';
+    }
+  }, [document, publish]);
   const solution = puzzle.completedRun?.result.solved
     ? {
         levelId: level.id,
@@ -66,6 +76,9 @@ export function Playtest({
         <h2>Force tiles</h2>
         <ForceToolkit level={level} puzzle={puzzle} />
         <PlayButton puzzle={puzzle} />
+        {(puzzle.error || puzzle.editError) && (
+          <p role="alert">{puzzle.error || puzzle.editError}</p>
+        )}
         <button className="text-button" onClick={puzzle.resetLayout}>
           Reset test layout
         </button>
@@ -87,7 +100,12 @@ export function Playtest({
           Test placements do not change the authored course. Physics and controls are shared with
           the game.
         </p>
-        {publish && <PublishMap document={document} placement={solution} publish={publish} />}
+        {publish &&
+          (publicationError ? (
+            <p role="alert">Return to the editor before publishing: {publicationError}</p>
+          ) : (
+            <PublishMap document={document} placement={solution} publish={publish} />
+          ))}
       </aside>
     </section>
   );
