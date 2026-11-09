@@ -1,11 +1,6 @@
 import { parseLevel } from '../game/levels/parse';
-import { isCourseObject } from '../game/objects/catalog';
-import {
-  defaultRules,
-  RULES_VERSION,
-  SIMULATION_VERSION,
-  validatePlacement,
-} from '../game/run-evaluation';
+import { defaultRules, RULES_VERSION, SIMULATION_VERSION } from '../game/run-evaluation';
+import { validateCommunityPlacement } from './community-placement';
 import { COMMUNITY_CONTRACT } from './community-contracts';
 import type {
   CanonicalCandidate,
@@ -165,39 +160,7 @@ export async function validateCommunityProof(
       canonicalJson(['candidateHash', 'candidateId', 'engineArtifactDigest', 'placement'])
   )
     throw new Error('Proof does not bind the exact candidate');
-  const allowed = ['levelId', 'levelVersion', 'rulesVersion', 'simulationVersion', 'commands'];
-  if (
-    Object.keys(proof.placement).length !== allowed.length ||
-    Object.keys(proof.placement).some((key) => !allowed.includes(key))
-  )
-    throw new Error('Unknown placement property');
-  if (!Array.isArray(proof.placement.commands)) throw new Error('Expected placement commands');
-  const selectable = new Set(
-    candidate.configuration.fields
-      .filter((field) => !isCourseObject(field.force))
-      .map((field) => field.id),
-  );
-  for (const command of proof.placement.commands) {
-    if (
-      !command ||
-      !selectable.has(command.fieldId) ||
-      !['move-field', 'set-field-angle', 'set-field-enabled'].includes(command.type)
-    )
-      throw new Error('Unknown or fixed placement tile');
-    const allowedKeys =
-      command.type === 'move-field'
-        ? ['type', 'fieldId', 'sequence', 'xQ', 'yQ']
-        : command.type === 'set-field-angle'
-          ? ['type', 'fieldId', 'sequence', 'angleQ']
-          : ['type', 'fieldId', 'sequence', 'enabled'];
-    if (
-      Object.keys(command).length !== allowedKeys.length ||
-      Object.keys(command).some((key) => !allowedKeys.includes(key))
-    )
-      throw new Error('Unknown placement command property');
-  }
-  // Shared canonical placement validation runs only after bounded exact-inventory checks.
-  validatePlacement(candidate.configuration, proof.placement, candidate.rules);
+  validateCommunityPlacement(candidate.configuration, candidate.rules, proof.placement);
   return hashCanonical({
     tag: 'puttential-community-proof-v1',
     candidateHash: candidate.candidateHash,
