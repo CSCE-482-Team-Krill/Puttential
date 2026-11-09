@@ -20,6 +20,9 @@ before(async () => {
   ({ prisma } = await import('../src/backend/prisma'));
 });
 after(async () => {
+  await prisma.apiRateLimit.deleteMany({
+    where: { key: { in: guests.map((id) => `community-publish:${id}`) } },
+  });
   await prisma.communityMap.deleteMany({ where: { authorId: { in: guests } } });
   await prisma.guest.deleteMany({ where: { id: { in: guests } } });
   await prisma.$disconnect();
@@ -157,4 +160,94 @@ test('community browsing paginates stable public summaries without requiring a g
   assert.ok(second.items.every((v: { id: string }) => !ids.has(v.id)));
   assert.equal(first.items[0].configuration, undefined);
   assert.equal((await call('?cursor=invalid')).status, 400);
+});
+
+test('concurrent publications cannot exceed the last hourly publishing slot', async () => {
+  const { player, cookie } = await guest();
+  const input = {
+    ...communityPublishingFixture(),
+    requestId: randomUUID(),
+    expectedGuestId: player.id,
+    title: 'Last hourly slot',
+    description: '',
+  };
+  for (let index = 0; index < 9; index++)
+    assert.equal((await call('', { ...input, requestId: randomUUID() }, cookie)).status, 201);
+  const responses = await Promise.all(
+    Array.from({ length: 3 }, () => call('', { ...input, requestId: randomUUID() }, cookie)),
+  );
+  assert.deepEqual(responses.map((response) => response.status).sort(), [201, 429, 429]);
+  assert.equal(await prisma.communityMap.count({ where: { authorId: player.id } }), 10);
+});
+
+test('failed solutions consume verification admission, while acknowledged retries remain available', async () => {
+  const { player, cookie } = await guest();
+  const input = {
+    ...communityPublishingFixture(),
+    requestId: randomUUID(),
+    expectedGuestId: player.id,
+    title: 'Bounded verification',
+    description: '',
+  };
+  const published = await call('', input, cookie);
+  assert.equal(published.status, 201);
+  await prisma.apiRateLimit.upsert({
+    where: { key: `community-publish:${player.id}` },
+    update: { count: 29 },
+    create: {
+      key: `community-publish:${player.id}`,
+      count: 29,
+      expiresAt: new Date(Date.now() + 3600_000),
+    },
+  });
+  const unsolved = structuredClone(input);
+  unsolved.requestId = randomUUID();
+  unsolved.document.level.goal = {
+    ...unsolved.document.level.goal,
+    minX: 3.45,
+    maxX: 6.35,
+    minY: -3.4,
+    maxY: -1.3,
+  };
+  assert.equal((await call('', unsolved, cookie)).status, 422);
+  assert.equal((await call('', { ...input, requestId: randomUUID() }, cookie)).status, 429);
+  assert.equal((await call('', input, cookie)).status, 201);
+  await prisma.apiRateLimit.update({
+    where: { key: `community-publish:${player.id}` },
+    data: { expiresAt: new Date(0) },
+  });
+  assert.equal((await call('', { ...input, requestId: randomUUID() }, cookie)).status, 201);
+});
+
+test('the publishing route uses strict transport and rejects decorated solution commands', async () => {
+  const { player, cookie } = await guest();
+  const input = {
+    ...communityPublishingFixture(),
+    requestId: randomUUID(),
+    expectedGuestId: player.id,
+    title: 'Strict publication',
+    description: '',
+  };
+  for (const headers of [
+    { 'Content-Type': 'application/jsonp' },
+    { 'Content-Type': 'application/json; charset=utf-16' },
+    { 'Content-Type': 'application/json', 'Content-Encoding': 'gzip' },
+  ]) {
+    const response = await handler(
+      new Request(`${origin}/api/community`, {
+        method: 'POST',
+        headers: { ...headers, Origin: origin, Cookie: cookie },
+        body: JSON.stringify(input),
+      }),
+    );
+    assert.equal(response.status, 415);
+  }
+  assert.equal(
+    (await call('', { ...input, placement: { ...input.placement, extra: true } }, cookie)).status,
+    400,
+  );
+  const decorated = structuredClone(input);
+  Object.assign(decorated.placement.commands[0]!, { ignored: 'untrusted' });
+  assert.equal((await call('', decorated, cookie)).status, 400);
+  assert.equal(await prisma.communityMap.count({ where: { authorId: player.id } }), 0);
 });

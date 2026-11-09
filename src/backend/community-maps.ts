@@ -6,8 +6,8 @@ import { convertCommunityImport, validateCommunityDocument } from '../shared/com
 import { canonicalJson } from '../shared/community-canonical-json';
 import { normalizePublicationMetadata } from '../shared/community-candidate';
 import { decodeLevel } from '../game/levels/codec';
-import { defaultRules, replayRun, validatePlacement } from '../game/run-evaluation';
-import type { Placement } from '../shared/puzzle-contracts';
+import { defaultRules, replayRun } from '../game/run-evaluation';
+import { validateCommunityPlacement } from '../shared/community-placement';
 import type {
   CommunityMapDetail,
   CommunityMapList,
@@ -73,8 +73,9 @@ export async function publishCommunityMap(guest: Guest, input: Record<string, un
       'INVALID_REQUEST',
       'A valid publishing request ID is required.',
     );
+  const requestId = input.requestId;
   let document, level, rules, metadata;
-  const placement = input.placement as Placement;
+  let placement;
   try {
     // Preview length does not affect simulation; keep existing editor imports publishable.
     document = validateCommunityDocument(
@@ -87,7 +88,7 @@ export async function publishCommunityMap(guest: Guest, input: Record<string, un
       description: input.description as string,
       creatorNameSnapshot: guest.nickname,
     });
-    validatePlacement(level, placement, rules);
+    placement = validateCommunityPlacement(level, rules, input.placement);
   } catch (error) {
     throw new CompetitiveError(
       400,
@@ -106,7 +107,7 @@ export async function publishCommunityMap(guest: Guest, input: Record<string, un
       }),
     )
     .digest('hex');
-  const key = { authorId_requestId: { authorId: guest.id, requestId: input.requestId } };
+  const key = { authorId_requestId: { authorId: guest.id, requestId } };
   const existing = await prisma.communityMap.findUnique({ where: key });
   const acknowledged = (map: CommunityMap) => {
     if (map.submissionHash !== submissionHash)
@@ -118,15 +119,38 @@ export async function publishCommunityMap(guest: Guest, input: Record<string, un
     return { map: summary(map) };
   };
   if (existing) return acknowledged(existing);
-  if (
-    (await prisma.communityMap.count({
-      where: { authorId: guest.id, createdAt: { gte: new Date(Date.now() - 3600_000) } },
-    })) >= 10
-  )
+  const checkQuota = async (tx: Prisma.TransactionClient) => {
+    const [clock] = await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
+    if (
+      (await tx.communityMap.count({
+        where: {
+          authorId: guest.id,
+          createdAt: { gte: new Date(clock!.now.getTime() - 3600_000) },
+        },
+      })) >= 10
+    )
+      throw new CompetitiveError(
+        429,
+        'RATE_LIMITED',
+        'You can publish ten maps per hour. Please try again later.',
+      );
+  };
+  await checkQuota(prisma);
+  // Count every admitted replay, including failed proofs, across all server replicas.
+  const rateKey = `community-publish:${guest.id}`;
+  const admitted = await prisma.$queryRaw<{ count: number }[]>`
+    INSERT INTO api_rate_limits (key, count, expires_at)
+    VALUES (${rateKey}, 1, NOW() + interval '1 hour')
+    ON CONFLICT (key) DO UPDATE SET
+      count = CASE WHEN api_rate_limits.expires_at <= NOW() THEN 1 ELSE api_rate_limits.count + 1 END,
+      expires_at = CASE WHEN api_rate_limits.expires_at <= NOW() THEN NOW() + interval '1 hour' ELSE api_rate_limits.expires_at END
+    WHERE api_rate_limits.expires_at <= NOW() OR api_rate_limits.count < 30
+    RETURNING count`;
+  if (!admitted.length)
     throw new CompetitiveError(
       429,
       'RATE_LIMITED',
-      'You can publish ten maps per hour. Please try again later.',
+      'Too many solution checks. Please try again later.',
     );
   const result = await replayRun(level, placement, rules);
   if (result.outcome !== 'success')
@@ -135,20 +159,25 @@ export async function publishCommunityMap(guest: Guest, input: Record<string, un
       'PROOF_FAILED',
       'The server could not solve this map with your test layout. Return to playtest, solve it, then publish again.',
     );
-  const map = await prisma.communityMap.upsert({
-    where: key,
-    update: {},
-    create: {
-      authorId: guest.id,
-      requestId: input.requestId,
-      submissionHash,
-      title: metadata.title,
-      description: metadata.description,
-      creatorName: metadata.creatorNameSnapshot,
-      configuration: json(level),
-      rules: json(rules),
-      authorSolution: json(placement),
-    },
+  return prisma.$transaction(async (tx) => {
+    // Replay stays outside the transaction; serialize the final quota check and insert.
+    await tx.$queryRaw`SELECT id FROM guests WHERE id = ${guest.id} FOR UPDATE`;
+    const existing = await tx.communityMap.findUnique({ where: key });
+    if (existing) return acknowledged(existing);
+    await checkQuota(tx);
+    const map = await tx.communityMap.create({
+      data: {
+        authorId: guest.id,
+        requestId,
+        submissionHash,
+        title: metadata.title,
+        description: metadata.description,
+        creatorName: metadata.creatorNameSnapshot,
+        configuration: json(level),
+        rules: json(rules),
+        authorSolution: json(placement),
+      },
+    });
+    return acknowledged(map);
   });
-  return acknowledged(map);
 }
