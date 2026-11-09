@@ -17,7 +17,7 @@ export interface EditorPersistence {
       | RecoveredEditorDocument
       | null
       | Promise<LevelDocument | RecoveredEditorDocument | null>;
-    write(document: LevelDocument): void | Promise<void>;
+    write(document: LevelDocument, revision?: string | null): void | Promise<void>;
   };
   labels: { save: string; saved: string; library: string; starters: string };
   starters: readonly { id: string; label: string; load(): LevelDocument }[];

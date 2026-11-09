@@ -63,7 +63,7 @@ test('recovery retains its original save revision so another tab cannot be overw
   const saved = await original.save(freshDocument(), null);
   const unfinished = structuredClone(saved.document);
   unfinished.editor.name = 'Unfinished changes';
-  original.recovery.write(unfinished);
+  original.recovery.write(unfinished, saved.revision);
   const otherTab = createBrowserEditorPersistence(() => store);
   const concurrent = structuredClone(saved.document);
   concurrent.editor.name = 'Saved in another tab';
@@ -73,4 +73,29 @@ test('recovery retains its original save revision so another tab cannot be overw
   assert.equal(recovered.revision, saved.revision);
   assert.deepEqual(recovered.document, unfinished);
   await assert.rejects(original.save(recovered.document, recovered.revision), /another tab/);
+});
+
+test('opening a newer draft cannot change the revision of the current recovery document', async () => {
+  const store = memoryStorage();
+  const persistence = createBrowserEditorPersistence(() => store);
+  const saved = await persistence.save(freshDocument(), null);
+  const other = createBrowserEditorPersistence(() => store);
+  const newer = await other.save(saved.document, saved.revision);
+  await persistence.load(saved.document.level.id); // The user may cancel replacing their work.
+  persistence.recovery.write(saved.document, saved.revision);
+  const recovered = persistence.recovery.read();
+  assert.ok(recovered && 'document' in recovered);
+  assert.equal(recovered.revision, saved.revision);
+  assert.notEqual(recovered.revision, newer.revision);
+  await assert.rejects(persistence.save(recovered.document, recovered.revision), /another tab/);
+  persistence.recovery.write(saved.document); // An import is a new unsaved document.
+  assert.equal((persistence.recovery.read() as { revision: unknown }).revision, null);
+});
+
+test('malformed draft keys do not prevent access to valid device drafts', async () => {
+  const store = memoryStorage();
+  const persistence = createBrowserEditorPersistence(() => store);
+  const saved = await persistence.save(freshDocument(), null);
+  store.setItem('puttential-editor-draft-v1/%invalid', '{}');
+  assert.deepEqual(await persistence.list(), [saved.document.level.id]);
 });

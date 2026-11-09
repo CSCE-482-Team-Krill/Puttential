@@ -173,7 +173,8 @@ export default function Home() {
       stateRef.current.applyAvailability(response.availability);
       setDaily(response);
       rollover.current = { puzzle: response, received: performance.now() };
-      if (select || contextRef.current?.puzzle) setNotice('');
+      if (generation === selectedGeneration.current && (select || contextRef.current?.puzzle))
+        setNotice('');
       if (select && generation === selectedGeneration.current) {
         const next = publishedContext(response);
         setContext((current) =>
@@ -191,6 +192,7 @@ export default function Home() {
       }
     } catch (e) {
       if (controller.signal.aborted) return;
+      if (generation !== selectedGeneration.current || contextRef.current?.community) return;
       setNotice(
         e instanceof ApiError && e.status === 404
           ? 'No course is published for today.'
@@ -199,7 +201,8 @@ export default function Home() {
             : 'Today’s puzzle service is unavailable.',
       );
     } finally {
-      if (!controller.signal.aborted) setLoading(false);
+      if (!controller.signal.aborted && generation === selectedGeneration.current)
+        setLoading(false);
     }
   }, []);
   const leaveOwned = useCallback(async () => {

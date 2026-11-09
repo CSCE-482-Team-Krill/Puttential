@@ -1,5 +1,5 @@
 'use client';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { CourseCanvas, toCanvas, toWorld, polygonPath } from '../../frontend/course-canvas';
 import type { View } from '../../frontend/course-canvas';
 import { portalPairColors } from '../../frontend/portal-colors';
@@ -38,7 +38,7 @@ type Props = {
   preset: string | null;
   clearPreset: () => void;
   snap: boolean;
-  onCommit: (d: LevelDocument) => void;
+  onCommit: (d: LevelDocument, source: LevelDocument) => void;
   onError: (message: string) => void;
 };
 type Drag = {
@@ -62,6 +62,12 @@ export function EditorCanvas(props: Props) {
   const view = useRef<View | null>(null),
     drag = useRef<Drag | null>(null),
     lastPreview = useRef<LevelDocument | null>(null);
+  useEffect(() => {
+    drag.current = null;
+    lastPreview.current = null;
+    setPreview(null);
+    setMarquee(null);
+  }, [props.document]);
   const display = preview ?? props.document;
   const portalColors = useMemo(
     () => portalPairColors(display.level.fields),
@@ -329,7 +335,7 @@ export function EditorCanvas(props: Props) {
   function movePointer(event: React.PointerEvent<HTMLDivElement>) {
     const d = drag.current,
       v = view.current;
-    if (!d || !v) return;
+    if (!d || !v || d.base !== props.document) return;
     const p = pixel(event),
       world = toWorld(v, p);
     if (d.type === 'region') {
@@ -409,7 +415,7 @@ export function EditorCanvas(props: Props) {
   }
   function finish(cancel = false) {
     const d = drag.current;
-    if (!cancel && d?.type === 'region') {
+    if (!cancel && d?.base === props.document && d.type === 'region') {
       const selected = regionSelection(d.base, d.start, d.end ?? d.start);
       props.onSelections(
         d.additive
@@ -421,7 +427,8 @@ export function EditorCanvas(props: Props) {
       );
     }
     setMarquee(null);
-    if (!cancel && lastPreview.current) props.onCommit(lastPreview.current);
+    if (!cancel && d?.base === props.document && lastPreview.current)
+      props.onCommit(lastPreview.current, d.base);
     drag.current = null;
     lastPreview.current = null;
     setPreview(null);
@@ -431,7 +438,7 @@ export function EditorCanvas(props: Props) {
       const preset = presets.find((p) => p.id === id);
       if (!preset) throw new Error('Unknown preset');
       const result = place(props.document, preset, snapped(world));
-      props.onCommit(result.doc);
+      props.onCommit(result.doc, props.document);
       props.onSelect(result.selection);
       props.clearPreset();
       props.onError('');
