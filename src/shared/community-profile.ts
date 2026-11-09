@@ -382,9 +382,9 @@ export function convertCommunityImport(
     const prediction = level.prediction as ObjectValue;
     if (typeof prediction.maxTicks === 'number' && prediction.maxTicks > 1200) {
       prediction.maxTicks = 1200;
-      if (typeof prediction.sampleEveryTicks === 'number' && prediction.sampleEveryTicks > 120)
-        prediction.sampleEveryTicks = 120;
     }
+    if (typeof prediction.sampleEveryTicks === 'number' && prediction.sampleEveryTicks > 120)
+      prediction.sampleEveryTicks = 120;
   }
   if (conversions.includes('remove-static-density') && Array.isArray(level.staticBodies))
     for (const body of level.staticBodies) {

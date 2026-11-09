@@ -70,6 +70,9 @@ export function Editor({
     inspectorPane.current?.scrollTo({ top: 0 });
   }, [selection?.id, selection?.kind]);
   const dirty = JSON.stringify(doc) !== saved?.text;
+  const dirtyRef = useRef(dirty);
+  dirtyRef.current = dirty;
+  const revision = saved?.id === doc.level.id ? saved.revision : null;
   const commit = useCallback((next: LevelDocument) => {
     setHistory((h) => historyCommit(h, next));
     setError('');
@@ -120,11 +123,11 @@ export function Editor({
   useEffect(() => {
     if (!recoveryChecked || recovery || recoveryError) return;
     Promise.resolve()
-      .then(() => persistence.recovery.write(doc))
+      .then(() => persistence.recovery.write(doc, revision))
       .catch(() => {
         setNotice('Browser recovery is unavailable. Save or export your course.');
       });
-  }, [doc, recoveryChecked, recovery, recoveryError, persistence]);
+  }, [doc, revision, recoveryChecked, recovery, recoveryError, persistence]);
   useEffect(() => {
     if (!dirty) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -192,7 +195,10 @@ export function Editor({
     }
   }
   function replace(next: LevelDocument, stored?: { revision: string }) {
-    if (dirty && !window.confirm('Replace this document? Save first to keep your current work.'))
+    if (
+      dirtyRef.current &&
+      !window.confirm('Replace this document? Save first to keep your current work.')
+    )
       return;
     setHistory({ past: [], present: next, future: [] });
     select(null);
