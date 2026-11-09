@@ -55,8 +55,8 @@ export function Editor({ persistence }: { persistence: EditorPersistence }) {
     inspectorPane.current?.scrollTo({ top: 0 });
   }, [selection?.id, selection?.kind]);
   const dirty = JSON.stringify(doc) !== saved?.text;
-  const commit = useCallback((next: LevelDocument) => {
-    setHistory((h) => historyCommit(h, next));
+  const commit = useCallback((next: LevelDocument, source?: LevelDocument) => {
+    setHistory((h) => (source && h.present !== source ? h : historyCommit(h, next)));
     setError('');
     setNotice('');
   }, []);
