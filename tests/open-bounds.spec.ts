@@ -38,7 +38,9 @@ test('Level borders toggle removes/restores walls, keeps board dimensions, and s
   await width.press('Tab');
   await expect
     .poll(() =>
-      page.evaluate(() => JSON.parse(localStorage.getItem('puttential-editor-v1')!).level.bounds),
+      page.evaluate(
+        () => JSON.parse(localStorage.getItem('puttential-editor-v1')!).document.level.bounds,
+      ),
     )
     .toEqual({ minX: -10, maxX: 10, minY: -4.25, maxY: 4.25 });
   await page.screenshot({ path: '/tmp/puttential-borders-off.png', fullPage: true });
