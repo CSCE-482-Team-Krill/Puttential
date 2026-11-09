@@ -73,8 +73,8 @@ export function Editor({
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
   const revision = saved?.id === doc.level.id ? saved.revision : null;
-  const commit = useCallback((next: LevelDocument) => {
-    setHistory((h) => historyCommit(h, next));
+  const commit = useCallback((next: LevelDocument, source?: LevelDocument) => {
+    setHistory((h) => (source && h.present !== source ? h : historyCommit(h, next)));
     setError('');
     setNotice('');
   }, []);
