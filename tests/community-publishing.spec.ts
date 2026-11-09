@@ -114,6 +114,31 @@ test('a creator solves and publishes a map; another browser discovers, shares an
       fullPage: true,
     });
     await page.setViewportSize({ width: 1500, height: 1050 });
+    let committedMapId = '',
+      originalRequestId = '';
+    await page.route(
+      '**/api/community',
+      async (route) => {
+        originalRequestId = route.request().postDataJSON().requestId;
+        const committed = await route.fetch();
+        expect(committed.status(), await committed.text()).toBe(201);
+        committedMapId = (await committed.json()).map.id;
+        await route.fulfill({
+          status: 503,
+          json: { error: 'Publication response lost. Please retry.' },
+        });
+      },
+      { times: 1 },
+    );
+    await editor.getByRole('button', { name: 'Publish map', exact: true }).click();
+    await expect(editor.getByRole('alert')).toContainText('Publication response lost');
+    await editor.getByRole('button', { name: 'Return to editor', exact: true }).click();
+    await editor.getByRole('button', { name: 'Playtest', exact: true }).click();
+    await expect(editor.getByLabel('Map title', { exact: true })).toHaveValue(
+      'A published browser course',
+    );
+    await editor.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect(editor.getByRole('button', { name: 'Publish map', exact: true })).toBeEnabled();
     const posted = page.waitForResponse(
       (response) =>
         response.url().endsWith('/api/community') && response.request().method() === 'POST',
@@ -121,7 +146,9 @@ test('a creator solves and publishes a map; another browser discovers, shares an
     await editor.getByRole('button', { name: 'Publish map', exact: true }).click();
     const response = await posted;
     expect(response.status(), await response.text()).toBe(201);
+    expect(response.request().postDataJSON().requestId).toBe(originalRequestId);
     const { map } = await response.json();
+    expect(map.id).toBe(committedMapId);
     const link = editor.getByRole('link', { name: `Play and share ${map.title}` });
     await expect(link).toBeVisible();
     await mkdir('artifacts/community-publishing', { recursive: true });

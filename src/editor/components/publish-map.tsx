@@ -13,6 +13,36 @@ export type MapPublisher = (
   requestId: string,
 ) => Promise<CommunityMapSummary>;
 
+type PublishAttempt = { payload: string; requestId: string };
+const attemptKey = (document: LevelDocument) =>
+  `puttential-community-publish-v1/${encodeURIComponent(document.level.id)}`;
+function restoreAttempt(document: LevelDocument) {
+  try {
+    const attempt = JSON.parse(sessionStorage.getItem(attemptKey(document)) ?? 'null');
+    if (
+      !attempt ||
+      typeof attempt.payload !== 'string' ||
+      typeof attempt.requestId !== 'string' ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(attempt.requestId)
+    )
+      return null;
+    const payload = JSON.parse(attempt.payload);
+    if (
+      typeof payload.title !== 'string' ||
+      typeof payload.description !== 'string' ||
+      JSON.stringify(payload.document) !== JSON.stringify(document)
+    )
+      return null;
+    return {
+      attempt: attempt as PublishAttempt,
+      title: payload.title,
+      description: payload.description,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function PublishMap({
   document,
   placement,
@@ -22,12 +52,13 @@ export function PublishMap({
   placement: Placement | null;
   publish: MapPublisher;
 }) {
-  const [title, setTitle] = useState(document.editor.name);
-  const [description, setDescription] = useState('');
+  const [restored] = useState(() => restoreAttempt(document));
+  const [title, setTitle] = useState(restored?.title ?? document.editor.name);
+  const [description, setDescription] = useState(restored?.description ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [published, setPublished] = useState<CommunityMapSummary | null>(null);
-  const attempt = useRef<{ payload: string; requestId: string } | null>(null);
+  const attempt = useRef<PublishAttempt | null>(restored?.attempt ?? null);
   const submitting = useRef(false);
   return (
     <form
@@ -42,6 +73,12 @@ export function PublishMap({
         const payload = JSON.stringify({ document, placement, title, description });
         if (attempt.current?.payload !== payload)
           attempt.current = { payload, requestId: crypto.randomUUID() };
+        try {
+          // Preserve retries if the server commits but its response is lost or the form closes.
+          sessionStorage.setItem(attemptKey(document), JSON.stringify(attempt.current));
+        } catch {
+          // In-memory retries remain available when browser storage is disabled or full.
+        }
         try {
           setPublished(
             await publish(document, placement, title, description, attempt.current.requestId),
