@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { starterLevels, levelName } from '../../game';
 import type { Bounds, Level } from '../../game';
 import type { Player, PuzzleResponse, Scope } from '../../shared/puzzle-contracts';
-import { ForceToolkit, PlayButton, SelectedFieldControls } from '../player-controls';
+import { GameplayCanvas, GameplayToolkit, GameplayRunControls } from '../gameplay/gameplay-view';
 import { LevelImport } from '../level-import';
-import { CourseCanvas } from '../course-canvas';
 import { usePuzzle } from '../puzzle';
 import { Icon } from '../icon';
 import { BrandLogo } from '../brand-logo';
@@ -29,10 +29,20 @@ import { LeaderboardPanel } from '../panels/leaderboard';
 import { ProfilePanel } from '../panels/profile';
 import { ResultPanel } from '../panels/result';
 import { RunsPanel } from '../panels/runs';
+import { CommunityPanel } from '../panels/community';
+import { communityApi } from '../community-api';
+import { communityMapUrl } from '../../shared/community-maps';
 import { shareResult } from '../share-result';
 import { markTutorialSeen, shouldOpenTutorial, Tutorial } from '../tutorial';
 
+const EmbeddedEditor = dynamic(() => import('../embedded-editor'), {
+  ssr: false,
+  loading: () => <p role="status">Loading level editor…</p>,
+});
+
 export default function Home() {
+  const [view, setView] = useState<'game' | 'editor'>('game');
+  const [editorVisited, setEditorVisited] = useState(false);
   const [context, setContext] = useState<CourseContext | null>(null);
   const contextRef = useRef(context);
   contextRef.current = context;
@@ -74,10 +84,12 @@ export default function Home() {
   const staleBoundary = useRef(false);
   const level = context?.level ?? starterLevels[0]!;
   const p = context?.puzzle;
+  const community = context?.community;
+  const courseRules = p?.rules ?? community?.rules;
   const legacy = context?.source === 'legacy';
   const puzzle = usePuzzle(level, {
-    ...(!p || deliveredEngine.supports(p.rules) ? { adapter: deliveredEngine } : {}),
-    ...(p ? { rules: p.rules } : {}),
+    ...(!courseRules || deliveredEngine.supports(courseRules) ? { adapter: deliveredEngine } : {}),
+    ...(courseRules ? { rules: courseRules } : {}),
     ...(context
       ? {
           storageKey: `puttential-draft-v1/${p ? (player?.id ?? 'unconfirmed') : 'local'}/${context.key}`,
@@ -161,7 +173,8 @@ export default function Home() {
       stateRef.current.applyAvailability(response.availability);
       setDaily(response);
       rollover.current = { puzzle: response, received: performance.now() };
-      setNotice('');
+      if (generation === selectedGeneration.current && (select || contextRef.current?.puzzle))
+        setNotice('');
       if (select && generation === selectedGeneration.current) {
         const next = publishedContext(response);
         setContext((current) =>
@@ -179,6 +192,7 @@ export default function Home() {
       }
     } catch (e) {
       if (controller.signal.aborted) return;
+      if (generation !== selectedGeneration.current || contextRef.current?.community) return;
       setNotice(
         e instanceof ApiError && e.status === 404
           ? 'No course is published for today.'
@@ -187,7 +201,8 @@ export default function Home() {
             : 'Today’s puzzle service is unavailable.',
       );
     } finally {
-      if (!controller.signal.aborted) setLoading(false);
+      if (!controller.signal.aborted && generation === selectedGeneration.current)
+        setLoading(false);
     }
   }, []);
   const leaveOwned = useCallback(async () => {
@@ -204,7 +219,11 @@ export default function Home() {
     const unresolved = record && !record.intent && record.phase !== 'terminal';
     if (
       (executorRef.current.mode === 'running' || unresolved) &&
-      !window.confirm('Leave this run? It will end; an accepted ranked start still counts.')
+      !window.confirm(
+        contextRef.current?.puzzle
+          ? 'Leave this run? It will end; an accepted ranked start still counts.'
+          : 'Leave this run? It will end.',
+      )
     )
       return false;
     if (unresolved) await session?.cancel(record.start.requestId);
@@ -223,9 +242,11 @@ export default function Home() {
           window.history.pushState(
             null,
             '',
-            contextRef.current?.puzzle
-              ? `?date=${contextRef.current.puzzle.date}`
-              : window.location.pathname,
+            contextRef.current?.community
+              ? communityMapUrl(contextRef.current.community.id)
+              : contextRef.current?.puzzle
+                ? `?date=${contextRef.current.puzzle.date}`
+                : window.location.pathname,
           );
         return;
       }
@@ -251,6 +272,7 @@ export default function Home() {
           current?.key === next.key ? { ...next, level: current.level } : next,
         );
         setImportBounds(null);
+        setView('game');
         setNotice('');
         setPanel(null);
         if (!sameContent) activeRequest.current = null;
@@ -260,6 +282,54 @@ export default function Home() {
           setNotice(e instanceof Error ? e.message : 'Selected course unavailable.');
       } finally {
         if (generation === selectedGeneration.current && !controller.signal.aborted)
+          setLoading(false);
+      }
+    },
+    [leaveOwned],
+  );
+  const chooseCommunity = useCallback(
+    async (id: string, history = true) => {
+      if (contextRef.current?.community?.id !== id && !(await leaveOwned())) {
+        if (!history)
+          window.history.pushState(
+            null,
+            '',
+            contextRef.current?.community
+              ? communityMapUrl(contextRef.current.community.id)
+              : contextRef.current?.puzzle
+                ? `?date=${contextRef.current.puzzle.date}`
+                : window.location.pathname,
+          );
+        return;
+      }
+      const generation = ++selectedGeneration.current;
+      selectionAbort.current?.abort();
+      const controller = new AbortController();
+      selectionAbort.current = controller;
+      setLoading(true);
+      setNotice('Loading community map…');
+      try {
+        const map = await communityApi.read(id, controller.signal);
+        if (controller.signal.aborted || generation !== selectedGeneration.current) return;
+        const next = {
+          ...localContext(map.configuration, 'community'),
+          key: `community-v1/${map.id}`,
+          community: map,
+        };
+        setContext((current) =>
+          current?.community?.id === map.id ? { ...next, level: current.level } : next,
+        );
+        setImportBounds(map.rules.placementBounds);
+        setView('game');
+        setPanel(null);
+        setNotice(deliveredEngine.supports(map.rules) ? '' : ENGINE_UNAVAILABLE);
+        activeRequest.current = null;
+        if (history) window.history.pushState(null, '', communityMapUrl(map.id));
+      } catch (cause) {
+        if (!controller.signal.aborted && generation === selectedGeneration.current)
+          setNotice(cause instanceof Error ? cause.message : 'Community map unavailable.');
+      } finally {
+        if (!controller.signal.aborted && generation === selectedGeneration.current)
           setLoading(false);
       }
     },
@@ -275,6 +345,7 @@ export default function Home() {
     selectionAbort.current?.abort();
     setContext(localContext(next, source));
     setImportBounds(bounds ?? null);
+    setView('game');
     setPanel(null);
     setLoading(false);
     activeRequest.current = null;
@@ -282,12 +353,18 @@ export default function Home() {
     window.history.pushState(null, '', window.location.pathname);
   }
   useEffect(() => {
-    const requested = new URLSearchParams(window.location.search).get('date');
-    void refreshToday(!requested);
-    if (requested) void chooseDate(requested, false);
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get('date');
+    const communityId = params.get('community');
+    void refreshToday(!requested && !communityId);
+    if (communityId) void chooseCommunity(communityId, false);
+    else if (requested) void chooseDate(requested, false);
     const back = () => {
-      const date = new URLSearchParams(window.location.search).get('date');
-      if (date) void chooseDate(date, false);
+      const params = new URLSearchParams(window.location.search);
+      const date = params.get('date');
+      const communityId = params.get('community');
+      if (communityId) void chooseCommunity(communityId, false);
+      else if (date) void chooseDate(date, false);
       else
         void (async () => {
           if (await leaveOwned()) {
@@ -298,9 +375,11 @@ export default function Home() {
             window.history.pushState(
               null,
               '',
-              contextRef.current?.puzzle
-                ? `?date=${contextRef.current.puzzle.date}`
-                : window.location.pathname,
+              contextRef.current?.community
+                ? communityMapUrl(contextRef.current.community.id)
+                : contextRef.current?.puzzle
+                  ? `?date=${contextRef.current.puzzle.date}`
+                  : window.location.pathname,
             );
           }
         })();
@@ -311,7 +390,7 @@ export default function Home() {
       selectionAbort.current?.abort();
       dailyAbort.current?.abort();
     };
-  }, [refreshToday, chooseDate]);
+  }, [refreshToday, chooseDate, chooseCommunity]);
   useEffect(() => {
     const current = rollover.current;
     if (!current) return;
@@ -472,11 +551,17 @@ export default function Home() {
         origin: window.location.origin,
       });
     }
-    return `⛳ Puttential — ${p?.date ?? (legacy ? levelName(level) : 'Practice')} — ${p ? 'Unverified' : legacy ? 'Legacy course' : 'Practice — unranked'}\n${puzzle.result?.solved ? 'Solved' : (puzzle.result?.outcome ?? 'Finished')}\nForce ${puzzle.result?.forceCost ?? 0} · Tiles ${puzzle.result?.tiles ?? 0}\nBall time ${(puzzle.result?.seconds ?? 0).toFixed(2)}s${p ? `\n${window.location.origin}/?date=${p.date}` : ''}`;
+    return `⛳ Puttential — ${community?.title ?? p?.date ?? (legacy ? levelName(level) : 'Practice')} — ${p ? 'Unverified' : community ? 'Community — unranked' : legacy ? 'Legacy course' : 'Practice — unranked'}\n${puzzle.result?.solved ? 'Solved' : (puzzle.result?.outcome ?? 'Finished')}\nForce ${puzzle.result?.forceCost ?? 0} · Tiles ${puzzle.result?.tiles ?? 0}\nBall time ${(puzzle.result?.seconds ?? 0).toFixed(2)}s${community ? `\n${window.location.origin}${communityMapUrl(community.id)}` : p ? `\n${window.location.origin}/?date=${p.date}` : ''}`;
   }
-  const nav: { name: Exclude<Panel, 'result' | null>; label: string; icon: IconName }[] = [
+  const nav: {
+    name: Exclude<Panel, 'result' | null> | 'editor';
+    label: string;
+    icon: IconName;
+  }[] = [
     { name: 'archive', label: 'Calendar', icon: 'calendar' },
     { name: 'leaderboard', label: 'Leaderboard', icon: 'trophy' },
+    { name: 'community', label: 'Community', icon: 'community' },
+    { name: 'editor', label: 'Editor', icon: 'editor' },
     { name: 'settings', label: 'Settings', icon: 'settings' },
     { name: 'stats', label: 'Profile', icon: 'profile' },
     { name: 'help', label: 'Help', icon: 'help' },
@@ -493,6 +578,10 @@ export default function Home() {
           className="brand"
           aria-label="Puttential home"
           onClick={() => {
+            if (view === 'editor') {
+              setView('game');
+              return;
+            }
             if (daily) void chooseDate(daily.date);
             else void refreshToday(true);
           }}
@@ -500,22 +589,49 @@ export default function Home() {
           <BrandLogo />
         </button>
         <nav className="main-nav" aria-label="Main navigation">
-          {nav.map((item) => (
-            <button
-              key={item.name}
-              className={`nav-button ${panel === item.name ? 'active' : ''}`}
-              aria-expanded={panel === item.name}
-              aria-label={item.label}
-              title={item.label}
-              onClick={() => setPanel(item.name)}
-            >
-              <Icon name={item.icon} size={20} />
-              <span>{item.label}</span>
-            </button>
-          ))}
+          {nav.map(({ name, label, icon }) =>
+            name === 'editor' ? (
+              <button
+                key={name}
+                className={`nav-button ${view === 'editor' ? 'active' : ''}`}
+                aria-pressed={view === 'editor'}
+                aria-controls="editor-view"
+                aria-label="Editor"
+                title="Editor"
+                disabled={startingPlay}
+                onClick={async () => {
+                  if (view === 'editor') {
+                    setView('game');
+                    return;
+                  }
+                  if (!(await leaveOwned())) return;
+                  if (puzzle.mode === 'running') puzzle.rewind();
+                  setPanel(null);
+                  setEditorVisited(true);
+                  setView('editor');
+                }}
+              >
+                <Icon name={icon} size={20} />
+                <span>{label}</span>
+              </button>
+            ) : (
+              <button
+                key={name}
+                className={`nav-button ${panel === name ? 'active' : ''}`}
+                aria-expanded={panel === name}
+                aria-label={label}
+                title={label}
+                disabled={name === 'leaderboard' && (loading || !context)}
+                onClick={() => setPanel(name)}
+              >
+                <Icon name={icon} size={20} />
+                <span>{label}</span>
+              </button>
+            ),
+          )}
         </nav>
       </header>
-      <main className="dashboard">
+      <main className="dashboard" hidden={view !== 'game'}>
         {(notice || !context) && (
           <div className="api-notice" role="status">
             {loading && !context ? "Loading today's course…" : notice}
@@ -566,18 +682,20 @@ export default function Home() {
             <div className="game-layout">
               <div className="course-meta course-heading">
                 <div className="course-identity">
-                  <h1 id="course-title">{p?.title ?? levelName(level)}</h1>
+                  <h1 id="course-title">{community?.title ?? p?.title ?? levelName(level)}</h1>
                   <span className="challenge-label">
                     <Icon name="calendar" size={16} />{' '}
-                    {context.source === 'daily'
-                      ? 'Daily challenge'
-                      : context.source === 'archive'
-                        ? 'Archive challenge'
-                        : context.source === 'local'
-                          ? 'Local course — unranked'
-                          : legacy
-                            ? 'Legacy course'
-                            : 'Practice challenge — unranked'}{' '}
+                    {community
+                      ? `Community map by ${community.creatorName} — unranked`
+                      : context.source === 'daily'
+                        ? 'Daily challenge'
+                        : context.source === 'archive'
+                          ? 'Archive challenge'
+                          : context.source === 'local'
+                            ? 'Local course — unranked'
+                            : legacy
+                              ? 'Legacy course'
+                              : 'Practice challenge — unranked'}{' '}
                     {p && <b>{p.date}</b>}
                   </span>
                 </div>
@@ -596,17 +714,11 @@ export default function Home() {
               </div>
               <section className="course-stage" aria-labelledby="course-title">
                 <div className="course">
-                  <CourseCanvas
+                  <GameplayCanvas
                     level={level}
-                    goalRef={puzzle.goalRef}
-                    frameRef={puzzle.frameRef}
-                    draft={puzzle.draft}
-                    mode={puzzle.mode}
-                    trail={preferences.showPreview ? puzzle.trail : []}
-                    onMoveField={puzzle.moveField}
-                    onSelectField={puzzle.selectField}
-                    selectedField={puzzle.selectedField}
-                    editingLocked={locked}
+                    puzzle={puzzle}
+                    showPreview={preferences.showPreview}
+                    locked={locked}
                     {...(p ? { placementBounds: p.rules.placementBounds } : {})}
                     {...(importBounds
                       ? {
@@ -684,13 +796,12 @@ export default function Home() {
                     </div>
                     <p>Turn a block ON, then drag its field on the course.</p>
                   </div>
-                  <ForceToolkit
+                  <GameplayToolkit
                     level={level}
                     puzzle={puzzle}
                     {...(p ? { costs: p.rules.tileCosts } : {})}
                     locked={locked}
                   />
-                  <SelectedFieldControls level={level} puzzle={puzzle} locked={locked} />
                   <p className="toolkit-note">
                     Force cost {cost} · {placed} tiles.{' '}
                     {p
@@ -729,30 +840,33 @@ export default function Home() {
                     }
                   />
                 </section>
-                <section className="run-controls" aria-label="Run controls">
-                  <PlayButton
-                    puzzle={puzzle}
-                    pending={locked && puzzle.mode !== 'running'}
-                    disabled={puzzle.mode === 'setup' && !!p && !canRank}
-                    onPlay={() => void play()}
-                    onStop={() => void stop()}
-                  />
-                  <p className="run-timer" role="timer">
-                    {(puzzle.tick / 120).toFixed(2)}s / {(puzzle.maxTicks / 120).toFixed(2)}s
-                  </p>
-                  <button
-                    className="text-button"
-                    disabled={locked || puzzle.mode !== 'setup'}
-                    onClick={puzzle.resetLayout}
-                  >
-                    <Icon name="reset" size={17} /> Reset layout
-                  </button>
-                </section>
+                <GameplayRunControls
+                  puzzle={puzzle}
+                  locked={locked}
+                  pending={locked && puzzle.mode !== 'running'}
+                  disabled={
+                    puzzle.mode === 'setup' &&
+                    ((!!p && !canRank) ||
+                      (!!community && !deliveredEngine.supports(community.rules)))
+                  }
+                  onPlay={() => void play()}
+                  onStop={() => void stop()}
+                />
               </aside>
             </div>
           </>
         )}
       </main>
+      {editorVisited && (
+        <section
+          id="editor-view"
+          className="dashboard embedded-editor"
+          aria-label="Level editor"
+          hidden={view !== 'editor'}
+        >
+          <EmbeddedEditor active={view === 'editor'} onExit={() => setView('game')} />
+        </section>
+      )}
       {panel && (
         <Modal
           key={`${panel}/${context?.key ?? 'loading'}/${player?.id ?? 'guest'}`}
@@ -768,74 +882,92 @@ export default function Home() {
           courseImport={
             <LevelImport onLoad={(next, bounds) => void chooseLocal(next, bounds, 'local')} />
           }
-          {...(panel === 'archive'
+          {...(panel === 'community'
             ? {
                 body: (
-                  <>
-                    <ArchivePanel
-                      player={player}
-                      {...(p ? { date: p.date } : {})}
-                      state={state}
-                      choose={(date) => void chooseDate(date)}
-                      reconcileGuest={reconcileGuest}
-                    />
-                    <h3>Legacy courses</h3>
-                    <p>Courses from an earlier version of Puttential.</p>
-                    {starterLevels.map((course) => (
-                      <button
-                        className="modal-row legacy-course"
-                        key={course.id}
-                        onClick={() => void chooseLocal(course, undefined, 'legacy')}
-                      >
-                        {levelName(course)}
-                      </button>
-                    ))}
-                  </>
+                  <CommunityPanel
+                    choose={(id) => void chooseCommunity(id)}
+                    create={() => {
+                      void (async () => {
+                        if (!(await leaveOwned())) return;
+                        if (puzzle.mode === 'running') puzzle.rewind();
+                        setPanel(null);
+                        setEditorVisited(true);
+                        setView('editor');
+                      })();
+                    }}
+                  />
                 ),
               }
-            : panel === 'leaderboard'
+            : panel === 'archive'
               ? {
                   body: (
-                    <LeaderboardPanel
-                      key={`${p?.id ?? 'none'}/${player?.id ?? 'none'}`}
-                      puzzle={p}
-                      player={player}
-                      state={state}
-                      reconcileGuest={reconcileGuest}
-                      runActive={startingPlay || puzzle.mode === 'running'}
-                    />
+                    <>
+                      <ArchivePanel
+                        player={player}
+                        {...(p ? { date: p.date } : {})}
+                        state={state}
+                        choose={(date) => void chooseDate(date)}
+                        reconcileGuest={reconcileGuest}
+                      />
+                      <h3>Legacy courses</h3>
+                      <p>Courses from an earlier version of Puttential.</p>
+                      {starterLevels.map((course) => (
+                        <button
+                          className="modal-row legacy-course"
+                          key={course.id}
+                          onClick={() => void chooseLocal(course, undefined, 'legacy')}
+                        >
+                          {levelName(course)}
+                        </button>
+                      ))}
+                    </>
                   ),
                 }
-              : panel === 'stats'
+              : panel === 'leaderboard'
                 ? {
                     body: (
-                      <ProfilePanel
+                      <LeaderboardPanel
+                        key={`${p?.id ?? 'none'}/${player?.id ?? 'none'}`}
+                        puzzle={p}
                         player={player}
-                        progress={progress}
-                        update={(next) =>
-                          setPlayer((current) => (current?.id === next.id ? next : current))
-                        }
-                        retry={reconcileGuest}
-                        memoryOnly={recoveryLimited}
+                        state={state}
+                        reconcileGuest={reconcileGuest}
+                        runActive={startingPlay || puzzle.mode === 'running'}
                       />
                     ),
                   }
-                : panel === 'result'
+                : panel === 'stats'
                   ? {
                       body: (
-                        <ResultPanel
-                          legacy={legacy}
-                          result={puzzle.result}
-                          record={record}
+                        <ProfilePanel
+                          player={player}
                           progress={progress}
-                          compose={() => compose()}
-                          retry={() => {
-                            if (record) void session?.retry(record.start.requestId);
-                          }}
+                          update={(next) =>
+                            setPlayer((current) => (current?.id === next.id ? next : current))
+                          }
+                          retry={reconcileGuest}
+                          memoryOnly={recoveryLimited}
                         />
                       ),
                     }
-                  : {})}
+                  : panel === 'result'
+                    ? {
+                        body: (
+                          <ResultPanel
+                            legacy={legacy}
+                            community={!!community}
+                            result={puzzle.result}
+                            record={record}
+                            progress={progress}
+                            compose={() => compose()}
+                            retry={() => {
+                              if (record) void session?.retry(record.start.requestId);
+                            }}
+                          />
+                        ),
+                      }
+                    : {})}
         />
       )}
       {tutorialOpen && <Tutorial close={closeTutorial} reducedMotion={preferences.reducedMotion} />}

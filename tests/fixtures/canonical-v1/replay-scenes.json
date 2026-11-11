@@ -1,0 +1,4867 @@
+[
+  {
+    "name": "moving-circle-0",
+    "input": {
+      "version": 2,
+      "level": {
+        "formatVersion": 1,
+        "id": "daily-opening-1",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                }
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-top",
+            "position": {
+              "x": 0,
+              "y": 2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-top-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-bottom",
+            "position": {
+              "x": 1,
+              "y": -2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-bottom-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 3.8,
+          "maxX": 6.6,
+          "minY": -1.8,
+          "maxY": 1.8,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "editor": {
+        "name": "Daily Opening 1",
+        "arena": {
+          "bounds": {
+            "minX": -7.25,
+            "maxX": 7.25,
+            "minY": -7.25,
+            "maxY": 7.25
+          },
+          "walls": [],
+          "thickness": 0.5
+        }
+      }
+    },
+    "candidate": {
+      "contract": "community-record-v1",
+      "profile": "community-v1",
+      "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
+      "engine": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+      },
+      "configuration": {
+        "formatVersion": 1,
+        "id": "c-6522c54323e4f9dbc2245b1966a4e523a15f518afa5f4a3138ece7a5eb1da855",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "bounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "linearVelocity": {
+              "x": 0,
+              "y": 0
+            },
+            "angularVelocity": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "canSleep": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                },
+                "density": 1
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-top",
+            "position": {
+              "x": 0,
+              "y": 2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-top-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-bottom",
+            "position": {
+              "x": 1,
+              "y": -2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-bottom-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 3.8,
+          "maxX": 6.6,
+          "minY": -1.8,
+          "maxY": 1.8,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "rules": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "maxTicks": 7200,
+        "rotationAllowed": true,
+        "placementBounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "tileCosts": {
+          "gentle-push": 1,
+          "strong-push": 1
+        }
+      },
+      "gameHash": "6522c54323e4f9dbc2245b1966a4e523a15f518afa5f4a3138ece7a5eb1da855",
+      "candidateHash": "aae2a35ab38882ed1ce369c8c37999afb77f2a73dc255c8e40a523613048e027"
+    },
+    "placement": {
+      "levelId": "c-6522c54323e4f9dbc2245b1966a4e523a15f518afa5f4a3138ece7a5eb1da855",
+      "levelVersion": 1,
+      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "rulesVersion": "puttential-daily-v1",
+      "commands": [
+        {
+          "type": "move-field",
+          "fieldId": "gentle-push",
+          "xQ": -4608,
+          "yQ": 0,
+          "sequence": 0
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "gentle-push",
+          "angleQ": 0,
+          "sequence": 1
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "gentle-push",
+          "enabled": true,
+          "sequence": 2
+        },
+        {
+          "type": "move-field",
+          "fieldId": "strong-push",
+          "xQ": -4608,
+          "yQ": 0,
+          "sequence": 3
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "strong-push",
+          "angleQ": 0,
+          "sequence": 4
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "strong-push",
+          "enabled": false,
+          "sequence": 5
+        }
+      ]
+    },
+    "result": {
+      "outcome": "success",
+      "metrics": {
+        "forceCost": 1,
+        "tileCount": 1,
+        "completionTick": 579,
+        "pathLengthQ": 9612
+      }
+    }
+  },
+  {
+    "name": "moving-circle-1",
+    "input": {
+      "version": 2,
+      "level": {
+        "formatVersion": 1,
+        "id": "daily-opening-2",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": 0,
+              "y": -4.5
+            },
+            "angle": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                }
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-left",
+            "position": {
+              "x": -2.5,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-left-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 1,
+                  "height": 3
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-right",
+            "position": {
+              "x": 2.5,
+              "y": 1
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-right-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 1,
+                  "height": 3
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 0,
+              "y": -4.5
+            },
+            "angle": 1.5707963267948966,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 0,
+              "y": -4.5
+            },
+            "angle": 1.5707963267948966,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": -1.8,
+          "maxX": 1.8,
+          "minY": 3.8,
+          "maxY": 6.6,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "editor": {
+        "name": "Daily Opening 2",
+        "arena": {
+          "bounds": {
+            "minX": -7.25,
+            "maxX": 7.25,
+            "minY": -7.25,
+            "maxY": 7.25
+          },
+          "walls": [],
+          "thickness": 0.5
+        }
+      }
+    },
+    "candidate": {
+      "contract": "community-record-v1",
+      "profile": "community-v1",
+      "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
+      "engine": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+      },
+      "configuration": {
+        "formatVersion": 1,
+        "id": "c-78b60be5b94daa82a63479ee529274c465aadaf29384838bdd7bd43806d7978d",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "bounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": 0,
+              "y": -4.5
+            },
+            "angle": 0,
+            "linearVelocity": {
+              "x": 0,
+              "y": 0
+            },
+            "angularVelocity": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "canSleep": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                },
+                "density": 1
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-left",
+            "position": {
+              "x": -2.5,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-left-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 1,
+                  "height": 3
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-right",
+            "position": {
+              "x": 2.5,
+              "y": 1
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-right-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 1,
+                  "height": 3
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 0,
+              "y": -4.5
+            },
+            "angle": 1.5707963267948966,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 0,
+              "y": -4.5
+            },
+            "angle": 1.5707963267948966,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": -1.8,
+          "maxX": 1.8,
+          "minY": 3.8,
+          "maxY": 6.6,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "rules": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "maxTicks": 7200,
+        "rotationAllowed": true,
+        "placementBounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "tileCosts": {
+          "gentle-push": 1,
+          "strong-push": 1
+        }
+      },
+      "gameHash": "78b60be5b94daa82a63479ee529274c465aadaf29384838bdd7bd43806d7978d",
+      "candidateHash": "2c1795307f463af8ab69aba31f316a865b2f3c0543dcb6b4a90a0129c273d5a0"
+    },
+    "placement": {
+      "levelId": "c-78b60be5b94daa82a63479ee529274c465aadaf29384838bdd7bd43806d7978d",
+      "levelVersion": 1,
+      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "rulesVersion": "puttential-daily-v1",
+      "commands": [
+        {
+          "type": "move-field",
+          "fieldId": "gentle-push",
+          "xQ": 0,
+          "yQ": -4608,
+          "sequence": 0
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "gentle-push",
+          "angleQ": 900,
+          "sequence": 1
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "gentle-push",
+          "enabled": true,
+          "sequence": 2
+        },
+        {
+          "type": "move-field",
+          "fieldId": "strong-push",
+          "xQ": 0,
+          "yQ": -4608,
+          "sequence": 3
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "strong-push",
+          "angleQ": 900,
+          "sequence": 4
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "strong-push",
+          "enabled": false,
+          "sequence": 5
+        }
+      ]
+    },
+    "result": {
+      "outcome": "success",
+      "metrics": {
+        "forceCost": 1,
+        "tileCount": 1,
+        "completionTick": 579,
+        "pathLengthQ": 9612
+      }
+    }
+  },
+  {
+    "name": "moving-circle-2",
+    "input": {
+      "version": 2,
+      "level": {
+        "formatVersion": 1,
+        "id": "daily-opening-3",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": 4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                }
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-top",
+            "position": {
+              "x": 0,
+              "y": 2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-top-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-bottom",
+            "position": {
+              "x": 1,
+              "y": -2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-bottom-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 4.5,
+              "y": 0
+            },
+            "angle": 3.141592653589793,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 4.5,
+              "y": 0
+            },
+            "angle": 3.141592653589793,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": -6.6,
+          "maxX": -3.8,
+          "minY": -1.8,
+          "maxY": 1.8,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "editor": {
+        "name": "Daily Opening 3",
+        "arena": {
+          "bounds": {
+            "minX": -7.25,
+            "maxX": 7.25,
+            "minY": -7.25,
+            "maxY": 7.25
+          },
+          "walls": [],
+          "thickness": 0.5
+        }
+      }
+    },
+    "candidate": {
+      "contract": "community-record-v1",
+      "profile": "community-v1",
+      "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
+      "engine": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+      },
+      "configuration": {
+        "formatVersion": 1,
+        "id": "c-4d7245cb9cc28f7dea8cc783f8f60ffb30f9796bd8f1adb0f737e6b8dcb4bb26",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "bounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": 4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "linearVelocity": {
+              "x": 0,
+              "y": 0
+            },
+            "angularVelocity": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "canSleep": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                },
+                "density": 1
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-top",
+            "position": {
+              "x": 0,
+              "y": 2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-top-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-bottom",
+            "position": {
+              "x": 1,
+              "y": -2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-bottom-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 4.5,
+              "y": 0
+            },
+            "angle": 3.141592653589793,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 4.5,
+              "y": 0
+            },
+            "angle": 3.141592653589793,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": -6.6,
+          "maxX": -3.8,
+          "minY": -1.8,
+          "maxY": 1.8,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "rules": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "maxTicks": 7200,
+        "rotationAllowed": true,
+        "placementBounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "tileCosts": {
+          "gentle-push": 1,
+          "strong-push": 1
+        }
+      },
+      "gameHash": "4d7245cb9cc28f7dea8cc783f8f60ffb30f9796bd8f1adb0f737e6b8dcb4bb26",
+      "candidateHash": "44a5e1b3139b702c85e21b1a62d5aab1abb9cb9e9908d2c98dc315cef4e34f3d"
+    },
+    "placement": {
+      "levelId": "c-4d7245cb9cc28f7dea8cc783f8f60ffb30f9796bd8f1adb0f737e6b8dcb4bb26",
+      "levelVersion": 1,
+      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "rulesVersion": "puttential-daily-v1",
+      "commands": [
+        {
+          "type": "move-field",
+          "fieldId": "gentle-push",
+          "xQ": 4608,
+          "yQ": 0,
+          "sequence": 0
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "gentle-push",
+          "angleQ": 1800,
+          "sequence": 1
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "gentle-push",
+          "enabled": true,
+          "sequence": 2
+        },
+        {
+          "type": "move-field",
+          "fieldId": "strong-push",
+          "xQ": 4608,
+          "yQ": 0,
+          "sequence": 3
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "strong-push",
+          "angleQ": 1800,
+          "sequence": 4
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "strong-push",
+          "enabled": false,
+          "sequence": 5
+        }
+      ]
+    },
+    "result": {
+      "outcome": "success",
+      "metrics": {
+        "forceCost": 1,
+        "tileCount": 1,
+        "completionTick": 579,
+        "pathLengthQ": 9612
+      }
+    }
+  },
+  {
+    "name": "moving-circle-3",
+    "input": {
+      "version": 2,
+      "level": {
+        "formatVersion": 1,
+        "id": "daily-opening-4",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": 0,
+              "y": 4.5
+            },
+            "angle": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                }
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-left",
+            "position": {
+              "x": -2.5,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-left-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 1,
+                  "height": 3
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-right",
+            "position": {
+              "x": 2.5,
+              "y": 1
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-right-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 1,
+                  "height": 3
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 0,
+              "y": 4.5
+            },
+            "angle": 4.71238898038469,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 0,
+              "y": 4.5
+            },
+            "angle": 4.71238898038469,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": -1.8,
+          "maxX": 1.8,
+          "minY": -6.6,
+          "maxY": -3.8,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "editor": {
+        "name": "Daily Opening 4",
+        "arena": {
+          "bounds": {
+            "minX": -7.25,
+            "maxX": 7.25,
+            "minY": -7.25,
+            "maxY": 7.25
+          },
+          "walls": [],
+          "thickness": 0.5
+        }
+      }
+    },
+    "candidate": {
+      "contract": "community-record-v1",
+      "profile": "community-v1",
+      "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
+      "engine": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+      },
+      "configuration": {
+        "formatVersion": 1,
+        "id": "c-9d5af3069dad66018d17b6cf47047e96d37741531ad8b8a372a8fd28ab22b7ee",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "bounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": 0,
+              "y": 4.5
+            },
+            "angle": 0,
+            "linearVelocity": {
+              "x": 0,
+              "y": 0
+            },
+            "angularVelocity": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "canSleep": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                },
+                "density": 1
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-left",
+            "position": {
+              "x": -2.5,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-left-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 1,
+                  "height": 3
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-right",
+            "position": {
+              "x": 2.5,
+              "y": 1
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-right-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 1,
+                  "height": 3
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 0,
+              "y": 4.5
+            },
+            "angle": 4.71238898038469,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": 0,
+              "y": 4.5
+            },
+            "angle": 4.71238898038469,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": -1.8,
+          "maxX": 1.8,
+          "minY": -6.6,
+          "maxY": -3.8,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "rules": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "maxTicks": 7200,
+        "rotationAllowed": true,
+        "placementBounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "tileCosts": {
+          "gentle-push": 1,
+          "strong-push": 1
+        }
+      },
+      "gameHash": "9d5af3069dad66018d17b6cf47047e96d37741531ad8b8a372a8fd28ab22b7ee",
+      "candidateHash": "05e686f7d1681b650835cfce0574e2f99de677cad3f5abcc485590957bc7c8cc"
+    },
+    "placement": {
+      "levelId": "c-9d5af3069dad66018d17b6cf47047e96d37741531ad8b8a372a8fd28ab22b7ee",
+      "levelVersion": 1,
+      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "rulesVersion": "puttential-daily-v1",
+      "commands": [
+        {
+          "type": "move-field",
+          "fieldId": "gentle-push",
+          "xQ": 0,
+          "yQ": 4608,
+          "sequence": 0
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "gentle-push",
+          "angleQ": 2700,
+          "sequence": 1
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "gentle-push",
+          "enabled": true,
+          "sequence": 2
+        },
+        {
+          "type": "move-field",
+          "fieldId": "strong-push",
+          "xQ": 0,
+          "yQ": 4608,
+          "sequence": 3
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "strong-push",
+          "angleQ": 2700,
+          "sequence": 4
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "strong-push",
+          "enabled": false,
+          "sequence": 5
+        }
+      ]
+    },
+    "result": {
+      "outcome": "success",
+      "metrics": {
+        "forceCost": 1,
+        "tileCount": 1,
+        "completionTick": 579,
+        "pathLengthQ": 9612
+      }
+    }
+  },
+  {
+    "name": "compound-body",
+    "input": {
+      "version": 2,
+      "level": {
+        "formatVersion": 1,
+        "id": "daily-opening-1",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                }
+              },
+              {
+                "id": "center-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.15,
+                  "height": 0.15
+                }
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-top",
+            "position": {
+              "x": 0,
+              "y": 2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-top-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-bottom",
+            "position": {
+              "x": 1,
+              "y": -2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-bottom-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 3.8,
+          "maxX": 6.6,
+          "minY": -1.8,
+          "maxY": 1.8,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "editor": {
+        "name": "Daily Opening 1",
+        "arena": {
+          "bounds": {
+            "minX": -7.25,
+            "maxX": 7.25,
+            "minY": -7.25,
+            "maxY": 7.25
+          },
+          "walls": [],
+          "thickness": 0.5
+        }
+      }
+    },
+    "candidate": {
+      "contract": "community-record-v1",
+      "profile": "community-v1",
+      "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
+      "engine": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+      },
+      "configuration": {
+        "formatVersion": 1,
+        "id": "c-2a63d0466f3e27394efe3d636680fd70fc94275a12a7bb1e2d3378477d194ebc",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "bounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "linearVelocity": {
+              "x": 0,
+              "y": 0
+            },
+            "angularVelocity": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "canSleep": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                },
+                "density": 1
+              },
+              {
+                "id": "center-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.15,
+                  "height": 0.15
+                },
+                "density": 1
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-top",
+            "position": {
+              "x": 0,
+              "y": 2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-top-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-bottom",
+            "position": {
+              "x": 1,
+              "y": -2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-bottom-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 3.8,
+          "maxX": 6.6,
+          "minY": -1.8,
+          "maxY": 1.8,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "rules": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "maxTicks": 7200,
+        "rotationAllowed": true,
+        "placementBounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "tileCosts": {
+          "gentle-push": 1,
+          "strong-push": 1
+        }
+      },
+      "gameHash": "2a63d0466f3e27394efe3d636680fd70fc94275a12a7bb1e2d3378477d194ebc",
+      "candidateHash": "f04b88490f44f1dc5cc669812b9fe023f112b93a37da75fbbe7a58e63e6fca3d"
+    },
+    "placement": {
+      "levelId": "c-2a63d0466f3e27394efe3d636680fd70fc94275a12a7bb1e2d3378477d194ebc",
+      "levelVersion": 1,
+      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "rulesVersion": "puttential-daily-v1",
+      "commands": [
+        {
+          "type": "move-field",
+          "fieldId": "gentle-push",
+          "xQ": -4608,
+          "yQ": 0,
+          "sequence": 0
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "gentle-push",
+          "angleQ": 0,
+          "sequence": 1
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "gentle-push",
+          "enabled": true,
+          "sequence": 2
+        },
+        {
+          "type": "move-field",
+          "fieldId": "strong-push",
+          "xQ": -4608,
+          "yQ": 0,
+          "sequence": 3
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "strong-push",
+          "angleQ": 0,
+          "sequence": 4
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "strong-push",
+          "enabled": false,
+          "sequence": 5
+        }
+      ]
+    },
+    "result": {
+      "outcome": "success",
+      "metrics": {
+        "forceCost": 1,
+        "tileCount": 1,
+        "completionTick": 579,
+        "pathLengthQ": 9612
+      }
+    }
+  },
+  {
+    "name": "concave-field",
+    "input": {
+      "version": 2,
+      "level": {
+        "formatVersion": 1,
+        "id": "daily-opening-1",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                }
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-top",
+            "position": {
+              "x": 0,
+              "y": 2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-top-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-bottom",
+            "position": {
+              "x": 1,
+              "y": -2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-bottom-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "polygon",
+              "points": [
+                {
+                  "x": -1.2,
+                  "y": -0.8
+                },
+                {
+                  "x": 1.2,
+                  "y": -0.8
+                },
+                {
+                  "x": 1.2,
+                  "y": 0.6
+                },
+                {
+                  "x": 0.6,
+                  "y": 0.6
+                },
+                {
+                  "x": 0.6,
+                  "y": 0.8
+                },
+                {
+                  "x": -1.2,
+                  "y": 0.8
+                }
+              ]
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 3.8,
+          "maxX": 6.6,
+          "minY": -1.8,
+          "maxY": 1.8,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "editor": {
+        "name": "Daily Opening 1",
+        "arena": {
+          "bounds": {
+            "minX": -7.25,
+            "maxX": 7.25,
+            "minY": -7.25,
+            "maxY": 7.25
+          },
+          "walls": [],
+          "thickness": 0.5
+        }
+      }
+    },
+    "candidate": {
+      "contract": "community-record-v1",
+      "profile": "community-v1",
+      "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
+      "engine": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+      },
+      "configuration": {
+        "formatVersion": 1,
+        "id": "c-10817b1ca631da78b944a669b35be50000c74f6f82839352beb5a446a75124b1",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "bounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "linearVelocity": {
+              "x": 0,
+              "y": 0
+            },
+            "angularVelocity": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.15
+            },
+            "ccd": true,
+            "canSleep": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                },
+                "density": 1
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-boundary",
+            "position": {
+              "x": -7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "left-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-boundary",
+            "position": {
+              "x": 7,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "right-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 14.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-boundary",
+            "position": {
+              "x": 0,
+              "y": -7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "bottom-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-boundary",
+            "position": {
+              "x": 0,
+              "y": 7
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "top-boundary-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.5,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-top",
+            "position": {
+              "x": 0,
+              "y": 2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-top-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          },
+          {
+            "id": "garden-bottom",
+            "position": {
+              "x": 1,
+              "y": -2.5
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.15
+            },
+            "pieces": [
+              {
+                "id": "garden-bottom-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 3,
+                  "height": 1
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "gentle-push",
+            "shape": {
+              "kind": "polygon",
+              "points": [
+                {
+                  "x": -1.2,
+                  "y": -0.8
+                },
+                {
+                  "x": 1.2,
+                  "y": -0.8
+                },
+                {
+                  "x": 1.2,
+                  "y": 0.6
+                },
+                {
+                  "x": 0.6,
+                  "y": 0.6
+                },
+                {
+                  "x": 0.6,
+                  "y": 0.8
+                },
+                {
+                  "x": -1.2,
+                  "y": 0.8
+                }
+              ]
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 2,
+                "y": 0
+              }
+            }
+          },
+          {
+            "id": "strong-push",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2.4,
+              "height": 1.6
+            },
+            "position": {
+              "x": -4.5,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": false,
+            "force": {
+              "kind": "uniform",
+              "density": {
+                "x": 5,
+                "y": 0
+              }
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 3.8,
+          "maxX": 6.6,
+          "minY": -1.8,
+          "maxY": 1.8,
+          "holdSeconds": 0.5
+        },
+        "prediction": {
+          "maxTicks": 60,
+          "sampleEveryTicks": 1
+        }
+      },
+      "rules": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "maxTicks": 7200,
+        "rotationAllowed": true,
+        "placementBounds": {
+          "minX": -7.25,
+          "maxX": 7.25,
+          "minY": -7.25,
+          "maxY": 7.25
+        },
+        "tileCosts": {
+          "gentle-push": 1,
+          "strong-push": 1
+        }
+      },
+      "gameHash": "10817b1ca631da78b944a669b35be50000c74f6f82839352beb5a446a75124b1",
+      "candidateHash": "5270a1ae5a7f0a6ea5191cc565bc37fbac103b48756576885a4aeaac58c1ab8e"
+    },
+    "placement": {
+      "levelId": "c-10817b1ca631da78b944a669b35be50000c74f6f82839352beb5a446a75124b1",
+      "levelVersion": 1,
+      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "rulesVersion": "puttential-daily-v1",
+      "commands": [
+        {
+          "type": "move-field",
+          "fieldId": "gentle-push",
+          "xQ": -4608,
+          "yQ": 0,
+          "sequence": 0
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "gentle-push",
+          "angleQ": 0,
+          "sequence": 1
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "gentle-push",
+          "enabled": true,
+          "sequence": 2
+        },
+        {
+          "type": "move-field",
+          "fieldId": "strong-push",
+          "xQ": -4608,
+          "yQ": 0,
+          "sequence": 3
+        },
+        {
+          "type": "set-field-angle",
+          "fieldId": "strong-push",
+          "angleQ": 0,
+          "sequence": 4
+        },
+        {
+          "type": "set-field-enabled",
+          "fieldId": "strong-push",
+          "enabled": false,
+          "sequence": 5
+        }
+      ]
+    },
+    "result": {
+      "outcome": "success",
+      "metrics": {
+        "forceCost": 1,
+        "tileCount": 1,
+        "completionTick": 579,
+        "pathLengthQ": 9612
+      }
+    }
+  },
+  {
+    "name": "water-failure",
+    "input": {
+      "version": 2,
+      "level": {
+        "formatVersion": 1,
+        "id": "untitled-course",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.8
+            },
+            "ccd": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                }
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-rail",
+            "position": {
+              "x": -7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "left-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-rail",
+            "position": {
+              "x": 7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "right-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-rail",
+            "position": {
+              "x": 0,
+              "y": -4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "bottom-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-rail",
+            "position": {
+              "x": 0,
+              "y": 4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "top-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "water",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2,
+              "height": 2
+            },
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": true,
+            "force": {
+              "kind": "water",
+              "drag": 12,
+              "sinkSpeed": 0.06
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 4,
+          "maxX": 5.5,
+          "minY": -0.75,
+          "maxY": 0.75,
+          "holdSeconds": 1
+        }
+      },
+      "editor": {
+        "name": "Untitled course",
+        "arena": {
+          "bounds": {
+            "minX": -7.4,
+            "maxX": 7.4,
+            "minY": -4.25,
+            "maxY": 4.25
+          },
+          "walls": [
+            "left-rail",
+            "right-rail",
+            "bottom-rail",
+            "top-rail"
+          ],
+          "thickness": 0.5
+        }
+      }
+    },
+    "candidate": {
+      "contract": "community-record-v1",
+      "profile": "community-v1",
+      "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
+      "engine": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+      },
+      "configuration": {
+        "formatVersion": 1,
+        "id": "c-2a3b92e0abf4558e15fcb3151e3b7fd43cb7497e4219e10c21f0648c48c75d61",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "bounds": {
+          "minX": -7.4,
+          "maxX": 7.4,
+          "minY": -4.25,
+          "maxY": 4.25
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "linearVelocity": {
+              "x": 0,
+              "y": 0
+            },
+            "angularVelocity": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.8
+            },
+            "ccd": true,
+            "canSleep": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                },
+                "density": 1
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-rail",
+            "position": {
+              "x": -7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "left-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-rail",
+            "position": {
+              "x": 7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "right-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-rail",
+            "position": {
+              "x": 0,
+              "y": -4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "bottom-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-rail",
+            "position": {
+              "x": 0,
+              "y": 4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "top-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "water",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2,
+              "height": 2
+            },
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": true,
+            "force": {
+              "kind": "water",
+              "drag": 12,
+              "sinkSpeed": 0.06
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 4,
+          "maxX": 5.5,
+          "minY": -0.75,
+          "maxY": 0.75,
+          "holdSeconds": 1
+        },
+        "prediction": {
+          "maxTicks": 1200,
+          "sampleEveryTicks": 8
+        }
+      },
+      "rules": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "maxTicks": 7200,
+        "rotationAllowed": true,
+        "placementBounds": {
+          "minX": -7.4,
+          "maxX": 7.4,
+          "minY": -4.25,
+          "maxY": 4.25
+        },
+        "tileCosts": {}
+      },
+      "gameHash": "2a3b92e0abf4558e15fcb3151e3b7fd43cb7497e4219e10c21f0648c48c75d61",
+      "candidateHash": "f24551df005debe944defb170e07a0083b35c9d70a928bf7240cc6ef9f010cf5"
+    },
+    "placement": {
+      "levelId": "c-2a3b92e0abf4558e15fcb3151e3b7fd43cb7497e4219e10c21f0648c48c75d61",
+      "levelVersion": 1,
+      "rulesVersion": "puttential-daily-v1",
+      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "commands": []
+    },
+    "result": {
+      "outcome": "water",
+      "metrics": {
+        "forceCost": 0,
+        "tileCount": 0,
+        "completionTick": 1,
+        "pathLengthQ": 0
+      }
+    }
+  },
+  {
+    "name": "lava-failure",
+    "input": {
+      "version": 2,
+      "level": {
+        "formatVersion": 1,
+        "id": "untitled-course",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.8
+            },
+            "ccd": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                }
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-rail",
+            "position": {
+              "x": -7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "left-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-rail",
+            "position": {
+              "x": 7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "right-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-rail",
+            "position": {
+              "x": 0,
+              "y": -4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "bottom-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-rail",
+            "position": {
+              "x": 0,
+              "y": 4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "top-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "lava",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2,
+              "height": 2
+            },
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": true,
+            "force": {
+              "kind": "lava"
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 4,
+          "maxX": 5.5,
+          "minY": -0.75,
+          "maxY": 0.75,
+          "holdSeconds": 1
+        }
+      },
+      "editor": {
+        "name": "Untitled course",
+        "arena": {
+          "bounds": {
+            "minX": -7.4,
+            "maxX": 7.4,
+            "minY": -4.25,
+            "maxY": 4.25
+          },
+          "walls": [
+            "left-rail",
+            "right-rail",
+            "bottom-rail",
+            "top-rail"
+          ],
+          "thickness": 0.5
+        }
+      }
+    },
+    "candidate": {
+      "contract": "community-record-v1",
+      "profile": "community-v1",
+      "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
+      "engine": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+      },
+      "configuration": {
+        "formatVersion": 1,
+        "id": "c-7dcfdd22f8db8077f6de92ed91d9af237f5366c829b3e3d1d69b83f3496cc68a",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "bounds": {
+          "minX": -7.4,
+          "maxX": 7.4,
+          "minY": -4.25,
+          "maxY": 4.25
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "linearVelocity": {
+              "x": 0,
+              "y": 0
+            },
+            "angularVelocity": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.8
+            },
+            "ccd": true,
+            "canSleep": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                },
+                "density": 1
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-rail",
+            "position": {
+              "x": -7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "left-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-rail",
+            "position": {
+              "x": 7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "right-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-rail",
+            "position": {
+              "x": 0,
+              "y": -4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "bottom-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-rail",
+            "position": {
+              "x": 0,
+              "y": 4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "top-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "lava",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2,
+              "height": 2
+            },
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": true,
+            "force": {
+              "kind": "lava"
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 4,
+          "maxX": 5.5,
+          "minY": -0.75,
+          "maxY": 0.75,
+          "holdSeconds": 1
+        },
+        "prediction": {
+          "maxTicks": 1200,
+          "sampleEveryTicks": 8
+        }
+      },
+      "rules": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "maxTicks": 7200,
+        "rotationAllowed": true,
+        "placementBounds": {
+          "minX": -7.4,
+          "maxX": 7.4,
+          "minY": -4.25,
+          "maxY": 4.25
+        },
+        "tileCosts": {}
+      },
+      "gameHash": "7dcfdd22f8db8077f6de92ed91d9af237f5366c829b3e3d1d69b83f3496cc68a",
+      "candidateHash": "62f536a70d4d963af23be5776eb0d9a016904316ac8f352f36f5c186839d4259"
+    },
+    "placement": {
+      "levelId": "c-7dcfdd22f8db8077f6de92ed91d9af237f5366c829b3e3d1d69b83f3496cc68a",
+      "levelVersion": 1,
+      "rulesVersion": "puttential-daily-v1",
+      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "commands": []
+    },
+    "result": {
+      "outcome": "lava",
+      "metrics": {
+        "forceCost": 0,
+        "tileCount": 0,
+        "completionTick": 1,
+        "pathLengthQ": 0
+      }
+    }
+  },
+  {
+    "name": "delayed-portals",
+    "input": {
+      "version": 2,
+      "level": {
+        "formatVersion": 1,
+        "id": "untitled-course",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.8
+            },
+            "ccd": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                }
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-rail",
+            "position": {
+              "x": -7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "left-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-rail",
+            "position": {
+              "x": 7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "right-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-rail",
+            "position": {
+              "x": 0,
+              "y": -4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "bottom-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-rail",
+            "position": {
+              "x": 0,
+              "y": 4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "top-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "portal-0",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2,
+              "height": 2
+            },
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": true,
+            "force": {
+              "kind": "portal",
+              "pairId": "pair-1",
+              "rotateVelocity": false
+            }
+          },
+          {
+            "id": "portal-1",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2,
+              "height": 2
+            },
+            "position": {
+              "x": 4,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": true,
+            "force": {
+              "kind": "portal",
+              "pairId": "pair-1",
+              "rotateVelocity": false
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 3,
+          "maxX": 5,
+          "minY": -1,
+          "maxY": 1,
+          "holdSeconds": 0.05
+        }
+      },
+      "editor": {
+        "name": "Untitled course",
+        "arena": {
+          "bounds": {
+            "minX": -7.4,
+            "maxX": 7.4,
+            "minY": -4.25,
+            "maxY": 4.25
+          },
+          "walls": [
+            "left-rail",
+            "right-rail",
+            "bottom-rail",
+            "top-rail"
+          ],
+          "thickness": 0.5
+        }
+      }
+    },
+    "candidate": {
+      "contract": "community-record-v1",
+      "profile": "community-v1",
+      "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
+      "engine": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+      },
+      "configuration": {
+        "formatVersion": 1,
+        "id": "c-2145125dba8c069ad701513826502ff29058628ecf2aa0397d164f3444567e9b",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "bounds": {
+          "minX": -7.4,
+          "maxX": 7.4,
+          "minY": -4.25,
+          "maxY": 4.25
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "linearVelocity": {
+              "x": 0,
+              "y": 0
+            },
+            "angularVelocity": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.8
+            },
+            "ccd": true,
+            "canSleep": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                },
+                "density": 1
+              }
+            ]
+          }
+        ],
+        "staticBodies": [
+          {
+            "id": "left-rail",
+            "position": {
+              "x": -7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "left-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "right-rail",
+            "position": {
+              "x": 7.15,
+              "y": 0
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "right-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 0.5,
+                  "height": 8.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "bottom-rail",
+            "position": {
+              "x": 0,
+              "y": -4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "bottom-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          },
+          {
+            "id": "top-rail",
+            "position": {
+              "x": 0,
+              "y": 4
+            },
+            "angle": 0,
+            "material": {
+              "restitution": 0.8
+            },
+            "pieces": [
+              {
+                "id": "top-rail-piece",
+                "shape": {
+                  "kind": "rectangle",
+                  "width": 14.8,
+                  "height": 0.5
+                }
+              }
+            ]
+          }
+        ],
+        "fields": [
+          {
+            "id": "portal-0",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2,
+              "height": 2
+            },
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": true,
+            "force": {
+              "kind": "portal",
+              "pairId": "pair-1",
+              "rotateVelocity": false,
+              "delaySeconds": 0.25,
+              "cooldownSeconds": 0.75
+            }
+          },
+          {
+            "id": "portal-1",
+            "shape": {
+              "kind": "rectangle",
+              "width": 2,
+              "height": 2
+            },
+            "position": {
+              "x": 4,
+              "y": 0
+            },
+            "angle": 0,
+            "enabled": true,
+            "force": {
+              "kind": "portal",
+              "pairId": "pair-1",
+              "rotateVelocity": false,
+              "delaySeconds": 0.25,
+              "cooldownSeconds": 0.75
+            }
+          }
+        ],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 3,
+          "maxX": 5,
+          "minY": -1,
+          "maxY": 1,
+          "holdSeconds": 0.05
+        },
+        "prediction": {
+          "maxTicks": 1200,
+          "sampleEveryTicks": 8
+        }
+      },
+      "rules": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "maxTicks": 7200,
+        "rotationAllowed": true,
+        "placementBounds": {
+          "minX": -7.4,
+          "maxX": 7.4,
+          "minY": -4.25,
+          "maxY": 4.25
+        },
+        "tileCosts": {}
+      },
+      "gameHash": "2145125dba8c069ad701513826502ff29058628ecf2aa0397d164f3444567e9b",
+      "candidateHash": "851824f84aea769019dcfa3ede7846165fd860fd0b69faae27038b699388ce0c"
+    },
+    "placement": {
+      "levelId": "c-2145125dba8c069ad701513826502ff29058628ecf2aa0397d164f3444567e9b",
+      "levelVersion": 1,
+      "rulesVersion": "puttential-daily-v1",
+      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "commands": []
+    },
+    "result": {
+      "outcome": "success",
+      "metrics": {
+        "forceCost": 0,
+        "tileCount": 0,
+        "completionTick": 35,
+        "pathLengthQ": 0
+      }
+    }
+  },
+  {
+    "name": "borderless-failure",
+    "input": {
+      "version": 2,
+      "level": {
+        "formatVersion": 1,
+        "id": "untitled-course",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.8
+            },
+            "ccd": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                }
+              }
+            ],
+            "linearVelocity": {
+              "x": 2,
+              "y": 0
+            }
+          }
+        ],
+        "staticBodies": [],
+        "fields": [],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 4,
+          "maxX": 5.5,
+          "minY": -0.75,
+          "maxY": 0.75,
+          "holdSeconds": 1
+        }
+      },
+      "editor": {
+        "name": "Untitled course",
+        "arena": {
+          "bounds": {
+            "minX": -7.4,
+            "maxX": 7.4,
+            "minY": -4.25,
+            "maxY": 4.25
+          },
+          "walls": [],
+          "thickness": 0.5
+        }
+      }
+    },
+    "candidate": {
+      "contract": "community-record-v1",
+      "profile": "community-v1",
+      "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
+      "engine": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+      },
+      "configuration": {
+        "formatVersion": 1,
+        "id": "c-62a2389cbd8684dcb4706eafa26e1958a5e6c3866c60d30009db696b4128f31d",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "bounds": {
+          "minX": -7.4,
+          "maxX": 7.4,
+          "minY": -4.25,
+          "maxY": 4.25
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "linearVelocity": {
+              "x": 2,
+              "y": 0
+            },
+            "angularVelocity": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.8
+            },
+            "ccd": true,
+            "canSleep": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                },
+                "density": 1
+              }
+            ]
+          }
+        ],
+        "staticBodies": [],
+        "fields": [],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 4,
+          "maxX": 5.5,
+          "minY": -0.75,
+          "maxY": 0.75,
+          "holdSeconds": 1
+        },
+        "prediction": {
+          "maxTicks": 1200,
+          "sampleEveryTicks": 8
+        }
+      },
+      "rules": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "maxTicks": 7200,
+        "rotationAllowed": true,
+        "placementBounds": {
+          "minX": -7.4,
+          "maxX": 7.4,
+          "minY": -4.25,
+          "maxY": 4.25
+        },
+        "tileCosts": {}
+      },
+      "gameHash": "62a2389cbd8684dcb4706eafa26e1958a5e6c3866c60d30009db696b4128f31d",
+      "candidateHash": "e0b8e1c135b0ec8c3c10159560b7a65270dee8c7d1ce596a440ed3f995186f89"
+    },
+    "placement": {
+      "levelId": "c-62a2389cbd8684dcb4706eafa26e1958a5e6c3866c60d30009db696b4128f31d",
+      "levelVersion": 1,
+      "rulesVersion": "puttential-daily-v1",
+      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "commands": []
+    },
+    "result": {
+      "outcome": "out-of-bounds",
+      "metrics": {
+        "forceCost": 0,
+        "tileCount": 0,
+        "completionTick": 709,
+        "pathLengthQ": 12100
+      }
+    }
+  },
+  {
+    "name": "borderless-board",
+    "input": {
+      "version": 2,
+      "level": {
+        "formatVersion": 1,
+        "id": "untitled-course",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.8
+            },
+            "ccd": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                }
+              }
+            ],
+            "linearVelocity": {
+              "x": 2,
+              "y": 0
+            }
+          }
+        ],
+        "staticBodies": [],
+        "fields": [],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 4,
+          "maxX": 5.5,
+          "minY": -0.75,
+          "maxY": 0.75,
+          "holdSeconds": 0.05
+        }
+      },
+      "editor": {
+        "name": "Untitled course",
+        "arena": {
+          "bounds": {
+            "minX": -7.4,
+            "maxX": 7.4,
+            "minY": -4.25,
+            "maxY": 4.25
+          },
+          "walls": [],
+          "thickness": 0.5
+        }
+      }
+    },
+    "candidate": {
+      "contract": "community-record-v1",
+      "profile": "community-v1",
+      "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
+      "engine": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+      },
+      "configuration": {
+        "formatVersion": 1,
+        "id": "c-22d8fdbeda41dd9800b26f25aa0f8c0045540ade6b78dc10b6649dc38cf142da",
+        "version": 1,
+        "gravity": {
+          "x": 0,
+          "y": 0
+        },
+        "bounds": {
+          "minX": -7.4,
+          "maxX": 7.4,
+          "minY": -4.25,
+          "maxY": 4.25
+        },
+        "dynamicBodies": [
+          {
+            "id": "ball",
+            "position": {
+              "x": -4,
+              "y": 0
+            },
+            "angle": 0,
+            "linearVelocity": {
+              "x": 2,
+              "y": 0
+            },
+            "angularVelocity": 0,
+            "density": 1,
+            "material": {
+              "restitution": 0.8
+            },
+            "ccd": true,
+            "canSleep": true,
+            "pieces": [
+              {
+                "id": "ball-piece",
+                "shape": {
+                  "kind": "circle",
+                  "radius": 0.4
+                },
+                "density": 1
+              }
+            ]
+          }
+        ],
+        "staticBodies": [],
+        "fields": [],
+        "goal": {
+          "bodyId": "ball",
+          "minX": 4,
+          "maxX": 5.5,
+          "minY": -0.75,
+          "maxY": 0.75,
+          "holdSeconds": 0.05
+        },
+        "prediction": {
+          "maxTicks": 1200,
+          "sampleEveryTicks": 8
+        }
+      },
+      "rules": {
+        "simulationVersion": "puttential-rapier-0.20.0-v2",
+        "rulesVersion": "puttential-daily-v1",
+        "maxTicks": 7200,
+        "rotationAllowed": true,
+        "placementBounds": {
+          "minX": -7.4,
+          "maxX": 7.4,
+          "minY": -4.25,
+          "maxY": 4.25
+        },
+        "tileCosts": {}
+      },
+      "gameHash": "22d8fdbeda41dd9800b26f25aa0f8c0045540ade6b78dc10b6649dc38cf142da",
+      "candidateHash": "340470af6a3be72866a09de39419c5d2899b0f5b7250e10ebf13922b37eb1d71"
+    },
+    "placement": {
+      "levelId": "c-22d8fdbeda41dd9800b26f25aa0f8c0045540ade6b78dc10b6649dc38cf142da",
+      "levelVersion": 1,
+      "rulesVersion": "puttential-daily-v1",
+      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "commands": []
+    },
+    "result": {
+      "outcome": "success",
+      "metrics": {
+        "forceCost": 0,
+        "tileCount": 0,
+        "completionTick": 486,
+        "pathLengthQ": 8294
+      }
+    }
+  }
+]

@@ -1,0 +1,40 @@
+# Selected-host prototype only. Must pass PR1 containment tests before enabling admission.
+[Unit]
+Description=Puttential verifier execution slot %i
+
+[Service]
+Type=exec
+User=puttential-child
+Group=puttential-child
+WorkingDirectory=/opt/puttential-verifier
+ExecStart=/usr/bin/node /opt/puttential-verifier/child.mjs /opt/puttential-verifier/engine
+StandardInput=file:/run/puttential-verifier/%i/input.json
+StandardOutput=file:/run/puttential-verifier/%i/output.json
+StandardError=journal
+Restart=no
+TimeoutStartSec=1s
+RuntimeMaxSec=5s
+TimeoutStopSec=1s
+SendSIGKILL=yes
+KillMode=control-group
+MemoryMax=512M
+MemorySwapMax=0
+CPUQuota=100%
+TasksMax=32
+NoNewPrivileges=yes
+PrivateNetwork=yes
+RestrictAddressFamilies=AF_UNIX
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+UMask=0077
+UnsetEnvironment=DATABASE_URL TEST_DATABASE_URL COMMUNITY_RUNNER_DATABASE_URL

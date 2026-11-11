@@ -1,13 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import {
-  forceDefinition,
-  polygonBounds,
-  rectangle,
-  shapeOutline,
-  shapePolygon,
-} from '../../src/game';
-import type { LevelDocument, Vec2, FieldParam } from '../../src/game';
+import { forceDefinition, polygonBounds, rectangle, shapeOutline, shapePolygon } from '../../game';
+import type { LevelDocument, Vec2, FieldParam } from '../../game';
 import {
   edit,
   isDynamic,
@@ -19,8 +13,8 @@ import {
   localBounds,
   hasCircle,
   editablePolygon,
-} from '../editor/model';
-import type { DraftDocument, Item, Selection } from '../editor/model';
+} from '../model';
+import type { DraftDocument, Item, Selection } from '../model';
 
 export function NumberInput({
   label,

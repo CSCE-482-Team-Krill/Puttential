@@ -363,7 +363,9 @@ for (const [width, height] of [
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('.course-canvas')).toHaveCount(1);
     await expect(page.locator('.play-button')).toHaveCount(1);
-    await expect(page.locator('.main-nav button')).toHaveCount(5);
+    await expect(
+      page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button'),
+    ).toHaveText(['Calendar', 'Leaderboard', 'Community', 'Editor', 'Settings', 'Profile', 'Help']);
     await screenshot(page, `after-mobile-${width}x${height}`);
     await page.locator('.tile-option').click();
     await expectField(page, level, { x: -3, y: 0 });

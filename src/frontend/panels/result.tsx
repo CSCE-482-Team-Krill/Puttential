@@ -5,6 +5,7 @@ import type { RecoveryRecord } from '../progress-storage';
 import { CopyResult } from './copy-result';
 export function ResultPanel({
   legacy = false,
+  community = false,
   result,
   record,
   progress,
@@ -12,6 +13,7 @@ export function ResultPanel({
   retry,
 }: {
   legacy?: boolean;
+  community?: boolean;
   result: RunResult | null;
   record: RecoveryRecord | undefined;
   progress: PuzzleProgress | undefined;
@@ -39,7 +41,11 @@ export function ResultPanel({
       </p>
       <p role="status">
         {record?.message ??
-          (legacy ? 'Legacy course' : 'Practice — unranked. This result is not submitted.')}
+          (community
+            ? 'Community — unranked. This result is not submitted.'
+            : legacy
+              ? 'Legacy course'
+              : 'Practice — unranked. This result is not submitted.')}
       </p>
       {result && (
         <div className="result-grid">

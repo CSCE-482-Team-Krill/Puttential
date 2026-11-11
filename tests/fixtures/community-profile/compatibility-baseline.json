@@ -1,0 +1,606 @@
+{
+  "profile": "community-v1",
+  "sourceBaseline": "b3c12425cca443a56af02e2c2a4e8430da035f83",
+  "rows": [
+    {
+      "group": "authored",
+      "name": "big-bertha.json",
+      "sourceHash": "729a0d58c1493987ffd9f125af5dc569bd752724e727c13f2f6c7d06c76a585c",
+      "sidecarHash": "5520cfd888286b2bf240d4a5c18176d2b521b032c50f22b96c05e337057b7f80",
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "c629170f8b6d2f786a6f83ef7a6dc7814a03d2afe25d45d0f9ddd8c9772474e5",
+      "originalDocumentHash": "c629170f8b6d2f786a6f83ef7a6dc7814a03d2afe25d45d0f9ddd8c9772474e5"
+    },
+    {
+      "group": "authored",
+      "name": "big-u.json",
+      "sourceHash": "e8e4d19b79f4112331ca636710efc38baabddd3142718defc2dc8be662a2983f",
+      "sidecarHash": "0a66fa75c124638c240af0ba7df3408b14d67f5da9c4db11ee7898edaf3ff4a3",
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "dba1d25fe8cf9f9627e13310f71c68bf42cb27d99d675c8e5896d0795b267cb2",
+      "originalDocumentHash": "fa9be4675e49e1cced1fc28fbc47b2377728ab54f674c4221b09455e48266e6e"
+    },
+    {
+      "group": "authored",
+      "name": "cinder-ford.json",
+      "sourceHash": "fd4907ee8a8d7ec5ce72108cf97fe6402c1c2b6be8efb099ec1438383b46a714",
+      "sidecarHash": "000005f5ecbe040145904f6549095312d2364bbadff60908abfa70cb28037b27",
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "8682812ddc2d2271b25ea83e145a4d956382cf703af410060bfdfeb662a9d8b8",
+      "originalDocumentHash": "ea2fafd38dabfb2e6d2578f253a4e491693b12db97bbb8c465b13f3f75ced770"
+    },
+    {
+      "group": "authored",
+      "name": "ember-alley.json",
+      "sourceHash": "869656758505e7d055e0b7f1196ce96d1d859ea365ab946e5ffa905dfee2a393",
+      "sidecarHash": "3f039925e0151a183e9a96a8e22b43c59e947d3633f37de46b2cc0f570486f33",
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "dffb5d3cea3c4540d40b7f0af83168c2043c98c1535004b525da596aceb3757f",
+      "originalDocumentHash": "b7e794e89364433d026a0d6c4349347ce1ce96cc0eacb238aeb77794516134be"
+    },
+    {
+      "group": "authored",
+      "name": "jailed.json",
+      "sourceHash": "9e34389bf95d933d73db578544b8fee7daa53ff20b73f318c099687c21bc330c",
+      "sidecarHash": "0eb9ed513e0bf29da21c40bf40f7355b49fb71756d897fd722816c8564c271f0",
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "883bc0b7f2f191925ffe42ed86d2e9ba7735c051c4ad1ed4899642167c573ab6",
+      "originalDocumentHash": "883bc0b7f2f191925ffe42ed86d2e9ba7735c051c4ad1ed4899642167c573ab6"
+    },
+    {
+      "group": "authored",
+      "name": "open-water-hop.json",
+      "sourceHash": "cf69a869d32f5fd3cb197f0467fa85b7d8764b28485696f178b75f7cfb1a56db",
+      "sidecarHash": "7f617f9c3e1639c8b5080b0d9ba15c1478d20dba5a9fe04fc048d2f6da10c30f",
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "34aaeb67eb4e8cff9fd6d7b5de02ce2e8136031fc46e373de15c1235cccc5327",
+      "originalDocumentHash": "1c2714c34abadccff4de9f7974bc8610cb86caa2502007de33575a58994b329f"
+    },
+    {
+      "group": "authored",
+      "name": "porcupine.json",
+      "sourceHash": "fb11d96c936e654925684b39d5b007bd27c2ee0ac98dfc29799292a83aef666a",
+      "sidecarHash": "f1a5118ad978978573e15f3631146ff70019cff9454604eef9c3d9c0a9f499ea",
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "7dfcc303651537d3036074d49c6e9de4fd9c3495ad9ce282eb45f2611e3387e9",
+      "originalDocumentHash": "1d79f3aba7b91173c41b59648609cb2b8b6d5279497c913b778b8dd48fca97cd"
+    },
+    {
+      "group": "authored",
+      "name": "prism-relay.json",
+      "sourceHash": "85f145a1d5d20002427e252c7fe6f8552292b399bd6654d7cc10fffad39ebfe2",
+      "sidecarHash": "4fd17ee3a04210d6a8356f4d18cfc5bd9fde80b96d54f3e1897b7ec91a54bd1f",
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "067d85dcba80f75b017b9e45ea0ce291a450fe801a52fb8cdace33deaf120b7b",
+      "originalDocumentHash": "7ec61c4d9c92babfad1706fa93dd6f028790910049f54f8b12445cd1ecacf194"
+    },
+    {
+      "group": "authored",
+      "name": "straight-forward.json",
+      "sourceHash": "68773922a66a9a1b69abcfb40d12e147235ff3d02844da825171b24ed9297991",
+      "sidecarHash": "773fa5e172535970d2fec67bcc1e2537f6026ba396596dfe4fd2b8ea5f62c641",
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "f3903d92ac631cf0fa3562eb42b10ce8571166c0bfdd94ffd60a7b0f214c88eb",
+      "originalDocumentHash": "7bbf6536997a7b079d30ecfd0a826e502c852b6ba2727676841088a8e0f823b5"
+    },
+    {
+      "group": "authored",
+      "name": "tidal-transfer.json",
+      "sourceHash": "613a0d9b0224957050de5c3fd5164a9502d222b5ec2e4b62fcebb8d738073013",
+      "sidecarHash": "54e2bbb926cd79cff72126b38520f37b0e03d73c7b20492747f75f39268072ab",
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "511a44219434846fc678b3c5490a666cb3b114c991912b8fc1190518d9713ba5",
+      "originalDocumentHash": "5a00fa3245c158124d6b0f75559d9f706ebadc57fa5ace2e134ab39186f359c0"
+    },
+    {
+      "group": "authored",
+      "name": "whirly-gig.json",
+      "sourceHash": "65b482cda57a011e23a0687b350f2c03777ca04731c5d3344f2e95c77e1c0ba4",
+      "sidecarHash": "5845f84b4ca0b4738379da1fc0f9eb9e5771ba7e2814bbdf0d972d7e351e05a4",
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "1f4dff48d9f322ff9218feaa310eaa464af2dde1e365133e69d1929cd4d20f8a",
+      "originalDocumentHash": "286a1f2ee090b22fccff130a5d9ba1971bf1bf1050c7b8f2b656e81212df785a"
+    },
+    {
+      "group": "starter",
+      "name": "bar-around-corner",
+      "sourceHash": "2803c7601c30cf042906f94b5211f0181d2d7bf7dba6b5b073db495123468b12",
+      "sidecarHash": null,
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "6f0e8a89e0279bf60dabb8dd62be7b8848f2933810b753e28cfcfd384a0067b2",
+      "originalDocumentHash": "2803c7601c30cf042906f94b5211f0181d2d7bf7dba6b5b073db495123468b12"
+    },
+    {
+      "group": "starter",
+      "name": "radial-relay",
+      "sourceHash": "a65f5c0be38ddd7aba8391bb755ee55f5f0d986398905158ce38ccb5a4b4f651",
+      "sidecarHash": null,
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "3d4450199744f03c522fe8200549b1229e44f65c5805a0a358a3386b342bf469",
+      "originalDocumentHash": "a65f5c0be38ddd7aba8391bb755ee55f5f0d986398905158ce38ccb5a4b4f651"
+    },
+    {
+      "group": "tutorial",
+      "name": "tutorial",
+      "sourceHash": "4e0b6e09d377685bdcc85c48011d088c44f98d0b3afc8d83fa27d9ed8ddcbeee",
+      "sidecarHash": null,
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.prediction.maxTicks",
+            "expected": "integer in [1, 1200]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "61d43111966da733e1f240c1d743197a8cd05dabee09f380f7f9e12d5740beb5",
+      "originalDocumentHash": "4e0b6e09d377685bdcc85c48011d088c44f98d0b3afc8d83fa27d9ed8ddcbeee"
+    },
+    {
+      "group": "template",
+      "name": "blank-course",
+      "sourceHash": "de7e0089a529b6e91bb90e09ba4eaceeddf624ea86627c223b7c2b00ef243b4d",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "de7e0089a529b6e91bb90e09ba4eaceeddf624ea86627c223b7c2b00ef243b4d",
+      "originalDocumentHash": "de7e0089a529b6e91bb90e09ba4eaceeddf624ea86627c223b7c2b00ef243b4d"
+    },
+    {
+      "group": "palette",
+      "name": "staticBodies:rectangle",
+      "sourceHash": "7b993257749f0f18abcca12b52fe96bab34a8a3d6004ccd26703caa4a44baf13",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "7b993257749f0f18abcca12b52fe96bab34a8a3d6004ccd26703caa4a44baf13",
+      "originalDocumentHash": "7b993257749f0f18abcca12b52fe96bab34a8a3d6004ccd26703caa4a44baf13"
+    },
+    {
+      "group": "palette",
+      "name": "staticBodies:square",
+      "sourceHash": "dbede433aa0bd238830afa50c55de525461f839aa5df09395a4f2d5d738df332",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "dbede433aa0bd238830afa50c55de525461f839aa5df09395a4f2d5d738df332",
+      "originalDocumentHash": "dbede433aa0bd238830afa50c55de525461f839aa5df09395a4f2d5d738df332"
+    },
+    {
+      "group": "palette",
+      "name": "staticBodies:triangle",
+      "sourceHash": "897c32f949ce9672e0a9a10df12cb2591a3a74e6ce9d101fa1f82e1752cf5cf1",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "897c32f949ce9672e0a9a10df12cb2591a3a74e6ce9d101fa1f82e1752cf5cf1",
+      "originalDocumentHash": "897c32f949ce9672e0a9a10df12cb2591a3a74e6ce9d101fa1f82e1752cf5cf1"
+    },
+    {
+      "group": "palette",
+      "name": "staticBodies:hexagon",
+      "sourceHash": "a23375e187600bf83f42270a05cbde682bdad32d5da92c7f5bbb29fbd96f3dbc",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "a23375e187600bf83f42270a05cbde682bdad32d5da92c7f5bbb29fbd96f3dbc",
+      "originalDocumentHash": "a23375e187600bf83f42270a05cbde682bdad32d5da92c7f5bbb29fbd96f3dbc"
+    },
+    {
+      "group": "palette",
+      "name": "staticBodies:ball",
+      "sourceHash": "d11ea0c6b5052be0410f545c10bb0baba11e23337eac7029025840c96174594b",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "d11ea0c6b5052be0410f545c10bb0baba11e23337eac7029025840c96174594b",
+      "originalDocumentHash": "d11ea0c6b5052be0410f545c10bb0baba11e23337eac7029025840c96174594b"
+    },
+    {
+      "group": "palette",
+      "name": "staticBodies:ell",
+      "sourceHash": "702e3c31f6e65fa88d99491441ac3b1cdf5d9f40a8c46e27ec5be3f172506d81",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "702e3c31f6e65fa88d99491441ac3b1cdf5d9f40a8c46e27ec5be3f172506d81",
+      "originalDocumentHash": "702e3c31f6e65fa88d99491441ac3b1cdf5d9f40a8c46e27ec5be3f172506d81"
+    },
+    {
+      "group": "palette",
+      "name": "dynamicBodies:rectangle",
+      "sourceHash": "9dad6a52c93a82c491f44bcc7893b5e5651cdb420ed45ce8574ec3bcd101413b",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "9dad6a52c93a82c491f44bcc7893b5e5651cdb420ed45ce8574ec3bcd101413b",
+      "originalDocumentHash": "9dad6a52c93a82c491f44bcc7893b5e5651cdb420ed45ce8574ec3bcd101413b"
+    },
+    {
+      "group": "palette",
+      "name": "dynamicBodies:square",
+      "sourceHash": "dc5843dd9ce4eff183c88951ac2865d58f4477911a9a0d57e384f8be012617c5",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "dc5843dd9ce4eff183c88951ac2865d58f4477911a9a0d57e384f8be012617c5",
+      "originalDocumentHash": "dc5843dd9ce4eff183c88951ac2865d58f4477911a9a0d57e384f8be012617c5"
+    },
+    {
+      "group": "palette",
+      "name": "dynamicBodies:triangle",
+      "sourceHash": "bbd2e275dfba1fed05c7cc741721a3cca201b6ee825cfdd496a425bd4b0e0cf8",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "bbd2e275dfba1fed05c7cc741721a3cca201b6ee825cfdd496a425bd4b0e0cf8",
+      "originalDocumentHash": "bbd2e275dfba1fed05c7cc741721a3cca201b6ee825cfdd496a425bd4b0e0cf8"
+    },
+    {
+      "group": "palette",
+      "name": "dynamicBodies:hexagon",
+      "sourceHash": "4bd6c94b838c1ce6e2bf4fe3752595494362400fdb9de2f3d14453c045d30f3c",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "4bd6c94b838c1ce6e2bf4fe3752595494362400fdb9de2f3d14453c045d30f3c",
+      "originalDocumentHash": "4bd6c94b838c1ce6e2bf4fe3752595494362400fdb9de2f3d14453c045d30f3c"
+    },
+    {
+      "group": "palette",
+      "name": "dynamicBodies:ball",
+      "sourceHash": "0139dde1ea1e45df03d21e05202cc406160877c30c96396d075e5cd44815271e",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "0139dde1ea1e45df03d21e05202cc406160877c30c96396d075e5cd44815271e",
+      "originalDocumentHash": "0139dde1ea1e45df03d21e05202cc406160877c30c96396d075e5cd44815271e"
+    },
+    {
+      "group": "palette",
+      "name": "dynamicBodies:ell",
+      "sourceHash": "59925c286e68b1a64bf8bfe41debfd975bcd65b0215feb9eec75783a4d91d66d",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "59925c286e68b1a64bf8bfe41debfd975bcd65b0215feb9eec75783a4d91d66d",
+      "originalDocumentHash": "59925c286e68b1a64bf8bfe41debfd975bcd65b0215feb9eec75783a4d91d66d"
+    },
+    {
+      "group": "palette",
+      "name": "fields:uniform",
+      "sourceHash": "5b6948c3a1c76039b15daeac169fc4542276af05cae5bd525077a7bd6a4fa3d1",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "5b6948c3a1c76039b15daeac169fc4542276af05cae5bd525077a7bd6a4fa3d1",
+      "originalDocumentHash": "5b6948c3a1c76039b15daeac169fc4542276af05cae5bd525077a7bd6a4fa3d1"
+    },
+    {
+      "group": "palette",
+      "name": "fields:attractor",
+      "sourceHash": "a5e0fbd550a6c8145e6ae085fd10ad61ffb1f5966882d6f5d22ebaf4c00f45f4",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "a5e0fbd550a6c8145e6ae085fd10ad61ffb1f5966882d6f5d22ebaf4c00f45f4",
+      "originalDocumentHash": "a5e0fbd550a6c8145e6ae085fd10ad61ffb1f5966882d6f5d22ebaf4c00f45f4"
+    },
+    {
+      "group": "palette",
+      "name": "fields:repulsor",
+      "sourceHash": "6672d6de329f5ab724d9ae37394110e4ec86af3946c6ea1aba3f8303c4140ad8",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "6672d6de329f5ab724d9ae37394110e4ec86af3946c6ea1aba3f8303c4140ad8",
+      "originalDocumentHash": "6672d6de329f5ab724d9ae37394110e4ec86af3946c6ea1aba3f8303c4140ad8"
+    },
+    {
+      "group": "palette",
+      "name": "fields:water",
+      "sourceHash": "d8b2d73031a6b9345bdc8fda340f6d9a474aa9e1822057eb3420768c140911bf",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "d8b2d73031a6b9345bdc8fda340f6d9a474aa9e1822057eb3420768c140911bf",
+      "originalDocumentHash": "d8b2d73031a6b9345bdc8fda340f6d9a474aa9e1822057eb3420768c140911bf"
+    },
+    {
+      "group": "palette",
+      "name": "fields:lava",
+      "sourceHash": "f3a94785986163bb8b83583d5d2e48535390af5d72ce47ec5ae3457d48bf3cc5",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "f3a94785986163bb8b83583d5d2e48535390af5d72ce47ec5ae3457d48bf3cc5",
+      "originalDocumentHash": "f3a94785986163bb8b83583d5d2e48535390af5d72ce47ec5ae3457d48bf3cc5"
+    },
+    {
+      "group": "palette",
+      "name": "fields:portal",
+      "sourceHash": "9fbe8b9f776e738521283fa10f8d5efb6f2b56f755fc3447aac1d82ad29138ae",
+      "sidecarHash": null,
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "9fbe8b9f776e738521283fa10f8d5efb6f2b56f755fc3447aac1d82ad29138ae",
+      "originalDocumentHash": "9fbe8b9f776e738521283fa10f8d5efb6f2b56f755fc3447aac1d82ad29138ae"
+    }
+  ]
+}

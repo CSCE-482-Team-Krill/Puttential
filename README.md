@@ -50,6 +50,8 @@ Use **Node 22.12+** and **PostgreSQL 17** (or Docker Desktop). Run commands from
 
    Open **http://127.0.0.1:3001**. See [the editor guide](level-editor/README.md). Courses save as canonical JSON with editor sidecars under `src/game/levels/authored/`. Use **Open local course** to playtest saved JSON, or publish it with two reviewed solutions as a daily course. The editor and practice/local-course play do not need a database; practice runs are not submitted.
 
+   The game's **Editor** tab opens the shared editor inside the website. It saves drafts on this device and supports JSON import/export; **Back to game** preserves your draft and game setup. It only needs `npm run game`. The separate `npm run editor` app remains available for repository file saving. To publish, open **Playtest**, solve your map, enter a title and optional description, then select **Publish map**. The server verifies your solution before saving the map. **Community** lists published maps, which can be played and shared with `/?community=<map-id>` links. Community play is unranked. Publishing and browsing require the migrated database. See [community publishing](docs/community-publishing.md).
+
 For a production build, run `npm run game:build`, then `npm run game:start` with `DATABASE_URL` set. The frontend's `prebuild` step generates Prisma Client, including on clean CI checkouts. Apply `npm run db:migrate` to the deployment database and provision dated courses before serving players. `docker compose stop db` stops the local database and retains its data.
 
 ## Vercel deployment
@@ -122,7 +124,8 @@ The older attempt/solution prototype endpoints remain unranked and isolated from
 - `src/frontend/`: shared canvas, controls, icons, modals, API client and simulation hook; also the runnable frontend workspace.
 - `src/backend/`: services, API types, request validation, Prisma integration and seed script.
 - `src/game/`: framework-independent simulation, geometry, catalog and level codecs. See [the game API](src/game/README.md).
-- `level-editor/`: desktop authoring UI, history and local save API.
+- `src/editor/`: shared browser editor, model, history, canvas, inspector and playtest.
+- `level-editor/`: trusted localhost wrapper, repository persistence adapter and local save API.
 - `scripts/`: logo generation tools. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-logo.ps1` on Windows, then `node scripts/render-logo.mjs` to regenerate the PNG, monochrome and reversed exports in `src/frontend/public/`.
 
 Run workspace commands from the repository root. `db:generate` and `db:migrate` use `prisma7.config.ts`; `db:seed` publishes the reviewed opening schedule.
