@@ -107,7 +107,7 @@ test('community retries repeat the failed page, including a failed refresh', asy
     createdAt: '2026-11-09T00:00:00.000Z',
   });
   const firstCursor = map(20).id,
-    secondCursor = map(40).id;
+    secondCursor = map(21).id;
   let failMore = true,
     failRefresh = false;
   const requests: string[] = [];

@@ -4,19 +4,59 @@ import { communityPublishingFixture } from './community-publishing-fixtures';
 import { defaultRules } from '../src/game/run-evaluation';
 import type { PublishCommunityMap } from '../src/shared/community-maps';
 
-for (const reopen of ['close', 'reload', 'edit'] as const) {
-  test(`publication retries preserve a nondefault proof after ${reopen}`, async ({ page }) => {
+for (const reopen of [
+  'close',
+  'reload',
+  'edit',
+  'guest-change',
+  'guest-expiry',
+  'malformed-response',
+] as const) {
+  test(`publication retries preserve a nondefault proof after ${reopen}`, async ({
+    page,
+    context,
+  }) => {
     await page.addInitScript(() => localStorage.setItem('puttential-tutorial-v1', 'seen'));
     await page.route('**/api/**', (route) =>
       route.fulfill({ status: 503, json: { error: 'Unavailable fixture' } }),
     );
+    let activeGuest: string | null = 'retry-author';
+    let guestCreations = 0;
     await page.route('**/api/me', (route) =>
-      route.fulfill({ json: { player: { id: 'retry-author', nickname: 'Retry author' } } }),
+      activeGuest
+        ? route.fulfill({ json: { player: { id: activeGuest, nickname: 'Retry author' } } })
+        : route.fulfill({ status: 401, json: { error: 'Guest expired', code: 'GUEST_REQUIRED' } }),
     );
+    await page.route('**/api/guest', (route) => {
+      guestCreations++;
+      activeGuest = 'replacement-author';
+      return route.fulfill({ json: { player: { id: activeGuest, nickname: 'Retry author' } } });
+    });
     const submissions: PublishCommunityMap[] = [];
-    await page.route('**/api/community', (route) => {
+    await page.route('**/api/community', async (route) => {
       const submission = route.request().postDataJSON() as PublishCommunityMap;
       submissions.push(submission);
+      const journal = await page.evaluate(
+        (id) =>
+          JSON.parse(
+            sessionStorage.getItem(`puttential-community-publish-v1/${encodeURIComponent(id)}`)!,
+          ),
+        submission.document.level.id,
+      );
+      expect(journal.guestId).toBe(submission.expectedGuestId);
+      expect(journal.requestId).toBe(submission.requestId);
+      if (!activeGuest)
+        return route.fulfill({
+          status: 401,
+          json: { error: 'Guest expired', code: 'GUEST_REQUIRED' },
+        });
+      if (submission.expectedGuestId !== activeGuest)
+        return route.fulfill({
+          status: 409,
+          json: { error: 'Guest changed', code: 'GUEST_CHANGED' },
+        });
+      if (submissions.length === 1 && reopen === 'malformed-response')
+        return route.fulfill({ status: 201, json: { map: { id: 'invalid-map-id' } } });
       return submissions.length === 1
         ? route.fulfill({ status: 503, json: { error: 'Publication response lost' } })
         : route.fulfill({
@@ -52,7 +92,11 @@ for (const reopen of ['close', 'reload', 'edit'] as const) {
     await expect(editor.getByRole('button', { name: 'Publish map', exact: true })).toBeEnabled();
     await editor.getByLabel('Map title').fill('Recover this publication');
     await editor.getByRole('button', { name: 'Publish map', exact: true }).click();
-    await expect(editor.getByRole('alert')).toContainText('Publication response lost');
+    await expect(editor.getByRole('alert')).toContainText(
+      reopen === 'malformed-response'
+        ? 'Community returned invalid data'
+        : 'Publication response lost',
+    );
     if (reopen === 'close') {
       await mkdir('artifacts/community-followup', { recursive: true });
       await page.screenshot({
@@ -65,6 +109,10 @@ for (const reopen of ['close', 'reload', 'edit'] as const) {
         (command) => command.type === 'set-field-enabled' && command.enabled,
       ),
     ).toBe(true);
+    if (reopen === 'guest-change' || reopen === 'guest-expiry') {
+      activeGuest = reopen === 'guest-change' ? 'another-author' : null;
+      await context.clearCookies();
+    }
     if (reopen === 'reload') {
       await page.reload();
       await page.getByRole('button', { name: 'Editor', exact: true }).click();
@@ -75,6 +123,30 @@ for (const reopen of ['close', 'reload', 'edit'] as const) {
     await editor.getByRole('button', { name: 'Playtest', exact: true }).click();
     await expect(editor.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
     await expect(editor.locator('.tile-option').first()).toHaveAttribute('aria-pressed', 'false');
+    if (reopen === 'guest-change' || reopen === 'guest-expiry') {
+      await editor.getByRole('button', { name: 'Retry publication', exact: true }).click();
+      await expect(editor.getByRole('alert')).toContainText(
+        'guest session used for this publication has expired or changed',
+      );
+      expect(submissions).toHaveLength(2);
+      expect(submissions[1]).toEqual(submissions[0]);
+      expect(guestCreations).toBe(0);
+      const journal = await page.evaluate(
+        (id) =>
+          JSON.parse(
+            sessionStorage.getItem(`puttential-community-publish-v1/${encodeURIComponent(id)}`)!,
+          ),
+        document.level.id,
+      );
+      expect(journal.guestId).toBe('retry-author');
+      activeGuest = 'retry-author';
+      await editor.getByRole('button', { name: 'Retry publication', exact: true }).click();
+      await expect(
+        editor.getByRole('link', { name: 'Play and share Recover this publication' }),
+      ).toBeVisible();
+      expect(submissions[2]).toEqual(submissions[0]);
+      return;
+    }
     if (reopen === 'edit') {
       await editor.getByRole('button', { name: 'Edit publication', exact: true }).click();
       await editor.getByLabel('Map title').fill('A different publication');

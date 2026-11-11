@@ -1,4 +1,5 @@
 import { parseLevel, isCourseObject } from '../game';
+import type { Level } from '../game';
 import { LIMITS } from '../shared/puzzle-contracts';
 import type {
   ArchiveResponse,
@@ -8,6 +9,7 @@ import type {
   PuzzleResponse,
   RunResponse,
   ReplayResponse,
+  PuzzleRules,
 } from '../shared/puzzle-contracts';
 import type { StartRunRequest } from '../shared/puzzle-contracts';
 
@@ -96,7 +98,6 @@ export function decodePlayer(x: unknown): { player: Player } {
 export function decodePuzzle(x: unknown): PuzzleResponse {
   check(obj(x));
   const configuration = parseLevel(x.configuration);
-  const r = x.rules;
   check(
     text(x.id) &&
       text(x.title) &&
@@ -109,6 +110,13 @@ export function decodePuzzle(x: unknown): PuzzleResponse {
       instant(x.nextDailyAt) &&
       availability(x.availability, x.id),
   );
+  const rules = decodePuzzleRules(x.rules, configuration);
+  return { ...x, configuration, rules } as PuzzleResponse;
+}
+
+/** Shape and inventory checks are shared by daily and community responses. */
+export function decodePuzzleRules(value: unknown, configuration: Level): PuzzleRules {
+  const r = value;
   check(
     obj(r) &&
       text(r.rulesVersion) &&
@@ -121,16 +129,20 @@ export function decodePuzzle(x: unknown): PuzzleResponse {
     obj(b) &&
       ['minX', 'minY', 'maxX', 'maxY'].every((k) => Number.isFinite(b[k])) &&
       b.minX < b.maxX &&
-      b.minY < b.maxY,
+      b.minY < b.maxY &&
+      Number.isFinite(b.maxX - b.minX) &&
+      Number.isFinite(b.maxY - b.minY),
   );
   const fields = configuration.fields.filter((f) => !isCourseObject(f.force));
   check(
     fields.length <= LIMITS.fields &&
       obj(r.tileCosts) &&
       Object.keys(r.tileCosts).length === fields.length &&
-      fields.every((f) => integer(r.tileCosts[f.id], 1, LIMITS.maxCost)),
+      fields.every(
+        (f) => Object.hasOwn(r.tileCosts, f.id) && integer(r.tileCosts[f.id], 1, LIMITS.maxCost),
+      ),
   );
-  return { ...x, configuration } as PuzzleResponse;
+  return r as PuzzleRules;
 }
 export function decodeProgress(x: unknown): ProgressResponse {
   check(obj(x) && progress(x.progress) && availability(x.availability, x.progress.puzzleId));

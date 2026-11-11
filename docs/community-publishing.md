@@ -26,6 +26,8 @@ The publishing form journals its exact submission and request ID in sessionStora
 before sending. If the server commits but its response is lost, reopening playtest
 offers **Retry publication**, which resends the saved proof and metadata without
 another solve. **Edit publication** explicitly starts a new submission.
+New attempts save the original guest ID before sending; retries never create a guest
+or switch owners. Older saved attempts may have an unknown owner.
 When browser storage is unavailable, retries are retained only while the form is open.
 
 ## Deploy on the existing Vercel project
