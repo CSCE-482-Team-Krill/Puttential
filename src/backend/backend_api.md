@@ -40,6 +40,7 @@ See [release and publishing](../../docs/iteration-two-release.md) for database s
 - `archiveRank` / `archivePlayers` / `archivePercentile` are the all-time standing (archive board), which includes late plays. Late plays never count toward streaks or the daily averages.
 - Ranks and percentiles use the same score order and tie rule as the leaderboard. Percentile is the share of players ranked strictly below, so a one-player board is 0.
 - A streak day is a verified success inside the course's original Central day. An unsolved today does not break the current streak until the day ends. Canceled courses are skipped; a date with no published course breaks the streak.
+
 # Community maps
 
 `GET /api/community` lists published summaries with optional `cursor` pagination.
