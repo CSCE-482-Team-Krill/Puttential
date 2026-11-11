@@ -211,10 +211,7 @@ export function Inspector({
         <p className="muted">
           Select an object to edit its geometry and properties. Save As by changing the level ID.
         </p>
-        <p className="muted">
-          Bounds apply to the full shape, including disabled fields. Overlapping objects are
-          allowed.
-        </p>
+        <p className="muted">Objects and fields may overlap or extend beyond the board.</p>
       </section>
     );
   if (selection.kind === 'goal') {

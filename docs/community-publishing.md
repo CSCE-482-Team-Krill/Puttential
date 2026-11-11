@@ -24,7 +24,8 @@ are excluded from public responses.
 
 The publishing form journals its exact submission and request ID in sessionStorage
 before sending. If the server commits but its response is lost, reopening playtest
-and retrying the same solution/metadata in that tab retrieves the existing map.
+offers **Retry publication**, which resends the saved proof and metadata without
+another solve. **Edit publication** explicitly starts a new submission.
 When browser storage is unavailable, retries are retained only while the form is open.
 
 ## Deploy on the existing Vercel project

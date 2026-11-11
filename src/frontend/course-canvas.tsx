@@ -513,7 +513,14 @@ export function CourseCanvas(props: Props) {
           endDrag(event.currentTarget);
           return;
         }
-        const bounds = propsRef.current.placementBounds ?? view.bounds;
+        const bounds = propsRef.current.placementBounds;
+        if (!bounds) {
+          propsRef.current.onMoveField(drag.id, {
+            x: drag.fieldStart.x + world.x - drag.start.x,
+            y: drag.fieldStart.y + world.y - drag.start.y,
+          });
+          return;
+        }
         propsRef.current.onMoveField(drag.id, {
           x: Math.min(
             Math.floor((bounds.maxX - drag.extents.maxX) / POSITION_QUANTUM) * POSITION_QUANTUM,

@@ -239,13 +239,13 @@
       "profile": "community-v1",
       "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
       "engine": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
-        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
+        "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-6522c54323e4f9dbc2245b1966a4e523a15f518afa5f4a3138ece7a5eb1da855",
+        "id": "c-e0901487f034542114344050327b373fbe385c8a9f81f96d1265e0c206346f1b",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -474,8 +474,8 @@
         }
       },
       "rules": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
         "maxTicks": 7200,
         "rotationAllowed": true,
         "placementBounds": {
@@ -489,14 +489,14 @@
           "strong-push": 1
         }
       },
-      "gameHash": "6522c54323e4f9dbc2245b1966a4e523a15f518afa5f4a3138ece7a5eb1da855",
-      "candidateHash": "aae2a35ab38882ed1ce369c8c37999afb77f2a73dc255c8e40a523613048e027"
+      "gameHash": "e0901487f034542114344050327b373fbe385c8a9f81f96d1265e0c206346f1b",
+      "candidateHash": "0b43905d7a5f09b2987307f6d1ba6d73bef1a62dee160d3fa946bff86c915c2c"
     },
     "placement": {
-      "levelId": "c-6522c54323e4f9dbc2245b1966a4e523a15f518afa5f4a3138ece7a5eb1da855",
+      "levelId": "c-e0901487f034542114344050327b373fbe385c8a9f81f96d1265e0c206346f1b",
       "levelVersion": 1,
-      "simulationVersion": "puttential-rapier-0.20.0-v2",
-      "rulesVersion": "puttential-daily-v1",
+      "simulationVersion": "puttential-rapier-0.20.0-v3",
+      "rulesVersion": "puttential-daily-v2",
       "commands": [
         {
           "type": "move-field",
@@ -788,13 +788,13 @@
       "profile": "community-v1",
       "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
       "engine": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
-        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
+        "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-78b60be5b94daa82a63479ee529274c465aadaf29384838bdd7bd43806d7978d",
+        "id": "c-a628d74f8e74ca26025ec4311e2f578e10a058e896bc5c0f2a88fcd9ba2d5189",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -1023,8 +1023,8 @@
         }
       },
       "rules": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
         "maxTicks": 7200,
         "rotationAllowed": true,
         "placementBounds": {
@@ -1038,14 +1038,14 @@
           "strong-push": 1
         }
       },
-      "gameHash": "78b60be5b94daa82a63479ee529274c465aadaf29384838bdd7bd43806d7978d",
-      "candidateHash": "2c1795307f463af8ab69aba31f316a865b2f3c0543dcb6b4a90a0129c273d5a0"
+      "gameHash": "a628d74f8e74ca26025ec4311e2f578e10a058e896bc5c0f2a88fcd9ba2d5189",
+      "candidateHash": "53f0320e20bad6db79959e283cf9400e17513d851483ad073494f08cb618e8c8"
     },
     "placement": {
-      "levelId": "c-78b60be5b94daa82a63479ee529274c465aadaf29384838bdd7bd43806d7978d",
+      "levelId": "c-a628d74f8e74ca26025ec4311e2f578e10a058e896bc5c0f2a88fcd9ba2d5189",
       "levelVersion": 1,
-      "simulationVersion": "puttential-rapier-0.20.0-v2",
-      "rulesVersion": "puttential-daily-v1",
+      "simulationVersion": "puttential-rapier-0.20.0-v3",
+      "rulesVersion": "puttential-daily-v2",
       "commands": [
         {
           "type": "move-field",
@@ -1337,13 +1337,13 @@
       "profile": "community-v1",
       "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
       "engine": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
-        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
+        "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-4d7245cb9cc28f7dea8cc783f8f60ffb30f9796bd8f1adb0f737e6b8dcb4bb26",
+        "id": "c-41d29443e8c2404967e6ed49372ad4297c940b2ba0014bae7e79ecd6b34a5697",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -1572,8 +1572,8 @@
         }
       },
       "rules": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
         "maxTicks": 7200,
         "rotationAllowed": true,
         "placementBounds": {
@@ -1587,14 +1587,14 @@
           "strong-push": 1
         }
       },
-      "gameHash": "4d7245cb9cc28f7dea8cc783f8f60ffb30f9796bd8f1adb0f737e6b8dcb4bb26",
-      "candidateHash": "44a5e1b3139b702c85e21b1a62d5aab1abb9cb9e9908d2c98dc315cef4e34f3d"
+      "gameHash": "41d29443e8c2404967e6ed49372ad4297c940b2ba0014bae7e79ecd6b34a5697",
+      "candidateHash": "b9eee45d5ca3fbe4d98c90f50bbd8c57954f465b7e74820d4a318d32c6ff7c0e"
     },
     "placement": {
-      "levelId": "c-4d7245cb9cc28f7dea8cc783f8f60ffb30f9796bd8f1adb0f737e6b8dcb4bb26",
+      "levelId": "c-41d29443e8c2404967e6ed49372ad4297c940b2ba0014bae7e79ecd6b34a5697",
       "levelVersion": 1,
-      "simulationVersion": "puttential-rapier-0.20.0-v2",
-      "rulesVersion": "puttential-daily-v1",
+      "simulationVersion": "puttential-rapier-0.20.0-v3",
+      "rulesVersion": "puttential-daily-v2",
       "commands": [
         {
           "type": "move-field",
@@ -1886,13 +1886,13 @@
       "profile": "community-v1",
       "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
       "engine": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
-        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
+        "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-9d5af3069dad66018d17b6cf47047e96d37741531ad8b8a372a8fd28ab22b7ee",
+        "id": "c-9f7369eceba4def745397bae9ee515cc0026b80e3e64ab509be2e8ed5f5c4644",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -2121,8 +2121,8 @@
         }
       },
       "rules": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
         "maxTicks": 7200,
         "rotationAllowed": true,
         "placementBounds": {
@@ -2136,14 +2136,14 @@
           "strong-push": 1
         }
       },
-      "gameHash": "9d5af3069dad66018d17b6cf47047e96d37741531ad8b8a372a8fd28ab22b7ee",
-      "candidateHash": "05e686f7d1681b650835cfce0574e2f99de677cad3f5abcc485590957bc7c8cc"
+      "gameHash": "9f7369eceba4def745397bae9ee515cc0026b80e3e64ab509be2e8ed5f5c4644",
+      "candidateHash": "3d757e2ca29d022faab6655953714ec3182347d9e8ff568db1f12545e4458ea4"
     },
     "placement": {
-      "levelId": "c-9d5af3069dad66018d17b6cf47047e96d37741531ad8b8a372a8fd28ab22b7ee",
+      "levelId": "c-9f7369eceba4def745397bae9ee515cc0026b80e3e64ab509be2e8ed5f5c4644",
       "levelVersion": 1,
-      "simulationVersion": "puttential-rapier-0.20.0-v2",
-      "rulesVersion": "puttential-daily-v1",
+      "simulationVersion": "puttential-rapier-0.20.0-v3",
+      "rulesVersion": "puttential-daily-v2",
       "commands": [
         {
           "type": "move-field",
@@ -2443,13 +2443,13 @@
       "profile": "community-v1",
       "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
       "engine": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
-        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
+        "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-2a63d0466f3e27394efe3d636680fd70fc94275a12a7bb1e2d3378477d194ebc",
+        "id": "c-b5f0eca4ffca429653173b37eea524d36c4dba5b3c9fad5c03e21d1bdb2c45f7",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -2687,8 +2687,8 @@
         }
       },
       "rules": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
         "maxTicks": 7200,
         "rotationAllowed": true,
         "placementBounds": {
@@ -2702,14 +2702,14 @@
           "strong-push": 1
         }
       },
-      "gameHash": "2a63d0466f3e27394efe3d636680fd70fc94275a12a7bb1e2d3378477d194ebc",
-      "candidateHash": "f04b88490f44f1dc5cc669812b9fe023f112b93a37da75fbbe7a58e63e6fca3d"
+      "gameHash": "b5f0eca4ffca429653173b37eea524d36c4dba5b3c9fad5c03e21d1bdb2c45f7",
+      "candidateHash": "acc4e30e81c12e9ce4e3a180e2ffe8cc2a334d1ae3406c2ff10995f906088d77"
     },
     "placement": {
-      "levelId": "c-2a63d0466f3e27394efe3d636680fd70fc94275a12a7bb1e2d3378477d194ebc",
+      "levelId": "c-b5f0eca4ffca429653173b37eea524d36c4dba5b3c9fad5c03e21d1bdb2c45f7",
       "levelVersion": 1,
-      "simulationVersion": "puttential-rapier-0.20.0-v2",
-      "rulesVersion": "puttential-daily-v1",
+      "simulationVersion": "puttential-rapier-0.20.0-v3",
+      "rulesVersion": "puttential-daily-v2",
       "commands": [
         {
           "type": "move-field",
@@ -3025,13 +3025,13 @@
       "profile": "community-v1",
       "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
       "engine": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
-        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
+        "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-10817b1ca631da78b944a669b35be50000c74f6f82839352beb5a446a75124b1",
+        "id": "c-178b3742e9f1bc7c1899699881b34ed1263cca79a459ae846ba53b342635f7f7",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -3284,8 +3284,8 @@
         }
       },
       "rules": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
         "maxTicks": 7200,
         "rotationAllowed": true,
         "placementBounds": {
@@ -3299,14 +3299,14 @@
           "strong-push": 1
         }
       },
-      "gameHash": "10817b1ca631da78b944a669b35be50000c74f6f82839352beb5a446a75124b1",
-      "candidateHash": "5270a1ae5a7f0a6ea5191cc565bc37fbac103b48756576885a4aeaac58c1ab8e"
+      "gameHash": "178b3742e9f1bc7c1899699881b34ed1263cca79a459ae846ba53b342635f7f7",
+      "candidateHash": "b36d8da0d94c6857746660741bf54e0a4e35f0b32f31c2c94edfc1b41b6ee10e"
     },
     "placement": {
-      "levelId": "c-10817b1ca631da78b944a669b35be50000c74f6f82839352beb5a446a75124b1",
+      "levelId": "c-178b3742e9f1bc7c1899699881b34ed1263cca79a459ae846ba53b342635f7f7",
       "levelVersion": 1,
-      "simulationVersion": "puttential-rapier-0.20.0-v2",
-      "rulesVersion": "puttential-daily-v1",
+      "simulationVersion": "puttential-rapier-0.20.0-v3",
+      "rulesVersion": "puttential-daily-v2",
       "commands": [
         {
           "type": "move-field",
@@ -3534,13 +3534,13 @@
       "profile": "community-v1",
       "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
       "engine": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
-        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
+        "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-2a3b92e0abf4558e15fcb3151e3b7fd43cb7497e4219e10c21f0648c48c75d61",
+        "id": "c-53fd844c255297af936bfe370b32043ce63aef47ed3b91f9bc12f7f30a4a8ddc",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -3704,8 +3704,8 @@
         }
       },
       "rules": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
         "maxTicks": 7200,
         "rotationAllowed": true,
         "placementBounds": {
@@ -3716,14 +3716,14 @@
         },
         "tileCosts": {}
       },
-      "gameHash": "2a3b92e0abf4558e15fcb3151e3b7fd43cb7497e4219e10c21f0648c48c75d61",
-      "candidateHash": "f24551df005debe944defb170e07a0083b35c9d70a928bf7240cc6ef9f010cf5"
+      "gameHash": "53fd844c255297af936bfe370b32043ce63aef47ed3b91f9bc12f7f30a4a8ddc",
+      "candidateHash": "ead18354cb675b53ea3d10a1d149636e86b7a5b679d5a5e961aea8b9e88dcaf5"
     },
     "placement": {
-      "levelId": "c-2a3b92e0abf4558e15fcb3151e3b7fd43cb7497e4219e10c21f0648c48c75d61",
+      "levelId": "c-53fd844c255297af936bfe370b32043ce63aef47ed3b91f9bc12f7f30a4a8ddc",
       "levelVersion": 1,
-      "rulesVersion": "puttential-daily-v1",
-      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "rulesVersion": "puttential-daily-v2",
+      "simulationVersion": "puttential-rapier-0.20.0-v3",
       "commands": []
     },
     "result": {
@@ -3910,13 +3910,13 @@
       "profile": "community-v1",
       "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
       "engine": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
-        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
+        "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-7dcfdd22f8db8077f6de92ed91d9af237f5366c829b3e3d1d69b83f3496cc68a",
+        "id": "c-922c5d0ea1e0817432157c84fc8ee13f3547d24439c5cbb14ca3caaf72dc0dd1",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -4078,8 +4078,8 @@
         }
       },
       "rules": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
         "maxTicks": 7200,
         "rotationAllowed": true,
         "placementBounds": {
@@ -4090,14 +4090,14 @@
         },
         "tileCosts": {}
       },
-      "gameHash": "7dcfdd22f8db8077f6de92ed91d9af237f5366c829b3e3d1d69b83f3496cc68a",
-      "candidateHash": "62f536a70d4d963af23be5776eb0d9a016904316ac8f352f36f5c186839d4259"
+      "gameHash": "922c5d0ea1e0817432157c84fc8ee13f3547d24439c5cbb14ca3caaf72dc0dd1",
+      "candidateHash": "bb3b46919e79c1d60e5c02a4435ede1c461f871e45039da54e5872c49f921555"
     },
     "placement": {
-      "levelId": "c-7dcfdd22f8db8077f6de92ed91d9af237f5366c829b3e3d1d69b83f3496cc68a",
+      "levelId": "c-922c5d0ea1e0817432157c84fc8ee13f3547d24439c5cbb14ca3caaf72dc0dd1",
       "levelVersion": 1,
-      "rulesVersion": "puttential-daily-v1",
-      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "rulesVersion": "puttential-daily-v2",
+      "simulationVersion": "puttential-rapier-0.20.0-v3",
       "commands": []
     },
     "result": {
@@ -4305,13 +4305,13 @@
       "profile": "community-v1",
       "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
       "engine": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
-        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
+        "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-2145125dba8c069ad701513826502ff29058628ecf2aa0397d164f3444567e9b",
+        "id": "c-6ed257bee7de6962872c16323c6c31a93cfce195ee1cfa3f45777b7fca072b7e",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -4498,8 +4498,8 @@
         }
       },
       "rules": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
         "maxTicks": 7200,
         "rotationAllowed": true,
         "placementBounds": {
@@ -4510,14 +4510,14 @@
         },
         "tileCosts": {}
       },
-      "gameHash": "2145125dba8c069ad701513826502ff29058628ecf2aa0397d164f3444567e9b",
-      "candidateHash": "851824f84aea769019dcfa3ede7846165fd860fd0b69faae27038b699388ce0c"
+      "gameHash": "6ed257bee7de6962872c16323c6c31a93cfce195ee1cfa3f45777b7fca072b7e",
+      "candidateHash": "09a56c31483881151c04f400d983e0263618b828830ab485f35d4f5438048924"
     },
     "placement": {
-      "levelId": "c-2145125dba8c069ad701513826502ff29058628ecf2aa0397d164f3444567e9b",
+      "levelId": "c-6ed257bee7de6962872c16323c6c31a93cfce195ee1cfa3f45777b7fca072b7e",
       "levelVersion": 1,
-      "rulesVersion": "puttential-daily-v1",
-      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "rulesVersion": "puttential-daily-v2",
+      "simulationVersion": "puttential-rapier-0.20.0-v3",
       "commands": []
     },
     "result": {
@@ -4600,13 +4600,13 @@
       "profile": "community-v1",
       "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
       "engine": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
-        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
+        "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-62a2389cbd8684dcb4706eafa26e1958a5e6c3866c60d30009db696b4128f31d",
+        "id": "c-bb335451b6b97c36603e1d9eea4dd4a0efecf080487d978263a1b233e7eab652",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -4665,8 +4665,8 @@
         }
       },
       "rules": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
         "maxTicks": 7200,
         "rotationAllowed": true,
         "placementBounds": {
@@ -4677,14 +4677,14 @@
         },
         "tileCosts": {}
       },
-      "gameHash": "62a2389cbd8684dcb4706eafa26e1958a5e6c3866c60d30009db696b4128f31d",
-      "candidateHash": "e0b8e1c135b0ec8c3c10159560b7a65270dee8c7d1ce596a440ed3f995186f89"
+      "gameHash": "bb335451b6b97c36603e1d9eea4dd4a0efecf080487d978263a1b233e7eab652",
+      "candidateHash": "5fb846f3d86f4b1bc76cade3895a3b891a03ace8c370560805404b4a8c13ee3f"
     },
     "placement": {
-      "levelId": "c-62a2389cbd8684dcb4706eafa26e1958a5e6c3866c60d30009db696b4128f31d",
+      "levelId": "c-bb335451b6b97c36603e1d9eea4dd4a0efecf080487d978263a1b233e7eab652",
       "levelVersion": 1,
-      "rulesVersion": "puttential-daily-v1",
-      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "rulesVersion": "puttential-daily-v2",
+      "simulationVersion": "puttential-rapier-0.20.0-v3",
       "commands": []
     },
     "result": {
@@ -4767,13 +4767,13 @@
       "profile": "community-v1",
       "levelId": "b3c12425-cca4-43a5-a6af-02e2c2a4e843",
       "engine": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
-        "artifactDigest": "a042654dea091d65014ab2471a6204bdd052deb2318eda09ca17f5b90da33158"
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
+        "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-22d8fdbeda41dd9800b26f25aa0f8c0045540ade6b78dc10b6649dc38cf142da",
+        "id": "c-f4e4f39ca5b70b2a6a55be382ed25f8c9b6367f8d4b8584889d1d8a5b6396fee",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -4832,8 +4832,8 @@
         }
       },
       "rules": {
-        "simulationVersion": "puttential-rapier-0.20.0-v2",
-        "rulesVersion": "puttential-daily-v1",
+        "simulationVersion": "puttential-rapier-0.20.0-v3",
+        "rulesVersion": "puttential-daily-v2",
         "maxTicks": 7200,
         "rotationAllowed": true,
         "placementBounds": {
@@ -4844,14 +4844,14 @@
         },
         "tileCosts": {}
       },
-      "gameHash": "22d8fdbeda41dd9800b26f25aa0f8c0045540ade6b78dc10b6649dc38cf142da",
-      "candidateHash": "340470af6a3be72866a09de39419c5d2899b0f5b7250e10ebf13922b37eb1d71"
+      "gameHash": "f4e4f39ca5b70b2a6a55be382ed25f8c9b6367f8d4b8584889d1d8a5b6396fee",
+      "candidateHash": "9fe32b117779efaa103bcdf2ae293c65075923c81ca20d34d18390951ee31ce4"
     },
     "placement": {
-      "levelId": "c-22d8fdbeda41dd9800b26f25aa0f8c0045540ade6b78dc10b6649dc38cf142da",
+      "levelId": "c-f4e4f39ca5b70b2a6a55be382ed25f8c9b6367f8d4b8584889d1d8a5b6396fee",
       "levelVersion": 1,
-      "rulesVersion": "puttential-daily-v1",
-      "simulationVersion": "puttential-rapier-0.20.0-v2",
+      "rulesVersion": "puttential-daily-v2",
+      "simulationVersion": "puttential-rapier-0.20.0-v3",
       "commands": []
     },
     "result": {

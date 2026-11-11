@@ -24,6 +24,7 @@ import type {
 } from '../shared/puzzle-contracts';
 import type { EngineAdapter } from './engine-adapter';
 import { displayedForceCost } from './score-display';
+import { simulationOptions, usesLegacyBounds } from '../game/run-evaluation';
 
 export type Mode = 'loading' | 'setup' | 'running' | 'done' | 'error';
 export type FieldDraft = Readonly<{ position: Vec2; angle?: number; enabled: boolean }>;
@@ -128,7 +129,7 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
     setAttempts(0);
     setTick(0);
     selectField(null);
-    void createGame(level)
+    void createGame(level, rulesRef.current ? simulationOptions(rulesRef.current) : {})
       .then((created) => {
         if (canceled) {
           created.destroy();
@@ -179,6 +180,8 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
                       };
                 const field = level.fields.find((f) => f.id === id)!;
                 if (
+                  r &&
+                  usesLegacyBounds(r) &&
                   !containsBounds(
                     r?.placementBounds ?? levelBounds(level),
                     polygonBounds(
@@ -246,6 +249,8 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
                 };
           const definition = level.fields.find((f) => f.id === id)!;
           if (
+            rules &&
+            usesLegacyBounds(rules) &&
             !containsBounds(
               rules?.placementBounds ?? levelBounds(level),
               polygonBounds(
@@ -432,6 +437,8 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
           };
         }
         if (
+          r &&
+          usesLegacyBounds(r) &&
           !containsBounds(
             r?.placementBounds ?? levelBounds(level),
             polygonBounds(

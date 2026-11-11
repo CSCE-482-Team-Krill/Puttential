@@ -1,7 +1,7 @@
 import { createGame, FIXED_DT } from '../game/simulation';
 import type { Game, GameSnapshot, RenderState } from '../game/types';
 import type { Level } from '../game/levels/types';
-import { RunEvaluator, validatePlacement } from '../game/run-evaluation';
+import { RunEvaluator, validatePlacement, simulationOptions } from '../game/run-evaluation';
 import { advanceGoal, initialGoal } from '../game/goal-progress';
 import type { Placement, PuzzleRules, SavedResult } from '../shared/puzzle-contracts';
 
@@ -42,7 +42,7 @@ export class ReplayPlayback {
     validatePlacement(level, placement, rules);
     if (expected.verification !== 'verified' || expected.outcome !== 'success' || !expected.metrics)
       throw new Error('A replay requires a verified successful solution.');
-    const game = await createGame(level);
+    const game = await createGame(level, simulationOptions(rules));
     try {
       game.applySetup(placement.commands);
       return new ReplayPlayback(game, level, rules, expected);

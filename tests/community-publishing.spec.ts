@@ -2,6 +2,162 @@ import { test, expect } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
 import { communityPublishingFixture } from './community-publishing-fixtures';
 import { defaultRules } from '../src/game/run-evaluation';
+import type { PublishCommunityMap } from '../src/shared/community-maps';
+
+for (const reopen of ['close', 'reload', 'edit'] as const) {
+  test(`publication retries preserve a nondefault proof after ${reopen}`, async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('puttential-tutorial-v1', 'seen'));
+    await page.route('**/api/**', (route) =>
+      route.fulfill({ status: 503, json: { error: 'Unavailable fixture' } }),
+    );
+    await page.route('**/api/me', (route) =>
+      route.fulfill({ json: { player: { id: 'retry-author', nickname: 'Retry author' } } }),
+    );
+    const submissions: PublishCommunityMap[] = [];
+    await page.route('**/api/community', (route) => {
+      const submission = route.request().postDataJSON() as PublishCommunityMap;
+      submissions.push(submission);
+      return submissions.length === 1
+        ? route.fulfill({ status: 503, json: { error: 'Publication response lost' } })
+        : route.fulfill({
+            status: 201,
+            json: {
+              map: {
+                id: '00000000-0000-4000-8000-000000000001',
+                title: submission.title,
+                description: submission.description,
+                creatorName: 'Retry author',
+                createdAt: '2026-11-10T00:00:00.000Z',
+              },
+            },
+          });
+    });
+    page.on('dialog', (dialog) => dialog.accept());
+    await page.goto('http://127.0.0.1:3000/');
+    await page.getByRole('button', { name: 'Editor', exact: true }).click();
+    const editor = page.getByRole('region', { name: 'Level editor', exact: true });
+    const { document } = communityPublishingFixture();
+    await editor.locator('input[type=file]').setInputFiles({
+      name: 'retry-map.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(document)),
+    });
+    await expect(editor.getByLabel('Course name', { exact: true })).toHaveValue(
+      document.editor.name,
+    );
+    await editor.getByRole('button', { name: 'Playtest', exact: true }).click();
+    await expect(editor.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+    await editor.locator('.tile-option').first().click();
+    await editor.getByRole('button', { name: 'Play', exact: true }).click();
+    await expect(editor.getByRole('button', { name: 'Publish map', exact: true })).toBeEnabled();
+    await editor.getByLabel('Map title').fill('Recover this publication');
+    await editor.getByRole('button', { name: 'Publish map', exact: true }).click();
+    await expect(editor.getByRole('alert')).toContainText('Publication response lost');
+    if (reopen === 'close') {
+      await mkdir('artifacts/community-followup', { recursive: true });
+      await page.screenshot({
+        path: 'artifacts/community-followup/publication-response-lost.png',
+        fullPage: true,
+      });
+    }
+    expect(
+      submissions[0]!.placement.commands.some(
+        (command) => command.type === 'set-field-enabled' && command.enabled,
+      ),
+    ).toBe(true);
+    if (reopen === 'reload') {
+      await page.reload();
+      await page.getByRole('button', { name: 'Editor', exact: true }).click();
+      await editor.getByRole('button', { name: 'Restore draft', exact: true }).click();
+    } else {
+      await editor.getByRole('button', { name: 'Return to editor', exact: true }).click();
+    }
+    await editor.getByRole('button', { name: 'Playtest', exact: true }).click();
+    await expect(editor.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+    await expect(editor.locator('.tile-option').first()).toHaveAttribute('aria-pressed', 'false');
+    if (reopen === 'edit') {
+      await editor.getByRole('button', { name: 'Edit publication', exact: true }).click();
+      await editor.getByLabel('Map title').fill('A different publication');
+      await expect(editor.getByRole('button', { name: 'Publish map', exact: true })).toBeDisabled();
+      await editor.getByRole('button', { name: 'Play', exact: true }).click();
+      await expect(editor.getByRole('button', { name: 'Publish map', exact: true })).toBeEnabled();
+      await editor.getByRole('button', { name: 'Publish map', exact: true }).click();
+      await expect(
+        editor.getByRole('link', { name: 'Play and share A different publication' }),
+      ).toBeVisible();
+      expect(submissions[1]!.requestId).not.toBe(submissions[0]!.requestId);
+      expect(submissions[1]!.title).toBe('A different publication');
+      expect(submissions[1]!.placement.commands).not.toEqual(submissions[0]!.placement.commands);
+      return;
+    }
+    if (reopen === 'close') {
+      // A different successful playtest must not silently replace the pending proof.
+      await editor.getByRole('button', { name: 'Play', exact: true }).click();
+      await expect(editor.getByRole('button', { name: 'Try again', exact: true })).toBeVisible();
+    }
+    await expect(editor.getByLabel('Map title')).toBeDisabled();
+    if (reopen === 'close') {
+      await page.screenshot({
+        path: 'artifacts/community-followup/publication-retry-restored.png',
+        fullPage: true,
+      });
+    }
+    await editor.getByRole('button', { name: 'Retry publication', exact: true }).click();
+    await expect(
+      editor.getByRole('link', { name: 'Play and share Recover this publication' }),
+    ).toBeVisible();
+    expect(submissions[1]).toEqual(submissions[0]);
+  });
+}
+
+test('playtest accepts edge tiles and outside geometry while other moving bodies keep simulating', async ({
+  page,
+}) => {
+  await page.addInitScript(() => localStorage.setItem('puttential-tutorial-v1', 'seen'));
+  await page.route('**/api/**', (route) =>
+    route.fulfill({ status: 503, json: { error: 'Unavailable fixture' } }),
+  );
+  page.on('dialog', (dialog) => dialog.accept());
+  const { document } = communityPublishingFixture();
+  document.level.fields = [
+    ...document.level.fields,
+    {
+      id: 'edge-tile',
+      position: { x: 6.4, y: 0 },
+      angle: 0,
+      enabled: false,
+      shape: { kind: 'rectangle', width: 2, height: 2 },
+      force: { kind: 'uniform', density: { x: 1, y: 0 } },
+    },
+  ];
+  document.level.dynamicBodies = [
+    ...document.level.dynamicBodies,
+    {
+      ...document.level.dynamicBodies[0]!,
+      id: 'outside-body',
+      position: { x: 20, y: 0 },
+      linearVelocity: { x: 1, y: 0 },
+    },
+  ];
+  document.level.staticBodies = [
+    ...document.level.staticBodies,
+    { ...document.level.staticBodies[0]!, id: 'outside-obstacle', position: { x: 30, y: 0 } },
+  ];
+  await page.goto('http://127.0.0.1:3000/');
+  await page.getByRole('button', { name: 'Editor', exact: true }).click();
+  const editor = page.getByRole('region', { name: 'Level editor', exact: true });
+  await editor.locator('input[type=file]').setInputFiles({
+    name: 'outside-map.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(document)),
+  });
+  await expect(editor.getByLabel('Course name', { exact: true })).toHaveValue(document.editor.name);
+  await editor.getByRole('button', { name: 'Playtest', exact: true }).click();
+  await expect(editor.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+  await editor.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(editor.getByRole('button', { name: 'Publish map', exact: true })).toBeEnabled();
+  await expect(editor.getByRole('alert')).toHaveCount(0);
+});
 
 test('unsupported community geometry is explained before the creator attempts publication', async ({
   page,
@@ -98,6 +254,7 @@ test('a creator solves and publishes a map; another browser discovers, shares an
     );
     await editor.getByRole('button', { name: 'Playtest', exact: true }).click();
     await expect(editor.getByRole('button', { name: 'Publish map', exact: true })).toBeDisabled();
+    await editor.locator('.tile-option').first().click();
     await editor.getByRole('button', { name: 'Play', exact: true }).click();
     await expect(editor.getByText('Goal reached', { exact: false }).first()).toBeVisible();
     await editor.getByLabel('Map title', { exact: true }).fill('A published browser course');
@@ -137,13 +294,15 @@ test('a creator solves and publishes a map; another browser discovers, shares an
     await expect(editor.getByLabel('Map title', { exact: true })).toHaveValue(
       'A published browser course',
     );
-    await editor.getByRole('button', { name: 'Play', exact: true }).click();
-    await expect(editor.getByRole('button', { name: 'Publish map', exact: true })).toBeEnabled();
+    await expect(
+      editor.getByRole('button', { name: 'Retry publication', exact: true }),
+    ).toBeEnabled();
+    await expect(editor.locator('.tile-option').first()).toHaveAttribute('aria-pressed', 'false');
     const posted = page.waitForResponse(
       (response) =>
         response.url().endsWith('/api/community') && response.request().method() === 'POST',
     );
-    await editor.getByRole('button', { name: 'Publish map', exact: true }).click();
+    await editor.getByRole('button', { name: 'Retry publication', exact: true }).click();
     const response = await posted;
     expect(response.status(), await response.text()).toBe(201);
     expect(response.request().postDataJSON().requestId).toBe(originalRequestId);

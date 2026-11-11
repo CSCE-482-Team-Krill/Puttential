@@ -4,6 +4,8 @@ import type { LevelDocument } from '../../game';
 import type { Placement } from '../../shared/puzzle-contracts';
 import type { CommunityMapSummary } from '../../shared/community-maps';
 import { communityMapUrl } from '../../shared/community-maps';
+import { defaultRules } from '../../game/run-evaluation';
+import { validateCommunityPlacement } from '../../shared/community-placement';
 
 export type MapPublisher = (
   document: LevelDocument,
@@ -14,6 +16,12 @@ export type MapPublisher = (
 ) => Promise<CommunityMapSummary>;
 
 type PublishAttempt = { payload: string; requestId: string };
+type Submission = {
+  document: LevelDocument;
+  placement: Placement;
+  title: string;
+  description: string;
+};
 const attemptKey = (document: LevelDocument) =>
   `puttential-community-publish-v1/${encodeURIComponent(document.level.id)}`;
 function restoreAttempt(document: LevelDocument) {
@@ -33,6 +41,7 @@ function restoreAttempt(document: LevelDocument) {
       JSON.stringify(payload.document) !== JSON.stringify(document)
     )
       return null;
+    validateCommunityPlacement(document.level, defaultRules(document.level), payload.placement);
     return {
       attempt: attempt as PublishAttempt,
       title: payload.title,
@@ -58,7 +67,7 @@ export function PublishMap({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [published, setPublished] = useState<CommunityMapSummary | null>(null);
-  const attempt = useRef<PublishAttempt | null>(restored?.attempt ?? null);
+  const [attempt, setAttempt] = useState<PublishAttempt | null>(restored?.attempt ?? null);
   const submitting = useRef(false);
   return (
     <form
@@ -66,22 +75,32 @@ export function PublishMap({
       aria-label="Publish community map"
       onSubmit={async (event) => {
         event.preventDefault();
-        if (!placement || submitting.current) return;
+        if ((!placement && !attempt) || submitting.current) return;
         submitting.current = true;
         setBusy(true);
         setError('');
-        const payload = JSON.stringify({ document, placement, title, description });
-        if (attempt.current?.payload !== payload)
-          attempt.current = { payload, requestId: crypto.randomUUID() };
+        // A retry always sends the journaled proof, even if playtest has been reopened or changed.
+        const current = attempt ?? {
+          payload: JSON.stringify({ document, placement, title, description }),
+          requestId: crypto.randomUUID(),
+        };
+        setAttempt(current);
+        const submission = JSON.parse(current.payload) as Submission;
         try {
           // Preserve retries if the server commits but its response is lost or the form closes.
-          sessionStorage.setItem(attemptKey(document), JSON.stringify(attempt.current));
+          sessionStorage.setItem(attemptKey(document), JSON.stringify(current));
         } catch {
           // In-memory retries remain available when browser storage is disabled or full.
         }
         try {
           setPublished(
-            await publish(document, placement, title, description, attempt.current.requestId),
+            await publish(
+              submission.document,
+              submission.placement,
+              submission.title,
+              submission.description,
+              current.requestId,
+            ),
           );
         } catch (cause) {
           setError(cause instanceof Error ? cause.message : 'Publishing failed. Please retry.');
@@ -99,9 +118,11 @@ export function PublishMap({
       ) : (
         <>
           <p>
-            {placement
-              ? 'Goal reached! Your solution will be checked before the map is published.'
-              : 'Solve this map in playtest to unlock publishing.'}
+            {attempt
+              ? 'Your previous submission is saved. Retry it without solving again to recover the same map.'
+              : placement
+                ? 'Goal reached! Your solution will be checked before the map is published.'
+                : 'Solve this map in playtest to unlock publishing.'}
           </p>
           <label>
             Map title
@@ -110,7 +131,7 @@ export function PublishMap({
               minLength={3}
               maxLength={80}
               value={title}
-              disabled={busy}
+              disabled={busy || !!attempt}
               onChange={(e) => setTitle(e.target.value)}
             />
           </label>
@@ -119,13 +140,39 @@ export function PublishMap({
             <textarea
               maxLength={1000}
               value={description}
-              disabled={busy}
+              disabled={busy || !!attempt}
               onChange={(e) => setDescription(e.target.value)}
             />
           </label>
-          <button className="primary-button" type="submit" disabled={!placement || busy}>
-            {busy ? 'Verifying and publishing…' : 'Publish map'}
+          <button
+            className="primary-button"
+            type="submit"
+            disabled={(!placement && !attempt) || busy}
+          >
+            {busy ? 'Verifying and publishing…' : attempt ? 'Retry publication' : 'Publish map'}
           </button>
+          {attempt && (
+            <>
+              <p>
+                The previous submission may already be published. Editing starts a new publication.
+              </p>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  setAttempt(null);
+                  setError('');
+                  try {
+                    sessionStorage.removeItem(attemptKey(document));
+                  } catch {
+                    // The current form still supports a fresh submission without storage.
+                  }
+                }}
+              >
+                Edit publication
+              </button>
+            </>
+          )}
           {busy && <p role="status">Checking your solution on the server…</p>}
           {error && <p role="alert">{error}</p>}
         </>
