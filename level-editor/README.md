@@ -47,14 +47,14 @@ The **Repository library** lists authored levels. **Legacy courses** loads cours
 - Enable **Show vertex handles** to drag vertices. The inspector also edits coordinates, inserts/deletes vertices, and adds/removes convex pieces. **Replace with a custom outline** accepts one local `x,y` pair per line and uses the game's triangulator to turn a concave solid into convex pieces. This replaces existing pieces and their density overrides.
 - Body pieces must be convex and counter-clockwise. Fields may be concave, with either winding. Neither supports holes or self-intersection, matching the engine. Force sources/centers must stay inside their field polygon.
 - **Board → Level borders** adds or removes the managed outer walls. Borders are optional; turning them off preserves the playable area and all other objects, with one undo step. Board width/height remain editable without walls.
-- Initial geometry, including complete circles, disabled fields and the goal, must fit within the board. Invalid placements, rotations, geometry edits and board shrinks are rejected. During play, overhang is allowed: a body fails the level only once all of its pieces are completely outside the playable area. Touching the boundary remains valid.
-- The failure rule applies to every moving body, including bodies other than the goal target. The shared engine checks actual circle and polygon geometry, rather than just an object’s center or bounding box. Reset restores the initial positions and clears the failure.
+- Geometry, disabled fields and goals may extend beyond the board; resizing does not move them. During play, only the goal ball completely leaving the board fails the run. Other bodies continue outside, and touching the boundary remains valid.
+- The shared engine checks the goal body's actual circle and polygon geometry, rather than just its center or bounding box. Reset restores the initial positions and clears the failure.
 - Managed boundary walls are edited with Board controls. Imported documents may declare no managed walls; resizing changes the playable area without creating physical walls. The toggle never deletes arbitrary imported obstacles. Open through Repository library to retain managed-wall metadata.
 - **Playtest** creates the main game's Rapier world. It uses the same timestep, forces, collisions, prediction, shared frontend goal tracking and player controls as Design C. Stop/reset and return to editing are available even for a course that never settles. Test placements do not change the authored course.
 
 Playable bounds are saved in the game JSON independently of wall geometry, so an open course keeps its dimensions when loaded in the game or imported without the editor sidecar. Older files without explicit bounds use their initial geometry as the playable area; older sidecar-only board sizes are retained when reopened in the editor.
 
-Goal completion checks the target body's position against the goal bounds for the configured hold time, after every engine tick. It does not require the entire body to fit inside the goal. Authoring bounds still apply to the whole shape.
+Goal completion checks the target body's position against the goal bounds for the configured hold time, after every engine tick. It does not require the entire body to fit inside the goal.
 
 Circle collisions, mass and inertia use the engine's true disc geometry. The engine integrates field loads over an equal-area 32-sided outline; both apps use this same force calculation. This approximation does not change the circular collider or the saved circle shape.
 
@@ -62,7 +62,7 @@ Shortcuts outside text inputs: Ctrl/Cmd+C copies the selected bodies or fields, 
 
 Group copy/paste preserves relative positions, assigns fresh object/piece IDs, and gives copied portal ends a new shared pair ID. Copy both ends to keep a working pair; a copied single end stays inactive until linked. Group movement, paste, duplicate and deletion each use one undo entry and reject the entire edit when any member is invalid.
 
-Object copy/paste uses an editor clipboard for the current tab, including between courses opened in that tab. It captures the object when copied and gives each paste new object/piece IDs. The pasted object is selected at its copied position; drag it to separate overlapping copies. Geometry, forces and body properties are preserved, and paste is rejected if the object would extend outside the destination board. Copying the goal target does not change which body the goal tracks. Goals and managed boundary walls cannot be copied. Text fields retain their normal system clipboard behavior; the object clipboard clears on page reload.
+Object copy/paste uses an editor clipboard for the current tab, including between courses opened in that tab. It captures the object when copied and gives each paste new object/piece IDs. The pasted object is selected at its copied position; drag it to separate overlapping copies. Geometry, forces and body properties are preserved, including objects outside the destination board. Copying the goal target does not change which body the goal tracks. Goals and managed boundary walls cannot be copied. Text fields retain their normal system clipboard behavior; the object clipboard clears on page reload.
 
 ## Water, lava and portals
 
@@ -108,7 +108,7 @@ The local API restricts writes to the authored folder and loopback, same-origin 
 | `src/frontend/puzzle.ts`, `player-controls.tsx`       | Shared loop, field controls and Play/Stop.                                                   |
 | `src/frontend/goal-progress.ts`                       | Goal hold tracking from each engine tick.                                                    |
 | `src/frontend/game.css`, `icon.tsx`, `field-label.ts` | Design C styles, icons and labels.                                                           |
-| `src/game/levels/codec.ts`, `document.ts`             | Editor metadata/migration and full-shape bounds; `levels/parse.ts` owns engine validation.   |
+| `src/game/levels/codec.ts`, `document.ts`             | Editor metadata/migration and managed walls; `levels/parse.ts` owns engine validation.       |
 | `src/game/levels/starters.ts`                         | Game archive and editor starters.                                                            |
 
 Design C's old canvas/hook paths are compatibility re-exports. Update shared source instead of copying it. Authoring gestures and inspector controls stay under `level-editor/`; framework-independent geometry/data stay under `src/game/`. Both apps share the root npm dependency lock and the same React/Next versions.

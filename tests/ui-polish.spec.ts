@@ -405,7 +405,7 @@ test('all responsive widths retain course framing, direct nav targets and no pag
 });
 
 for (const width of [390, 959, 960, 1050, 1440]) {
-  test(`canvas movement has correct rendered displacement and clamps at bounds at ${width}`, async ({
+  test(`canvas movement has correct rendered displacement and permits outside placements at ${width}`, async ({
     page,
   }) => {
     const level = inventoryLevel(1, { enabled: true });
@@ -421,7 +421,10 @@ for (const width of [390, 959, 960, 1050, 1440]) {
     await page.mouse.down();
     await page.mouse.move(p.clientX, p.box.y + p.box.height + 200, { steps: 8 });
     await page.mouse.up();
-    await expectField(page, level, { x: -2, y: levelBounds(level).minY + 0.6 });
+    const expectedY = -0.5 - (p.box.y + p.box.height + 200 - p.clientY) / p.scale;
+    await expect(
+      page.getByRole('spinbutton', { name: 'Selected tile Y', exact: true }),
+    ).toHaveValue(String(Math.round(expectedY * 1024) / 1024));
   });
 }
 

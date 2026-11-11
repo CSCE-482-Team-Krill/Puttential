@@ -37,6 +37,7 @@ import {
   objectBounds,
   objectContains,
   editablePolygon,
+  item,
 } from '../level-editor/editor/model';
 import { loadLevel, saveLevel, listLevels } from '../level-editor/editor/library';
 
@@ -133,7 +134,7 @@ test('native circle uses Rapier ball geometry, disc mass, render data, exact bou
     d.level.dynamicBodies[0]!.angle = Math.PI / 7;
   });
   assert.equal(objectBounds(edge, selected).maxX, 7.4);
-  assert.throws(() => move(edge, selected, { x: 0.0001, y: 0 }), /outside/);
+  assert.ok(objectBounds(move(edge, selected, { x: 0.0001, y: 0 }), selected).maxX > 7.4);
   assert.ok(objectContains(edge, selected, { x: 7.39999, y: 0 }));
   assert.ok(!objectContains(edge, selected, { x: 7.4, y: 0.001 }));
   assert.throws(() => scaleObject(doc, selected, 1, 2), /uniformly/);
@@ -258,29 +259,25 @@ test('invalid format, unsupported properties, forces and source geometry are rej
   );
 });
 
-test('bounds reject full geometry on placement, rotation, resizing, import and arena shrink', () => {
+test('board dimensions do not restrict placement, rotation, resizing, import or arena shrink', () => {
   const doc = freshDocument(),
     preset = presets.find((p) => p.id === 'staticBodies:rectangle')!;
-  assert.throws(() => place(doc, preset, { x: 7.3, y: 0 }), /outside/);
+  assert.equal(place(doc, preset, { x: 7.3, y: 0 }).doc.level.staticBodies.at(-1)!.position.x, 7.3);
   const { doc: placed, selection } = place(doc, preset, { x: 5, y: 0 });
-  assert.throws(() => move(placed, selection, { x: 2, y: 0 }), /outside/);
-  assert.throws(() => scaleObject(placed, selection, 10, 1), /outside/);
-  assert.throws(
-    () =>
-      edit(placed, (d) => {
-        const body = d.level.staticBodies.find((b) => b.id === selection.id)!;
-        body.position.y = 4;
-        body.angle = Math.PI / 2;
-      }),
-    /outside/,
-  );
-  assert.throws(
-    () =>
-      validateDocument({
-        ...placed,
-        level: { ...placed.level, goal: { ...placed.level.goal, minX: -10, maxX: 10 } },
-      }),
-    /Goal extends/,
+  assert.equal(item(move(placed, selection, { x: 20, y: 0 }), selection)!.position.x, 25);
+  assert.equal(objectBounds(scaleObject(placed, selection, 10, 1), selection).maxX, 10);
+  const rotated = edit(placed, (d) => {
+    const body = d.level.staticBodies.find((b) => b.id === selection.id)!;
+    body.position.y = 4;
+    body.angle = Math.PI / 2;
+  });
+  assert.ok(objectBounds(rotated, selection).maxY > doc.editor.arena.bounds.maxY);
+  assert.equal(
+    validateDocument({
+      ...placed,
+      level: { ...placed.level, goal: { ...placed.level.goal, minX: -10, maxX: 10 } },
+    }).level.goal.minX,
+    -10,
   );
   const field = place(
     doc,
@@ -288,7 +285,7 @@ test('bounds reject full geometry on placement, rotation, resizing, import and a
     { x: 0, y: 0 },
   );
   assert.equal(field.doc.level.fields[0]!.enabled, false);
-  assert.throws(() => move(field.doc, field.selection, { x: 20, y: 0 }), /outside/);
+  assert.equal(move(field.doc, field.selection, { x: 20, y: 0 }).level.fields[0]!.position.x, 20);
   const grown = resizeArena(doc, { minX: -10, maxX: 10, minY: -6, maxY: 6 });
   assert.deepEqual(grown.level.dynamicBodies, doc.level.dynamicBodies);
   assert.deepEqual(grown.level.goal, doc.level.goal);
@@ -296,7 +293,10 @@ test('bounds reject full geometry on placement, rotation, resizing, import and a
     grown.level.staticBodies.map((b) => b.id),
     doc.level.staticBodies.map((b) => b.id),
   );
-  assert.throws(() => resizeArena(doc, { minX: -3, maxX: 3, minY: -3, maxY: 3 }), /outside/);
+  assert.deepEqual(
+    resizeArena(doc, { minX: -3, maxX: 3, minY: -3, maxY: 3 }).level.dynamicBodies,
+    doc.level.dynamicBodies,
+  );
   const h = historyCommit({ past: [], present: doc, future: [] }, grown);
   assert.deepEqual(historyUndo(h).present, doc);
   assert.deepEqual(historyRedo(historyUndo(h)).present, grown);

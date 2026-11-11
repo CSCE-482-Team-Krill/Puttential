@@ -116,7 +116,7 @@ test('unsolved, changed, malformed and oversized map submissions never publish',
   assert.equal(failed.status, 422, JSON.stringify(await failed.clone().json()));
   assert.equal((await failed.json()).code, 'PROOF_FAILED');
   const outside = structuredClone(input);
-  outside.document.level.dynamicBodies[0]!.position = { x: 999, y: 999 };
+  outside.document.level.dynamicBodies[0]!.position = { x: 1001, y: 1001 };
   assert.equal((await call('', outside, cookie)).status, 400);
   assert.equal((await call('', { ...input, placement: null }, cookie)).status, 400);
   assert.equal(

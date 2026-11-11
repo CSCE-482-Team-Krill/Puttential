@@ -7,6 +7,7 @@ import { prepareCommunityCandidate, validateCommunityProof } from '../shared/com
 import { canonicalJson, hashCanonical } from '../shared/community-canonical-json';
 import { decodeStrictJson, utf8Length } from '../shared/strict-json';
 import type { Assignment } from './lifecycle';
+import { simulationOptions } from '../game/run-evaluation';
 
 export type VerifierInput = {
   contract: 'community-work-v1';
@@ -64,7 +65,10 @@ export async function performCommunityWork(input: VerifierInput, artifact: Artif
     // Full cap, with every selectable field enabled at the canonical proof placement.
     // Never terminate the benchmark because the author's successful proof ended early.
     const benchmarkStarted = performance.now();
-    const game = await artifact.createGame(input.candidate.configuration);
+    const game = await artifact.createGame(
+      input.candidate.configuration,
+      simulationOptions(input.candidate.rules),
+    );
     try {
       game.applySetup(
         input.proof.placement.commands.map((command) =>

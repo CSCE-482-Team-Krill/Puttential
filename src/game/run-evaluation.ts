@@ -10,11 +10,17 @@ import type { Level } from './levels/types';
 import type { Game, RenderState, Vec2 } from './types';
 import type { Metrics, Placement, PuzzleRules, SavedResult } from '../shared/puzzle-contracts';
 
-export const SIMULATION_VERSION = 'puttential-rapier-0.20.0-v2';
-export const RULES_VERSION = 'puttential-daily-v1';
+export const SIMULATION_VERSION = 'puttential-rapier-0.20.0-v3';
+export const RULES_VERSION = 'puttential-daily-v2';
+export const usesLegacyBounds = (rules: PuzzleRules) =>
+  rules.simulationVersion === 'puttential-rapier-0.20.0-v2' &&
+  rules.rulesVersion === 'puttential-daily-v1';
+export const simulationOptions = (rules: PuzzleRules) =>
+  ({ boundsFailure: usesLegacyBounds(rules) ? 'any-body' : 'goal-body' }) as const;
 export type TileDraft = { position: Vec2; angle?: number; enabled: boolean };
 export const supportsRules = (r: PuzzleRules) =>
-  r.simulationVersion === SIMULATION_VERSION && r.rulesVersion === RULES_VERSION;
+  (r.simulationVersion === SIMULATION_VERSION && r.rulesVersion === RULES_VERSION) ||
+  usesLegacyBounds(r);
 export function defaultRules(level: Level): PuzzleRules {
   return {
     simulationVersion: SIMULATION_VERSION,
@@ -37,18 +43,25 @@ export function canonicalField(
   if (!field || typeof value.enabled !== 'boolean' || !Number.isFinite(value.angle ?? field.angle))
     throw new Error('Invalid tile');
   const angleQ = ((Math.round((value.angle ?? field.angle) / ANGLE_QUANTUM) % 3600) + 3600) % 3600;
+  const xQ = quantizePosition(value.position.x),
+    yQ = quantizePosition(value.position.y);
+  if (![xQ, yQ, angleQ].every(Number.isSafeInteger))
+    throw new Error('Tile position or angle exceeds the supported numeric range.');
   const next = {
     position: {
-      x: quantizePosition(value.position.x) / 1024,
-      y: quantizePosition(value.position.y) / 1024,
+      x: xQ / 1024,
+      y: yQ / 1024,
     },
     angle: rules.rotationAllowed ? angleQ * ANGLE_QUANTUM : field.angle,
     enabled: value.enabled,
   };
-  const bounds = polygonBounds(
-    transformPolygon(shapePolygon(field.shape), next.position, next.angle),
-  );
-  if (!containsBounds(rules.placementBounds, bounds))
+  if (
+    usesLegacyBounds(rules) &&
+    !containsBounds(
+      rules.placementBounds,
+      polygonBounds(transformPolygon(shapePolygon(field.shape), next.position, next.angle)),
+    )
+  )
     throw new Error('Keep the entire tile inside the course.');
   return next;
 }
@@ -171,7 +184,7 @@ export class RunEvaluator {
 }
 export async function replayRun(level: Level, placement: Placement, rules: PuzzleRules) {
   validatePlacement(level, placement, rules);
-  const game = await createGame(level);
+  const game = await createGame(level, simulationOptions(rules));
   try {
     game.applySetup(placement.commands);
     const evaluator = new RunEvaluator(level, rules);

@@ -509,8 +509,8 @@ export function Editor({
                   Level borders
                 </label>
                 <p className="muted">
-                  Borders are optional. Partial overhang is allowed during play; leaving completely
-                  fails the run.
+                  Borders are optional. Other objects may leave the board; the goal ball leaving
+                  completely fails the run.
                 </p>
                 <NumberInput
                   label="Board width"
@@ -535,8 +535,7 @@ export function Editor({
                   }
                 />
                 <p className="muted">
-                  Resize preserves object sizes and positions. Anything outside the bounds blocks
-                  the change.
+                  Resize preserves object sizes and positions, including anything outside the board.
                 </p>
               </section>
               <section>

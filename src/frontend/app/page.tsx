@@ -32,6 +32,7 @@ import { RunsPanel } from '../panels/runs';
 import { CommunityPanel } from '../panels/community';
 import { communityApi } from '../community-api';
 import { communityMapUrl } from '../../shared/community-maps';
+import { usesLegacyBounds } from '../../game/run-evaluation';
 import { shareResult } from '../share-result';
 import { markTutorialSeen, shouldOpenTutorial, Tutorial } from '../tutorial';
 
@@ -719,7 +720,9 @@ export default function Home() {
                     puzzle={puzzle}
                     showPreview={preferences.showPreview}
                     locked={locked}
-                    {...(p ? { placementBounds: p.rules.placementBounds } : {})}
+                    {...(courseRules && usesLegacyBounds(courseRules)
+                      ? { placementBounds: courseRules.placementBounds }
+                      : {})}
                     {...(importBounds
                       ? {
                           camera: {
