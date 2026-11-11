@@ -30,3 +30,13 @@ Errors are `{ error, code, retryable }`, with 400/413/415 for malformed requests
 The compatibility `POST /api/attempts` and `POST /api/solutions` routes retain their prototype payloads and write only legacy, unranked tables. They cannot populate competitive progress or standings. Do not use them for the daily frontend.
 
 See [release and publishing](../../docs/iteration-two-release.md) for database setup, supported versions, capacity, worker recovery, cancellation and acceptance.
+
+# Player statistics
+
+`GET /api/me/stats` returns the current guest's profile statistics and up to 366 days of history (newest first). Shape: `PlayerStatsResponse` in `src/shared/puzzle-contracts.ts`.
+
+- `stats`: games played and solved, daily solves, current and best streak, average daily percentile, best daily finish, top 10% / top 1% finishes, average first-solve attempts and average tiles.
+- `days`: one entry per published course with status, first-solve attempts, best verified metrics, and daily rank, player count and percentile.
+- `archiveRank` / `archivePlayers` / `archivePercentile` are the all-time standing (archive board), which includes late plays. Late plays never count toward streaks or the daily averages.
+- Ranks and percentiles use the same score order and tie rule as the leaderboard. Percentile is the share of players ranked strictly below, so a one-player board is 0.
+- A streak day is a verified success inside the course's original Central day. An unsolved today does not break the current streak until the day ends. Canceled courses are skipped; a date with no published course breaks the streak.

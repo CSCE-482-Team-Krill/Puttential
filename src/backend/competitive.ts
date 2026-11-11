@@ -426,7 +426,7 @@ export async function completeRun(guest: Guest, id: string, intent: CompleteRunR
   await verifyRun(id);
   return readRun(guest, id);
 }
-function score(result: SavedResult, first: number) {
+export function score(result: SavedResult, first: number) {
   const m = result.metrics!;
   return [m.forceCost, m.tileCount, first, m.completionTick, m.pathLengthQ];
 }
