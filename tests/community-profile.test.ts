@@ -90,12 +90,6 @@ test('public profile rejects hostile physics and unsupported document structures
       },
     ],
     [
-      'out of bounds',
-      (d) => {
-        d.level.dynamicBodies[0].position.x = 7.4;
-      },
-    ],
-    [
       'conflicting bounds',
       (d) => {
         d.level.bounds = { ...d.editor.arena.bounds, maxX: 7.4000000001 };
@@ -204,6 +198,29 @@ test('bounded incomplete geometry can save structurally but cannot prepare', () 
     points: Array.from({ length: 65 }, (_, i) => ({ x: i / 100, y: i % 2 })),
   };
   assert.throws(() => validateCommunityStructure(document), /points.length/);
+});
+
+test('community admission preserves geometry, fields and goals outside the board', () => {
+  const document = freshDocument();
+  document.editor.arena.walls = [];
+  document.level.dynamicBodies[0]!.position.x = 20;
+  document.level.staticBodies[0]!.position.x = 30;
+  document.level.goal = { ...document.level.goal, minX: 19, maxX: 21 };
+  document.level.fields = [
+    {
+      id: 'edge-tile',
+      position: { x: 6.4, y: 0 },
+      angle: 0,
+      enabled: false,
+      shape: { kind: 'rectangle', width: 2, height: 2 },
+      force: { kind: 'uniform', density: { x: 1, y: 0 } },
+    },
+  ];
+  const admitted = validateCommunityDocument(document);
+  assert.deepEqual(admitted.level.dynamicBodies, document.level.dynamicBodies);
+  assert.deepEqual(admitted.level.staticBodies, document.level.staticBodies);
+  assert.deepEqual(admitted.level.fields, document.level.fields);
+  assert.deepEqual(admitted.level.goal, document.level.goal);
 });
 
 test('aggregate piece, vertex and triangulation budgets reject bounded but expensive geometry', () => {

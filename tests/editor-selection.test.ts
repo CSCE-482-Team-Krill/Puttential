@@ -11,7 +11,7 @@ import {
   regionSelection,
 } from '../level-editor/editor/model';
 
-test('Ctrl-click selection toggles independent objects and group movement is atomic and bounded', () => {
+test('Ctrl-click selection toggles independent objects and group movement is atomic across the board edge', () => {
   const ball = { kind: 'dynamicBodies' as const, id: 'ball' };
   const placed = place(
     freshDocument(),
@@ -29,7 +29,9 @@ test('Ctrl-click selection toggles independent objects and group movement is ato
     historyUndo(historyCommit({ past: [], present: placed.doc, future: [] }, moved)).present,
     placed.doc,
   );
-  assert.throws(() => moveObjects(placed.doc, selected, { x: 20, y: 0 }), /outside the board/);
+  const outside = moveObjects(placed.doc, selected, { x: 20, y: 0 });
+  assert.equal(outside.level.dynamicBodies[0]!.position.x, 16);
+  assert.equal(outside.level.staticBodies.at(-1)!.position.x, 20);
   assert.equal(placed.doc.level.dynamicBodies[0]!.position.x, -4);
 });
 
@@ -86,7 +88,9 @@ test('group clipboard snapshots all objects, preserves relative positions, relin
     d.editor.arena.bounds.minX = -3.5;
     d.level.dynamicBodies[0]!.position.x = 0;
   });
-  assert.throws(() => pasteObjects(narrow, copied), /outside the board/);
+  const outside = pasteObjects(narrow, copied);
+  assert.equal(outside.doc.level.dynamicBodies[1]!.position.x, -4);
+  assert.equal(outside.doc.level.fields.length, 2);
   assert.equal(narrow.level.fields.length, 0);
   assert.throws(() => removeObjects(pair.doc, selected), /goal target/);
   assert.deepEqual(

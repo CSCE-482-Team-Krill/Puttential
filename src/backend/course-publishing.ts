@@ -4,7 +4,7 @@ import { prisma } from './prisma';
 import { openingCourse } from './daily-courses';
 import { AUTHORED_COURSE_COUNT, authoredCourse, authoredIndexForDate } from './authored-courses';
 import { centralDateString, shiftDate } from './puzzle-date';
-import { replayRun } from '../game/run-evaluation';
+import { replayRun, simulationOptions } from '../game/run-evaluation';
 import { parseLevel, createGame } from '../game';
 import { validDate, decodePuzzle } from '../shared/response-validation';
 import { puzzleResponse, verifyRun } from './competitive';
@@ -83,7 +83,7 @@ export async function publishCourse(
     throw new Error('Reviewed replays exceed the five-second publishing budget.');
 
   const benchmarkStart = performance.now(),
-    benchmark = await createGame(level);
+    benchmark = await createGame(level, simulationOptions(rules));
   try {
     benchmark.applySetup(
       solutions[0]!.commands.map((c) =>

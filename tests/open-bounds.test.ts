@@ -24,7 +24,7 @@ import { resolveBodyPieces } from '../src/game/objects/bodies';
 import { bodyTouchesBounds } from '../src/game/objects/bounds';
 import { saveLevel, loadLevel } from '../level-editor/editor/library';
 import { advanceGoal, initialGoal } from '../src/frontend/goal-progress';
-import { defaultRules, makePlacement, replayRun } from '../src/game/run-evaluation';
+import { defaultRules, makePlacement, replayRun, canonicalField } from '../src/game/run-evaluation';
 import { deliveredEngine } from '../src/frontend/engine-adapter';
 
 const bounds = { minX: -2, maxX: 2, minY: -2, maxY: 2 };
@@ -162,7 +162,7 @@ test('compound bodies remain in play while any piece overlaps, even with the ori
   assert.equal(touches([shape(-2)], { x: 3, y: 0 }), true);
 });
 
-test('any moving object leaving fails the run, prevents a goal, freezes the tick and restores deterministically', async () => {
+test('legacy simulation still fails when any moving object leaves and restores deterministically', async () => {
   const base = course();
   const level = {
     ...base,
@@ -177,7 +177,7 @@ test('any moving object leaving fails the run, prevents a goal, freezes the tick
       },
     ],
   };
-  const game = await createGame(level);
+  const game = await createGame(level, { boundsFailure: 'any-body' });
   try {
     const setup = game.snapshot();
     const predicted = game.predict([], { maxTicks: 120, sampleEveryTicks: 1 });
@@ -199,6 +199,99 @@ test('any moving object leaving fails the run, prevents a goal, freezes the tick
   } finally {
     game.destroy();
   }
+});
+
+test('new courses allow other bodies outside while legacy published rules keep their outcome', async () => {
+  const base = course();
+  const level = {
+    ...base,
+    dynamicBodies: [
+      ...base.dynamicBodies,
+      {
+        ...base.dynamicBodies[0]!,
+        id: 'escaping',
+        position: { x: 1.8, y: 0 },
+        linearVelocity: { x: 8, y: 0 },
+      },
+    ],
+  };
+  const rules = defaultRules(level);
+  const legacy = {
+    ...rules,
+    simulationVersion: 'puttential-rapier-0.20.0-v2',
+    rulesVersion: 'puttential-daily-v1',
+  };
+  assert.equal(
+    (await replayRun(level, makePlacement(level, {}, legacy), legacy)).outcome,
+    'out-of-bounds',
+  );
+  const result = await replayRun(level, makePlacement(level, {}, rules), rules);
+  assert.equal(result.outcome, 'success');
+  assert.equal(result.metrics.completionTick, 120);
+
+  const outside = {
+    ...level,
+    dynamicBodies: level.dynamicBodies.map((body) =>
+      body.id === 'escaping' ? { ...body, position: { x: 20, y: 0 } } : body,
+    ),
+  };
+  const game = await createGame(outside);
+  try {
+    const setup = game.snapshot();
+    const predicted = game.predict([], { maxTicks: 12, sampleEveryTicks: 1 });
+    for (let tick = 0; tick < 12; tick++) game.step();
+    assert.equal(game.getRenderState().failure, undefined);
+    assert.ok(game.getRenderState().bodies.find((body) => body.id === 'escaping')!.position.x > 20);
+    assert.deepEqual(game.getRenderState(), predicted.finalState);
+    const state = game.getRenderState();
+    game.restore(setup);
+    for (let tick = 0; tick < 12; tick++) game.step();
+    assert.deepEqual(game.getRenderState(), state);
+  } finally {
+    game.destroy();
+  }
+});
+
+test('a goal ball starting outside produces a first-tick failure that the evaluator can consume', async () => {
+  const level = course({ x: 20, y: 0 });
+  const rules = defaultRules(level);
+  const result = await replayRun(level, makePlacement(level, {}, rules), rules);
+  assert.equal(result.outcome, 'out-of-bounds');
+  assert.equal(result.metrics.completionTick, 1);
+});
+
+test('quantized edge tiles and outside placements work for new rules; published legacy rules stay bounded', () => {
+  const document = freshDocument();
+  const level = {
+    ...document.level,
+    fields: [
+      {
+        id: 'edge-tile',
+        position: { x: 6.4, y: 0 },
+        angle: 0,
+        enabled: false,
+        shape: { kind: 'rectangle' as const, width: 2, height: 2 },
+        force: { kind: 'uniform' as const, density: { x: 1, y: 0 } },
+      },
+    ],
+  };
+  const rules = defaultRules(level);
+  const draft = { position: { x: 6.4, y: 0 }, enabled: false };
+  assert.equal(canonicalField(level, 'edge-tile', draft, rules).position.x, 6.400390625);
+  assert.deepEqual(
+    canonicalField(level, 'edge-tile', { ...draft, position: { x: 20, y: 20 } }, rules).position,
+    { x: 20, y: 20 },
+  );
+  const legacy = {
+    ...rules,
+    simulationVersion: 'puttential-rapier-0.20.0-v2',
+    rulesVersion: 'puttential-daily-v1',
+  };
+  assert.throws(() => canonicalField(level, 'edge-tile', draft, legacy), /inside/);
+  assert.throws(
+    () => canonicalField(level, 'edge-tile', { ...draft, position: { x: 1e20, y: 0 } }, rules),
+    /numeric range/,
+  );
 });
 
 test('bounds validate positive finite dimensions and old JSON remains losslessly supported', () => {

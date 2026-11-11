@@ -52,15 +52,16 @@ test('author, constrain, save, reopen and play the same course in both apps', as
       '1',
     );
     await number('Position X', '50');
-    await expect(page.locator('.error-message')).toContainText('outside the board');
     await expect(page.getByRole('spinbutton', { name: 'Position X', exact: true })).toHaveValue(
-      '2',
+      '50',
     );
     await number('Board width', '4');
-    await expect(page.locator('.error-message')).toContainText('outside the board');
     await expect(page.getByRole('spinbutton', { name: 'Board width', exact: true })).toHaveValue(
-      '20',
+      '4',
     );
+    await expect(page.locator('.error-message')).toHaveCount(0);
+    await number('Board width', '20');
+    await number('Position X', '2');
     await number('Rotation (degrees)', '30');
     await page.getByLabel('Show vertex handles').check();
     await page.getByRole('button', { name: 'Add piece', exact: true }).click();
@@ -71,7 +72,7 @@ test('author, constrain, save, reopen and play the same course in both apps', as
       .fill('-1,-1\n1,-1\n1,0\n0,0\n0,1\n-1,1');
     await page.getByRole('button', { name: 'Apply outline', exact: true }).click();
     await expect(page.getByLabel('Convex piece').locator('option')).toHaveCount(4);
-    // Native palette drag/drop uses the same placement and bounds path as click-to-place.
+    // Native palette drag/drop uses the same placement path as click-to-place.
     const force = page.getByRole('button', { name: '→ Directional force', exact: true });
     await force.dragTo(canvas, { targetPosition: { x: 200, y: 200 } });
     await expect(page.getByRole('textbox', { name: 'Object ID', exact: true })).toHaveValue(

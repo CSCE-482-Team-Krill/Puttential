@@ -49,24 +49,19 @@ test('canonical setup enforces full inventory, version, angle and geometry befor
       const a = v.commands.find((c) => c.type === 'set-field-angle')!;
       if (a.type === 'set-field-angle') a.angleQ = 3600;
     },
-    (v: typeof p) => {
-      const a = v.commands.find((c) => c.type === 'move-field')!;
-      if (a.type === 'move-field') a.xQ = 100 * 1024;
-    },
   ]) {
     const bad = structuredClone(p);
     mutate(bad);
     assert.throws(() => validatePlacement(c.level, bad, c.rules));
   }
-  assert.throws(
-    () =>
-      canonicalField(
-        c.level,
-        'gentle-push',
-        { position: { x: 6, y: 6 }, angle: Math.PI / 4, enabled: false },
-        c.rules,
-      ),
-    /inside/,
+  assert.deepEqual(
+    canonicalField(
+      c.level,
+      'gentle-push',
+      { position: { x: 6, y: 6 }, angle: Math.PI / 4, enabled: false },
+      c.rules,
+    ).position,
+    { x: 6, y: 6 },
   );
   const game = await createGame(c.level);
   try {

@@ -18,7 +18,7 @@ Use descriptive, lowercase file names with hyphens, following the existing `putt
 
 ## Testing Guidelines
 
-Tests live in `tests/`: Node's test runner through tsx covers model/engine behavior, and Playwright covers desktop interactions. Verify existing-level round trips and identical Rapier replays in the same runtime when changing codecs or physics. Editor operations must reject geometry outside board bounds and preserve authored data across playtest. New force registration should supply serialization, palette and property controls automatically. Daily puzzle validation should confirm solvability and multiple practical solutions. Include before-and-after images when a pull request changes a mockup.
+Tests live in `tests/`: Node's test runner through tsx covers model/engine behavior, and Playwright covers desktop interactions. Verify existing-level round trips and identical Rapier replays in the same runtime when changing codecs or physics. Editor operations allow geometry outside board bounds and must preserve authored data across playtest. New force registration should supply serialization, palette and property controls automatically. Daily puzzle validation should confirm solvability and multiple practical solutions. Include before-and-after images when a pull request changes a mockup.
 
 ## Commits and Pull Requests
 

@@ -39,7 +39,7 @@ test('object clipboard snapshots properties, allocates IDs and preserves the goa
   assert.equal(copied.object.id, 'ball');
 });
 
-test('object clipboard supports fields and compound bodies across documents with strict bounds', () => {
+test('object clipboard preserves fields and compound bodies across different board sizes', () => {
   for (const id of ['fields:attractor', 'staticBodies:ell', 'dynamicBodies:ell']) {
     const source = place(
       freshDocument(),
@@ -69,10 +69,8 @@ test('object clipboard supports fields and compound bodies across documents with
     d.level.staticBodies = [];
     d.editor.arena.bounds.maxX = 5.5;
   });
-  assert.throws(
-    () => pasteObject(narrow, copyObject(outside.doc, outside.selection)),
-    /outside the board/,
-  );
+  const pastedOutside = pasteObject(narrow, copyObject(outside.doc, outside.selection));
+  assert.equal(pastedOutside.doc.level.staticBodies[0]!.position.x, 6);
   assert.equal(narrow.level.staticBodies.length, 0);
   assert.throws(() => copyObject(doc, { kind: 'goal', id: 'goal' }), /Select a body or field/);
   assert.throws(() => copyObject(doc, { kind: 'staticBodies', id: 'left-rail' }), /Board controls/);
