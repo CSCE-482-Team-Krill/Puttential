@@ -65,8 +65,28 @@ model Guest {
   nicknameUpdatedAt DateTime?        @map("nickname_updated_at")
   runs              CompetitiveRun[]
   progress          GuestProgress[]
+  communityMaps     CommunityMap[]
 
   @@map("guests")
+}
+
+model CommunityMap {
+  id             String   @id @default(uuid())
+  authorId       String   @map("author_id")
+  requestId      String   @map("request_id")
+  submissionHash String   @map("submission_hash")
+  title          String
+  description    String
+  creatorName    String   @map("creator_name")
+  configuration  Json
+  rules          Json
+  authorSolution Json     @map("author_solution")
+  createdAt      DateTime @default(now()) @map("created_at")
+  author         Guest    @relation(fields: [authorId], references: [id])
+
+  @@unique([authorId, requestId])
+  @@index([createdAt, id])
+  @@map("community_maps")
 }
 
 model ApiRateLimit {

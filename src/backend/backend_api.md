@@ -31,6 +31,7 @@ The compatibility `POST /api/attempts` and `POST /api/solutions` routes retain t
 
 See [release and publishing](../../docs/iteration-two-release.md) for database setup, supported versions, capacity, worker recovery, cancellation and acceptance.
 
+<<<<<<< HEAD
 # Player statistics
 
 `GET /api/me/stats` returns the current guest's profile statistics and up to 366 days of history (newest first). Shape: `PlayerStatsResponse` in `src/shared/puzzle-contracts.ts`.
@@ -40,3 +41,12 @@ See [release and publishing](../../docs/iteration-two-release.md) for database s
 - `archiveRank` / `archivePlayers` / `archivePercentile` are the all-time standing (archive board), which includes late plays. Late plays never count toward streaks or the daily averages.
 - Ranks and percentiles use the same score order and tie rule as the leaderboard. Percentile is the share of players ranked strictly below, so a one-player board is 0.
 - A streak day is a verified success inside the course's original Central day. An unsolved today does not break the current streak until the day ends. Canceled courses are skipped; a date with no published course breaks the streak.
+=======
+# Community maps
+
+`GET /api/community` lists published summaries with optional `cursor` pagination.
+`GET /api/community/:id` reads a public playable map without its author solution.
+`POST /api/community` verifies a solved editor document and publishes an immutable
+map using the existing guest cookie, origin checks and a retryable request ID.
+See [community publishing](../../docs/community-publishing.md) for the request and deployment details.
+>>>>>>> origin/main

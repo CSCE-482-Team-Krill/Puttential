@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 export type IconName =
   | 'home'
   | 'calendar'
+  | 'community'
+  | 'editor'
   | 'stats'
   | 'profile'
   | 'trophy'
@@ -36,6 +38,17 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
       <>
         <rect x="3" y="5" width="18" height="16" rx="2" />
         <path d="M7 3v4M17 3v4M3 10h18M7 14h6M7 17h4" />
+      </>
+    ),
+    community: (
+      <>
+        <circle cx="9" cy="8" r="3" />
+        <path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6M21 21v-2a6 6 0 0 0-4-5.66" />
+      </>
+    ),
+    editor: (
+      <>
+        <path d="m15 4 5 5M4 15 15.5 3.5a2.12 2.12 0 0 1 3 0l2 2a2.12 2.12 0 0 1 0 3L9 20l-6 1z" />
       </>
     ),
     stats: (

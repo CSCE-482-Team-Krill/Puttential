@@ -241,7 +241,12 @@ test('unsupported browser recovery is retained until explicitly discarded', asyn
   await expect(page.locator('.recovery-banner[role=alert]')).toHaveCount(0);
   await expect
     .poll(() =>
-      page.evaluate(() => JSON.parse(localStorage.getItem('puttential-editor-v1')!).editor.name),
+      page.evaluate(
+        () => JSON.parse(localStorage.getItem('puttential-editor-v1')!).document.editor.name,
+      ),
     )
     .toBe('New work');
+  expect(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('puttential-editor-v1')!).revision),
+  ).toBeNull();
 });
