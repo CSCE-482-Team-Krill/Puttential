@@ -133,6 +133,10 @@ Both levels use a restitution of 0.8 on every body. Two colliding surfaces bounc
 
 `predict(commands, options?)` runs the commands on a copy of the game until every body sleeps or the tick limit is reached, and never changes the live game. `options` can override the level's `{ maxTicks, sampleEveryTicks }`.
 
+## Sound events
+
+`createGame(level, { soundEvents: true })` makes `soundEvents()` return what became audible during the latest `step()`: `impact` (a new contact, with the closing speed along the contact normal and `otherId` for another live body, else `null`), `portal-enter`/`portal-exit`, `water-enter`/`water-exit` (the center of mass crossing a water zone, with the body's speed), `water-sink` and `lava-burn`. Impacts slower than `IMPACT_MIN_SPEED` are dropped. Recording only reads the settled world, so snapshots and results are identical with events on or off; contacts and submerged bodies present at creation or `restore()` are not reported again. Events stay off by default, so verification, `replayRun` and `predict` copies pay nothing. The browser plays them through `src/frontend/physics-audio.ts`; clips live in `src/frontend/sounds/` and are regenerated with `scripts/generate-placeholder-sounds.ts`.
+
 Ordinary motion and collisions are frictionless: colliders use zero contact friction and dynamic bodies use zero linear and angular damping. Drag should come from a field whose force opposes `sample.velocity`, so it exists only inside that field.
 
 ## Determinism
