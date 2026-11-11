@@ -2,26 +2,18 @@
 import { useRef, useState } from 'react';
 import type { LevelDocument } from '../../game';
 import type { Placement } from '../../shared/puzzle-contracts';
-import type { CommunityMapSummary } from '../../shared/community-maps';
+import type { CommunityMapSummary, PublishCommunityMap } from '../../shared/community-maps';
 import { communityMapUrl } from '../../shared/community-maps';
 import { defaultRules } from '../../game/run-evaluation';
 import { validateCommunityPlacement } from '../../shared/community-placement';
 
-export type MapPublisher = (
-  document: LevelDocument,
-  placement: Placement,
-  title: string,
-  description: string,
-  requestId: string,
-) => Promise<CommunityMapSummary>;
-
-type PublishAttempt = { payload: string; requestId: string };
-type Submission = {
-  document: LevelDocument;
-  placement: Placement;
-  title: string;
-  description: string;
+export type MapPublisher = {
+  getGuestId(): Promise<string>;
+  publish(submission: PublishCommunityMap): Promise<CommunityMapSummary>;
 };
+
+type PublishAttempt = { payload: string; requestId: string; guestId: string | null };
+type Submission = Omit<PublishCommunityMap, 'requestId' | 'expectedGuestId'>;
 const attemptKey = (document: LevelDocument) =>
   `puttential-community-publish-v1/${encodeURIComponent(document.level.id)}`;
 function restoreAttempt(document: LevelDocument) {
@@ -43,7 +35,12 @@ function restoreAttempt(document: LevelDocument) {
       return null;
     validateCommunityPlacement(document.level, defaultRules(document.level), payload.placement);
     return {
-      attempt: attempt as PublishAttempt,
+      // Older journals have no owner. Retain them without assigning a different guest's identity.
+      attempt: {
+        payload: attempt.payload as string,
+        requestId: attempt.requestId as string,
+        guestId: typeof attempt.guestId === 'string' && attempt.guestId ? attempt.guestId : null,
+      } as PublishAttempt,
       title: payload.title,
       description: payload.description,
     };
@@ -79,28 +76,30 @@ export function PublishMap({
         submitting.current = true;
         setBusy(true);
         setError('');
-        // A retry always sends the journaled proof, even if playtest has been reopened or changed.
-        const current = attempt ?? {
-          payload: JSON.stringify({ document, placement, title, description }),
-          requestId: crypto.randomUUID(),
-        };
-        setAttempt(current);
-        const submission = JSON.parse(current.payload) as Submission;
         try {
-          // Preserve retries if the server commits but its response is lost or the form closes.
-          sessionStorage.setItem(attemptKey(document), JSON.stringify(current));
-        } catch {
-          // In-memory retries remain available when browser storage is disabled or full.
-        }
-        try {
+          // Bind identity before journaling or dispatch; a retry never bootstraps another guest.
+          const current = attempt ?? {
+            payload: JSON.stringify({ document, placement, title, description }),
+            requestId: crypto.randomUUID(),
+            guestId: await publish.getGuestId(),
+          };
+          setAttempt(current);
+          if (!current.guestId)
+            throw new Error(
+              'This older saved publication has no guest identity. Check Community for the original map, or choose Edit publication to start a new submission.',
+            );
+          const submission = JSON.parse(current.payload) as Submission;
+          try {
+            sessionStorage.setItem(attemptKey(document), JSON.stringify(current));
+          } catch {
+            // In-memory retries remain available when browser storage is disabled or full.
+          }
           setPublished(
-            await publish(
-              submission.document,
-              submission.placement,
-              submission.title,
-              submission.description,
-              current.requestId,
-            ),
+            await publish.publish({
+              ...submission,
+              requestId: current.requestId,
+              expectedGuestId: current.guestId,
+            }),
           );
         } catch (cause) {
           setError(cause instanceof Error ? cause.message : 'Publishing failed. Please retry.');
