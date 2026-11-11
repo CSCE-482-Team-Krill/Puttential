@@ -164,6 +164,17 @@ export type LeaderboardResponse = {
   pendingEligibleCount: number;
   final: boolean;
 };
+/** The guest's standing on one course. All three fields of a board are null when the guest has no verified result on it. */
+export type StandingFields = {
+  /** Daily board: results verified within the course's own Central day. Frozen once that day ends. */
+  dailyRank: number | null;
+  dailyPlayers: number | null;
+  dailyPercentile: number | null;
+  /** Archive (all-time) board: every verified success, including late plays. */
+  archiveRank: number | null;
+  archivePlayers: number | null;
+  archivePercentile: number | null;
+};
 export type ArchiveItem = {
   id: string;
   date: string;
@@ -172,7 +183,7 @@ export type ArchiveItem = {
   status: 'unplayed' | 'attempted' | 'solved';
   progressRevision: string;
   availability: PuzzleAvailability;
-};
+} & StandingFields;
 export type ArchiveResponse = { guestId: string; items: ArchiveItem[]; nextCursor: string | null };
 
 export type PlayerDay = {
@@ -186,14 +197,7 @@ export type PlayerDay = {
   solvedOnDay: boolean;
   /** Best verified result on any day, or null. */
   best: Metrics | null;
-  dailyRank: number | null;
-  dailyPlayers: number | null;
-  dailyPercentile: number | null;
-  /** All-time (archive board) standing: every verified success, including late plays. */
-  archiveRank: number | null;
-  archivePlayers: number | null;
-  archivePercentile: number | null;
-};
+} & StandingFields;
 export type PlayerStats = {
   gamesPlayed: number;
   gamesSolved: number;
