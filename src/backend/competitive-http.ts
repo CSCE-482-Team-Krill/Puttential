@@ -79,6 +79,8 @@ export async function competitiveHandler(request: Request): Promise<Response> {
       result = { player: { id: guest.id, nickname: guest.nickname } };
     else if (path.join('/') === 'me' && request.method === 'PATCH')
       result = await api.renameGuest(request, input);
+    else if (path.join('/') === 'me/progress' && request.method === 'GET')
+      result = await api.readProgress(guest, url.searchParams.get('puzzleId') ?? '');
     else if (path.join('/') === 'me/stats' && request.method === 'GET')
       result = await (await import('./player-stats')).readPlayerStats(guest);
     else if (path.join('/') === 'runs' && request.method === 'POST') {
