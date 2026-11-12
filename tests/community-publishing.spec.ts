@@ -1,7 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { mkdir } from 'node:fs/promises';
-import { communityPublishingFixture } from './community-publishing-fixtures';
-import { defaultRules } from '../src/game/run-evaluation';
+import {
+  communityPublishingFixture,
+  communityDetailFixture,
+} from './community-publishing-fixtures';
 import type { PublishCommunityMap } from '../src/shared/community-maps';
 
 for (const reopen of [
@@ -260,18 +262,18 @@ test('a delayed daily failure cannot replace a community map loading state or no
   page,
 }) => {
   await page.addInitScript(() => localStorage.setItem('puttential-tutorial-v1', 'seen'));
-  const { document } = communityPublishingFixture();
-  const map = {
+  const map = communityDetailFixture({
     id: '00000000-0000-4000-8000-000000000001',
     title: 'Independent community map',
     description: '',
     creatorName: 'Test creator',
     createdAt: '2026-11-09T00:00:00.000Z',
-    configuration: document.level,
-    rules: defaultRules(document.level),
-  };
+  });
   await page.route('**/api/**', (route) =>
     route.fulfill({ status: 503, json: { error: 'Unavailable fixture' } }),
+  );
+  await page.route('**/api/me', (route) =>
+    route.fulfill({ json: { player: { id: 'community-reader', nickname: 'Test reader' } } }),
   );
   let failDaily!: () => void;
   const dailyReady = new Promise<void>((resolve) => {
@@ -415,9 +417,9 @@ test('a creator solves and publishes a map; another browser discovers, shares an
     await expect(visitor.getByRole('dialog', { name: 'Nice work!', exact: true })).toBeVisible();
     await visitor.getByRole('button', { name: 'Copy result', exact: true }).click();
     // Clipboard availability varies by environment; the selectable result is always shown.
-    await expect(visitor.getByLabel('Result text')).toHaveValue(/Community — unranked/);
+    await expect(visitor.getByLabel('Result text')).toHaveValue(/Community solved/);
     await expect(visitor.getByLabel('Result text')).toHaveValue(new RegExp(map.id));
-    expect(rankedStarts).toBe(0);
+    expect(rankedStarts).toBe(1);
     expect(errors).toEqual([]);
   } finally {
     await author.close();

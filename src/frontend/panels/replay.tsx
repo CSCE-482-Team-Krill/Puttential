@@ -271,7 +271,13 @@ export function ReplayPanel({
         {replay?.player.nickname ?? target.nickname}’s solution
       </h3>
       <p className="modal-footnote">
-        {puzzle.date} · {scope === 'daily' ? 'Daily best' : 'Archive best'} · Read-only replay
+        {puzzle.communityMapId ? puzzle.title : puzzle.date} ·{' '}
+        {puzzle.communityMapId
+          ? 'Community best'
+          : scope === 'daily'
+            ? 'Daily best'
+            : 'Archive best'}{' '}
+        · Read-only replay
       </p>
       {error ? (
         <>
