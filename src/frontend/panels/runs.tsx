@@ -5,6 +5,7 @@ import type { RecoveryRecord } from '../progress-storage';
 import { CopyResult } from './copy-result';
 
 export function RunsPanel({
+  legacy = false,
   puzzleId,
   progress,
   records,
@@ -15,6 +16,7 @@ export function RunsPanel({
   cancel,
   interrupt,
 }: {
+  legacy?: boolean;
   puzzleId: string | undefined;
   progress: PuzzleProgress | undefined;
   records: RecoveryRecord[];
@@ -33,7 +35,7 @@ export function RunsPanel({
       <h2>Runs</h2>
       <dl className="runs-summary">
         <div>
-          <dt>{puzzleId ? 'Accepted starts' : 'Practice runs'}</dt>
+          <dt>{puzzleId ? 'Accepted starts' : legacy ? 'Legacy runs' : 'Practice runs'}</dt>
           <dd>{puzzleId ? (progress?.attemptsStarted ?? 'Unavailable') : localAttempts}</dd>
         </div>
         {progress && (
@@ -47,7 +49,11 @@ export function RunsPanel({
           </div>
         )}
       </dl>
-      {!puzzleId && <p className="runs-note">Practice runs are unranked and are not submitted.</p>}
+      {!puzzleId && (
+        <p className="runs-note">
+          {legacy ? 'Legacy course' : 'Practice runs are unranked and are not submitted.'}
+        </p>
+      )}
       {!visible.length && (
         <p className="runs-note">
           {puzzleId

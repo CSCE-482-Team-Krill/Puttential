@@ -1,0 +1,112 @@
+'use client';
+import { useMemo } from 'react';
+import { decodeLevel } from '../../game';
+import type { LevelDocument } from '../../game';
+import { GameplayCanvas } from '../../frontend/gameplay/gameplay-view';
+import { usePuzzle } from '../../frontend/puzzle';
+import { ForceToolkit, PlayButton } from '../../frontend/player-controls';
+import { deliveredEngine } from '../../frontend/engine-adapter';
+import { defaultRules } from '../../game/run-evaluation';
+import { PublishMap, type MapPublisher } from './publish-map';
+import { convertCommunityImport, validateCommunityDocument } from '../../shared/community-profile';
+
+export function Playtest({
+  document,
+  onClose,
+  publish,
+}: {
+  document: LevelDocument;
+  onClose: () => void;
+  publish?: MapPublisher;
+}) {
+  const level = useMemo(
+    () => decodeLevel({ ...document.level, bounds: document.editor.arena.bounds }),
+    [document],
+  );
+  const rules = useMemo(() => defaultRules(level), [level]);
+  const puzzle = usePuzzle(level, { adapter: deliveredEngine, rules });
+  const publicationError = useMemo(() => {
+    if (!publish) return '';
+    try {
+      validateCommunityDocument(convertCommunityImport(document, ['community-preview-limit']));
+      return '';
+    } catch (cause) {
+      return cause instanceof Error ? cause.message : 'This map does not meet community limits.';
+    }
+  }, [document, publish]);
+  const solution = puzzle.completedRun?.result.solved
+    ? {
+        levelId: level.id,
+        levelVersion: level.version,
+        simulationVersion: rules.simulationVersion,
+        rulesVersion: rules.rulesVersion,
+        commands: puzzle.completedRun.commands,
+      }
+    : null;
+  const bounds = document.editor.arena.bounds;
+  return (
+    <section className="playtest-layout">
+      <div className="game-card">
+        <div className="card-heading">
+          <div>
+            <span className="section-kicker">PLAYTEST</span>
+            <h2>{document.editor.name}</h2>
+          </div>
+          <button onClick={onClose}>Return to editor</button>
+        </div>
+        <div className="course playtest-course">
+          <GameplayCanvas
+            level={level}
+            puzzle={puzzle}
+            selectFields={false}
+            camera={{
+              bounds,
+              zoom: 1,
+              center: { x: (bounds.minX + bounds.maxX) / 2, y: (bounds.minY + bounds.maxY) / 2 },
+            }}
+          />
+        </div>
+        <p className="muted">
+          {puzzle.mode === 'running'
+            ? 'Simulation running. Stop returns to your test layout.'
+            : 'Choose fields, position them, then press Play.'}
+        </p>
+      </div>
+      <aside className="control-card">
+        <h2>Force tiles</h2>
+        <ForceToolkit level={level} puzzle={puzzle} />
+        <PlayButton puzzle={puzzle} />
+        {(puzzle.error || puzzle.editError) && (
+          <p role="alert">{puzzle.error || puzzle.editError}</p>
+        )}
+        <button className="text-button" onClick={puzzle.resetLayout}>
+          Reset test layout
+        </button>
+        {puzzle.result && (
+          <p role="status">
+            {puzzle.result.solved
+              ? 'Goal reached'
+              : puzzle.result.failure === 'water'
+                ? 'Ball sank in water'
+                : puzzle.result.failure === 'lava'
+                  ? 'Ball burnt by lava'
+                  : puzzle.result.failure === 'out-of-bounds'
+                    ? 'An object left the course'
+                    : 'Run finished'}{' '}
+            · {puzzle.result.seconds.toFixed(2)} seconds · {puzzle.result.tiles} tiles
+          </p>
+        )}
+        <p className="muted">
+          Test placements do not change the authored course. Physics and controls are shared with
+          the game.
+        </p>
+        {publish &&
+          (publicationError ? (
+            <p role="alert">Return to the editor before publishing: {publicationError}</p>
+          ) : (
+            <PublishMap document={document} placement={solution} publish={publish} />
+          ))}
+      </aside>
+    </section>
+  );
+}

@@ -52,15 +52,16 @@ test('author, constrain, save, reopen and play the same course in both apps', as
       '1',
     );
     await number('Position X', '50');
-    await expect(page.locator('.error-message')).toContainText('outside the board');
     await expect(page.getByRole('spinbutton', { name: 'Position X', exact: true })).toHaveValue(
-      '2',
+      '50',
     );
     await number('Board width', '4');
-    await expect(page.locator('.error-message')).toContainText('outside the board');
     await expect(page.getByRole('spinbutton', { name: 'Board width', exact: true })).toHaveValue(
-      '20',
+      '4',
     );
+    await expect(page.locator('.error-message')).toHaveCount(0);
+    await number('Board width', '20');
+    await number('Position X', '2');
     await number('Rotation (degrees)', '30');
     await page.getByLabel('Show vertex handles').check();
     await page.getByRole('button', { name: 'Add piece', exact: true }).click();
@@ -71,7 +72,7 @@ test('author, constrain, save, reopen and play the same course in both apps', as
       .fill('-1,-1\n1,-1\n1,0\n0,0\n0,1\n-1,1');
     await page.getByRole('button', { name: 'Apply outline', exact: true }).click();
     await expect(page.getByLabel('Convex piece').locator('option')).toHaveCount(4);
-    // Native palette drag/drop uses the same placement and bounds path as click-to-place.
+    // Native palette drag/drop uses the same placement path as click-to-place.
     const force = page.getByRole('button', { name: '→ Directional force', exact: true });
     await force.dragTo(canvas, { targetPosition: { x: 200, y: 200 } });
     await expect(page.getByRole('textbox', { name: 'Object ID', exact: true })).toHaveValue(
@@ -88,8 +89,8 @@ test('author, constrain, save, reopen and play the same course in both apps', as
     expect(saved.dynamicBodies[0].pieces[0].shape).toEqual({ kind: 'circle', radius: 0.4 });
     expect(saved.formatVersion).toBe(1);
     expect(saved.editor).toBeUndefined();
-    await mkdir('level-editor/screenshots', { recursive: true });
-    await page.screenshot({ path: 'level-editor/screenshots/editor.png', fullPage: true });
+    await mkdir('artifacts/editor', { recursive: true });
+    await page.screenshot({ path: 'artifacts/editor/editor.png', fullPage: true });
     await page.getByRole('button', { name: 'Playtest', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
     await page.locator('.tile-option').click();
@@ -109,9 +110,9 @@ test('author, constrain, save, reopen and play the same course in both apps', as
       route.fulfill({ status: 404, json: { error: 'No daily fixture' } }),
     );
     await game.goto('http://127.0.0.1:3000');
-    await game.getByRole('button', { name: 'Play practice', exact: true }).click();
+    await game.getByRole('button', { name: 'Play legacy course', exact: true }).click();
     await expect(game.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
-    await game.screenshot({ path: 'level-editor/screenshots/game.png', fullPage: true });
+    await game.screenshot({ path: 'artifacts/editor/game.png', fullPage: true });
     await game.getByRole('button', { name: 'Settings', exact: true }).click();
     await game.getByLabel('Open local course').setInputFiles(file);
     await expect(
@@ -141,9 +142,9 @@ test('starter geometry, undo and malformed imports keep an editable document', a
   await page.goto('http://127.0.0.1:3001');
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
-  await page.getByLabel('Game starters').selectOption('0');
+  await page.getByLabel('Legacy courses').selectOption('0');
   await expect(page.getByRole('heading', { name: 'Bar Around Corner', exact: true })).toBeVisible();
-  await page.getByLabel('Game starters').selectOption('1');
+  await page.getByLabel('Legacy courses').selectOption('1');
   await expect(page.getByRole('heading', { name: 'Radial Relay', exact: true })).toBeVisible();
   await page.locator('.object-list').getByRole('button', { name: 'ball', exact: true }).click();
   await expect(page.getByRole('spinbutton', { name: 'Radius', exact: true })).toHaveValue('0.35');
@@ -241,7 +242,12 @@ test('unsupported browser recovery is retained until explicitly discarded', asyn
   await expect(page.locator('.recovery-banner[role=alert]')).toHaveCount(0);
   await expect
     .poll(() =>
-      page.evaluate(() => JSON.parse(localStorage.getItem('puttential-editor-v1')!).editor.name),
+      page.evaluate(
+        () => JSON.parse(localStorage.getItem('puttential-editor-v1')!).document.editor.name,
+      ),
     )
     .toBe('New work');
+  expect(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('puttential-editor-v1')!).revision),
+  ).toBeNull();
 });

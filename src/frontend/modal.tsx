@@ -2,23 +2,17 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, ReactNode, RefObject } from 'react';
-import type { Level } from '../game';
 import { Icon } from './icon';
-import type { RunResult } from './puzzle';
-import { TILE_COST } from './score-display';
 
-export type Panel = 'archive' | 'stats' | 'leaderboard' | 'settings' | 'help' | 'result' | null;
+export type Panel =
+  'archive' | 'stats' | 'leaderboard' | 'community' | 'settings' | 'help' | 'result' | null;
 
 type Preferences = {
-  muteMusic: boolean;
-  muteEffects: boolean;
   reducedMotion: boolean;
   showPreview: boolean;
 };
 
 const DEFAULT_PREFERENCES: Preferences = {
-  muteMusic: false,
-  muteEffects: false,
   reducedMotion: false,
   showPreview: true,
 };
@@ -34,8 +28,6 @@ export function usePreferences() {
       if (stored && typeof stored === 'object') {
         const values = stored as Record<string, unknown>;
         setPreferences({
-          muteMusic: typeof values.muteMusic === 'boolean' ? values.muteMusic : false,
-          muteEffects: typeof values.muteEffects === 'boolean' ? values.muteEffects : false,
           reducedMotion: typeof values.reducedMotion === 'boolean' ? values.reducedMotion : false,
           showPreview: typeof values.showPreview === 'boolean' ? values.showPreview : true,
         });
@@ -59,6 +51,11 @@ export function usePreferences() {
 }
 
 const HELP_SECTIONS = [
+  {
+    title: 'Solution replays',
+    content:
+      'Leaderboard best solutions, including existing saved solutions, are shared automatically after the course’s daily window closes at Central midnight. Open a daily or archive leaderboard and choose Watch replay. Replays are read-only and do not count as attempts. Archive rankings remain open after replays unlock. Playback requires a compatible engine version.',
+  },
   {
     title: 'Objective',
     content:
@@ -86,27 +83,12 @@ const HELP_SECTIONS = [
   },
 ] as const;
 
-// Display-only fixtures, rendered exclusively by the development preview.
-const RANKINGS = [
-  { rank: 1, name: 'Example player 1', tiles: 1, time: '4.82s' },
-  { rank: 2, name: 'Example player 2', tiles: 2, time: '3.14s' },
-  { rank: 3, name: 'Example player 3', tiles: 2, time: '5.26s' },
-  { rank: 4, name: 'Example player 4', tiles: 3, time: '4.67s' },
-  { rank: 5, name: 'Example player 5', tiles: 3, time: '5.92s' },
-  { rank: 6, name: 'Example player 6', tiles: 4, time: '6.31s' },
-] as const;
-
 type Props = {
   panel: Exclude<Panel, null>;
   close: () => void;
   preferences: Preferences;
   setPreferences: Dispatch<SetStateAction<Preferences>>;
-  result: RunResult | null;
-  levels: readonly { level: Level; day: string }[];
-  currentLevel: Level;
-  chooseLevel: (level: Level) => void;
-  tileCost: number;
-  previewMode?: boolean;
+  resultSolved?: boolean;
   courseImport?: ReactNode;
   body?: ReactNode;
   /** Replays the first-visit walkthrough from Help. */
@@ -150,13 +132,19 @@ export function useDialog(dialogRef: RefObject<HTMLElement | null>, close: () =>
     dialogRef.current?.focus();
 
     const onKey = (event: KeyboardEvent) => {
+      const focusRoot =
+        document.fullscreenElement && dialogRef.current?.contains(document.fullscreenElement)
+          ? document.fullscreenElement
+          : dialogRef.current;
       if (event.key === 'Escape') {
+        // Let the browser exit fullscreen before Escape can dismiss the dialog.
+        if (document.fullscreenElement) return;
         event.preventDefault();
         closeRef.current();
       }
       if (event.key !== 'Tab') return;
       const elements = Array.from(
-        dialogRef.current?.querySelectorAll<HTMLElement>(
+        focusRoot?.querySelectorAll<HTMLElement>(
           'button:not(:disabled), summary, a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
         ) ?? [],
       ).filter((element) => element.getClientRects().length > 0);
@@ -165,13 +153,13 @@ export function useDialog(dialogRef: RefObject<HTMLElement | null>, close: () =>
       if (!first || !last) return;
       if (
         event.shiftKey &&
-        (document.activeElement === first || document.activeElement === dialogRef.current)
+        (document.activeElement === first || document.activeElement === focusRoot)
       ) {
         event.preventDefault();
         last.focus();
       } else if (
         !event.shiftKey &&
-        (document.activeElement === last || document.activeElement === dialogRef.current)
+        (document.activeElement === last || document.activeElement === focusRoot)
       ) {
         event.preventDefault();
         first.focus();
@@ -191,12 +179,7 @@ export function Modal({
   close,
   preferences,
   setPreferences,
-  result,
-  levels,
-  currentLevel,
-  chooseLevel,
-  tileCost,
-  previewMode = false,
+  resultSolved = true,
   courseImport,
   body,
   showTutorial,
@@ -207,9 +190,10 @@ export function Modal({
     archive: 'Calendar',
     stats: 'Profile',
     leaderboard: 'Leaderboard',
+    community: 'Community',
     settings: 'Settings',
     help: 'Help',
-    result: result?.solved === false ? 'So close' : 'Nice work!',
+    result: resultSolved ? 'Nice work!' : 'So close',
   };
 
   function togglePreference(key: keyof Preferences) {
@@ -266,112 +250,22 @@ export function Modal({
           </div>
         )}
 
-        {body && <div className="modal-body modal-stack">{body}</div>}
-        {!body && panel === 'stats' && (
-          <div className="modal-body modal-stack">
-            <p className="modal-intro">Profile statistics are not connected.</p>
-            {[
-              ['stats', 'Stats'],
-              ['games', 'Games played'],
-              ['ranking', 'Ranking'],
-            ].map(([id, title]) => (
-              <section className="profile-section" aria-labelledby={`profile-${id}`} key={id}>
-                <h3 id={`profile-${id}`} className="modal-section-heading">
-                  {title}
-                </h3>
-                <p className="unavailable-state">No recorded data available</p>
-              </section>
-            ))}
-          </div>
-        )}
-
-        {!body && panel === 'leaderboard' && (
-          <div className="modal-body modal-stack">
-            {previewMode ? (
-              <>
-                <p className="modal-intro">EXAMPLE RANKINGS — PREVIEW ONLY</p>
-                <ol className="modal-stack ranking-list" aria-label="Sample rankings">
-                  {RANKINGS.map((entry) => (
-                    <li className="modal-row ranking-row" key={entry.rank}>
-                      <span className="ranking-number">#{entry.rank}</span>
-                      <span className="ranking-player">
-                        <strong>{entry.name}</strong>
-                        <small>
-                          {entry.tiles} {entry.tiles === 1 ? 'tile' : 'tiles'} · {entry.time}
-                        </small>
-                      </span>
-                      <span className="ranking-score">
-                        {entry.tiles * tileCost}
-                        <small>pt</small>
-                      </span>
-                    </li>
-                  ))}
-                </ol>
-                <p className="modal-footnote">
-                  Example rankings. Ties use tile count, first-solve attempts, simulation time, then
-                  path length.
-                </p>
-              </>
-            ) : (
-              <p className="unavailable-state">Leaderboard is not available yet.</p>
-            )}
-          </div>
-        )}
-
-        {!body && panel === 'archive' && (
-          <div className="modal-body modal-stack">
-            <p className="modal-intro">
-              Available courses <span>Find another way to the goal</span>
+        {panel === 'community' && !body && (
+          <div className="modal-body community-empty">
+            <span className="community-empty-icon">
+              <Icon name="community" size={32} />
+            </span>
+            <h3>Community maps</h3>
+            <p>Discover and play courses created by other players.</p>
+            <p>
+              Open the Editor tab to create a course. Playtest and solve it to publish it to
+              Community. Drafts are saved on this device.
             </p>
-            <div className="modal-stack archive-list">
-              {levels.map(({ level, day }, index) => (
-                <button
-                  className={`modal-row archive-row ${level === currentLevel ? 'current-course' : ''}`}
-                  key={level.id}
-                  onClick={() => {
-                    chooseLevel(level);
-                    close();
-                  }}
-                  aria-current={level === currentLevel ? 'true' : undefined}
-                >
-                  <span className="archive-number">#{index + 1}</span>
-                  <span className="archive-course">
-                    <strong>
-                      {level.id
-                        .split('-')
-                        .map((word) => word[0]!.toUpperCase() + word.slice(1))
-                        .join(' ')}
-                    </strong>
-                    <small>{day}</small>
-                  </span>
-                  <span className="row-status">
-                    {level === currentLevel ? 'Playing' : 'Play'}
-                    <Icon name="arrow" size={15} />
-                  </span>
-                </button>
-              ))}
-            </div>
-            <p className="modal-footnote">Choose a course to start a fresh layout.</p>
           </div>
         )}
-
+        {body && <div className="modal-body modal-stack">{body}</div>}
         {panel === 'settings' && (
           <div className="modal-body modal-stack">
-            <section className="settings-section" aria-labelledby="audio-settings">
-              <h3 className="modal-section-heading" id="audio-settings">
-                Audio
-              </h3>
-              <SettingSwitch
-                label="Mute music"
-                checked={preferences.muteMusic}
-                change={() => togglePreference('muteMusic')}
-              />
-              <SettingSwitch
-                label="Mute sound effects"
-                checked={preferences.muteEffects}
-                change={() => togglePreference('muteEffects')}
-              />
-            </section>
             <section className="settings-section" aria-labelledby="display-settings">
               <h3 className="modal-section-heading" id="display-settings">
                 Display
@@ -395,51 +289,7 @@ export function Modal({
                 {courseImport}
               </section>
             )}
-            <p className="modal-footnote">
-              Preferences are saved on this device. Audio playback is not available yet.
-            </p>
-          </div>
-        )}
-
-        {!body && panel === 'result' && result && (
-          <div className="modal-body result-body">
-            <div className="result-mark brand-mark" aria-hidden="true">
-              <span className="brand-ball" />
-              <span className="brand-flag" />
-            </div>
-            <p>
-              {result.solved
-                ? 'The ball held in the goal.'
-                : result.failure === 'water'
-                  ? 'The ball sank in water. Keep it moving or find a route around.'
-                  : result.failure === 'lava'
-                    ? 'The ball burnt in lava. Find a route around it.'
-                    : result.failure === 'out-of-bounds'
-                      ? 'An object left the course. Keep at least part of every object inside the board.'
-                      : 'The ball stopped short of the goal. Adjust your fields and try again.'}
-            </p>
-            {!result.solved && (
-              <p className="result-helper">
-                Close this panel, then choose Try again to adjust your fields.
-              </p>
-            )}
-            <div className="result-grid">
-              <div>
-                <strong>{result.forceCost ?? result.tiles * tileCost}</strong>
-                <span>Force cost</span>
-              </div>
-              <div>
-                <strong>{result.tiles}</strong>
-                <span>Tiles</span>
-              </div>
-              <div>
-                <strong>{result.seconds.toFixed(2)}s</strong>
-                <span>{result.solved ? 'Ball time' : 'Run time'}</span>
-              </div>
-            </div>
-            <button className="primary-button" onClick={close}>
-              Back to course <Icon name="arrow" size={18} />
-            </button>
+            <p className="modal-footnote">Preferences are saved on this device.</p>
           </div>
         )}
       </section>

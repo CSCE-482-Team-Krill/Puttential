@@ -8,4 +8,4 @@
 
 Archive, profile, leaderboard and sharing consume persisted server values. Board pagination binds viewer, puzzle, scope, view and revision; copy text uses rank only for the exact saved best run. Date rollover retains the canvas and draft when content is unchanged.
 
-See [release instructions](../../docs/iteration-two-release.md) and [integrated evidence](../../artifacts/iteration-two-completion/verification.md). The earlier `artifacts/iteration-two` evidence describes the preceding frontend-only revision.
+See [release instructions](../../docs/iteration-two-release.md). Historical integrated and frontend-only evidence remains in Git history; tests recreate fresh review output under `artifacts/`.

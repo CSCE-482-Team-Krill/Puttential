@@ -5,7 +5,6 @@ import { levelBounds, levelName, encodeLevel, parseDocument } from './codec';
 import type { Arena, LevelDocument } from './codec';
 
 import { shapePolygon } from '../geometry/shapes';
-import { shapeBounds } from '../geometry/authoring';
 
 const EPSILON = 1e-8;
 export function containsBounds(outer: Bounds, inner: Bounds): boolean {
@@ -44,26 +43,9 @@ export function arenaGeometry(arena: Arena) {
   ];
 }
 
-/** Initial geometry fits the board; runtime permits overhang until every piece is outside. */
+/** The board frames the course; authored geometry and the goal may extend beyond it. */
 export function validateDocument(value: unknown): LevelDocument {
   const doc = parseDocument(value);
-  const { bounds } = doc.editor.arena;
-  for (const body of [...doc.level.dynamicBodies, ...doc.level.staticBodies]) {
-    for (const piece of body.pieces) {
-      if (!containsBounds(bounds, shapeBounds(piece.shape, body.position, body.angle)))
-        throw new Error(`${body.id} extends outside the board`);
-    }
-  }
-  for (const field of doc.level.fields) {
-    if (
-      !containsBounds(
-        bounds,
-        polygonBounds(transformPolygon(shapePolygon(field.shape), field.position, field.angle)),
-      )
-    )
-      throw new Error(`${field.id} extends outside the board`);
-  }
-  if (!containsBounds(bounds, doc.level.goal)) throw new Error('Goal extends outside the board');
   if (doc.editor.arena.walls.length) {
     const expected = arenaGeometry(doc.editor.arena);
     doc.editor.arena.walls.forEach((id, index) => {

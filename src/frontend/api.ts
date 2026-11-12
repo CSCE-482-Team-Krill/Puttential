@@ -12,6 +12,7 @@ import {
   decodeProgress,
   decodePuzzle,
   decodeRun,
+  decodeReplay,
   validDate,
 } from './response-validation';
 import { RequestScheduler } from './request-scheduler';
@@ -168,6 +169,12 @@ export class PuzzleApi {
       `/api/puzzles/${encodeURIComponent(id)}/leaderboard?${new URLSearchParams({ scope, view, limit: '20', ...(cursor ? { cursor } : {}) })}`,
       decodeBoard,
       o,
+    );
+  replay = (id: string, playerId: string, scope: Scope, o?: RequestOptions) =>
+    this.request(
+      `/api/puzzles/${encodeURIComponent(id)}/replays/${encodeURIComponent(playerId)}?${new URLSearchParams({ scope })}`,
+      decodeReplay,
+      { priority: 'foreground', ...o },
     );
 }
 export const puzzleApi = new PuzzleApi();

@@ -1,6 +1,6 @@
 # Iteration 2 release and publishing
 
-Production target: https://puttential.vercel.app/. Daily publishing owner: the project owner (confirmed October 26, 2026). The earlier implementation plan and handoff are historical planning documents; the shared revision 3.1 code and this guide describe delivery.
+Production target: https://puttential.vercel.app/. Daily publishing owner: the project owner (confirmed October 26, 2026). The earlier implementation plan and handoff remain in Git history; the shared revision 3.1 code and this guide describe delivery.
 
 ## Release
 
@@ -65,10 +65,10 @@ The database suite rejects nonlocal or unnamed database targets. The unmocked br
 
 ## Remaining production acceptance
 
-Production was connected and deployed on October 27, 2026. The [live connection record](../artifacts/production-backend/verification.md) documents the reviewed source revision, additive migration and publishing release, guest persistence, verified replay readback, archive and working leaderboard UI. Standard project install/build settings remain unchanged; the initial release used an explicit production-and-commit-guarded, single-deployment install override to use the existing write-only database secret.
+Production was connected and deployed on October 27, 2026. The live connection record, retained in Git history under `artifacts/production-backend/verification.md`, documents the reviewed source revision, additive migration and publishing release, guest persistence, verified replay readback, archive and working leaderboard UI. Standard project install/build settings remain unchanged; the initial release used an explicit production-and-commit-guarded, single-deployment install override to use the existing write-only database secret.
 
 - Exercise additional successful live solves, two ranked guests, optimization/ties, copy text and outage recovery on the named Vercel project. The connection smoke run was a verified non-success and did not populate production rankings.
 - Confirm the hosting replay benchmark, capacity and scheduled recovery/availability monitoring in that environment.
 - Have three uncoached people complete the core flow, resolve any blocking findings and record project-owner acceptance.
 
-Local integrated checks are documented in [the completion evidence](../artifacts/iteration-two-completion/verification.md). They do not substitute for production or human acceptance. OAuth, payments, new physics systems, generated daily courses and optional bonus content remain outside this release.
+Local integrated checks were documented in `artifacts/iteration-two-completion/verification.md`, retained in Git history. Tests recreate fresh evidence under `artifacts/`; local checks do not substitute for production or human acceptance. OAuth, payments, new physics systems, generated daily courses and optional bonus content remain outside this release.

@@ -48,5 +48,5 @@ export const deliveredEngine: EngineAdapter = {
   localRules: defaultRules,
 };
 export const ENGINE_UNAVAILABLE =
-  'Unavailable in this version. Ranked playback and rotation await compatible engine support.';
+  'Unavailable in this version. Ranked playback awaits compatible engine support.';
 export type FieldEdit = { position?: Vec2; angle?: number; enabled?: boolean };

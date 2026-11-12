@@ -31,8 +31,6 @@ test.beforeEach(async ({ context }) => {
     localStorage.setItem(
       'puttential-preferences',
       JSON.stringify({
-        muteMusic: false,
-        muteEffects: false,
         reducedMotion: true,
         showPreview: true,
       }),
@@ -183,7 +181,9 @@ for (const [width, height] of [
     await page.goto(URL);
     await expect(page.getByRole('status')).toContainText("Loading today's course…");
     await expect(page.getByRole('img', { name: 'Puttential', exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Play practice', exact: true })).toBeEnabled();
+    await expect(
+      page.getByRole('button', { name: 'Play legacy course', exact: true }),
+    ).toBeEnabled();
     await noOverflow(page);
     release();
     await expect(page.locator('.course-canvas.editable')).toHaveCount(1);
@@ -192,9 +192,9 @@ for (const [width, height] of [
       route.fulfill({ status: 503, json: { error: 'Unavailable' } }),
     );
     await page.reload();
-    await expect(page.locator('.api-notice')).toContainText('Practice courses still work');
-    await page.getByRole('button', { name: 'Play practice', exact: true }).click();
-    await expect(page.locator('.challenge-label')).toContainText('Practice challenge');
+    await expect(page.locator('.api-notice')).toContainText('Legacy courses are still available');
+    await page.getByRole('button', { name: 'Play legacy course', exact: true }).click();
+    await expect(page.locator('.challenge-label')).toHaveText('Legacy course');
     await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
   });
 }
@@ -330,7 +330,7 @@ test('landscape game fits one viewport and keeps controls reachable after height
   await page.setViewportSize({ width: 1024, height: 600 });
   await page.reload();
   await expect(page.locator('.api-notice')).toBeVisible();
-  await page.getByRole('button', { name: 'Play practice', exact: true }).click();
+  await page.getByRole('button', { name: 'Play legacy course', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeInViewport({
     ratio: 1,
   });
@@ -363,7 +363,9 @@ for (const [width, height] of [
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('.course-canvas')).toHaveCount(1);
     await expect(page.locator('.play-button')).toHaveCount(1);
-    await expect(page.locator('.main-nav button')).toHaveCount(5);
+    await expect(
+      page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button'),
+    ).toHaveText(['Calendar', 'Leaderboard', 'Community', 'Editor', 'Settings', 'Profile', 'Help']);
     await screenshot(page, `after-mobile-${width}x${height}`);
     await page.locator('.tile-option').click();
     await expectField(page, level, { x: -3, y: 0 });
@@ -403,7 +405,7 @@ test('all responsive widths retain course framing, direct nav targets and no pag
 });
 
 for (const width of [390, 959, 960, 1050, 1440]) {
-  test(`canvas movement has correct rendered displacement and clamps at bounds at ${width}`, async ({
+  test(`canvas movement has correct rendered displacement and permits outside placements at ${width}`, async ({
     page,
   }) => {
     const level = inventoryLevel(1, { enabled: true });
@@ -419,7 +421,10 @@ for (const width of [390, 959, 960, 1050, 1440]) {
     await page.mouse.down();
     await page.mouse.move(p.clientX, p.box.y + p.box.height + 200, { steps: 8 });
     await page.mouse.up();
-    await expectField(page, level, { x: -2, y: levelBounds(level).minY + 0.6 });
+    const expectedY = -0.5 - (p.box.y + p.box.height + 200 - p.clientY) / p.scale;
+    await expect(
+      page.getByRole('spinbutton', { name: 'Selected tile Y', exact: true }),
+    ).toHaveValue(String(Math.round(expectedY * 1024) / 1024));
   });
 }
 
@@ -561,6 +566,7 @@ test('production data stays unavailable; development preview has six labeled exa
     await expect(dialog).toBeVisible();
     if (name === 'Help')
       await expect(dialog.locator('summary')).toHaveText([
+        'Solution replays',
         'Objective',
         'How to play',
         'Scoring',
@@ -574,8 +580,10 @@ test('production data stays unavailable; development preview has six labeled exa
       await expect(dialog.locator('.ranking-row')).toHaveCount(0);
     }
     if (name === 'Calendar') {
-      await expect(dialog.locator('.practice-course')).toHaveCount(2);
-      await expect(dialog).toContainText('Practice — unranked');
+      await expect(dialog.locator('.legacy-course')).toHaveCount(2);
+      await expect(
+        dialog.getByRole('heading', { name: 'Legacy courses', exact: true }),
+      ).toBeVisible();
       await expect(dialog).toContainText('Archive unavailable');
     }
     await screenshot(page, `modals-${file}`);
@@ -615,7 +623,7 @@ test('short dialogs scroll, trap Tab both ways, close on backdrop and retain pre
   await page.keyboard.press('Tab');
   await expect(close).toBeFocused();
   await page.getByRole('switch', { name: 'Show path preview' }).click();
-  await page.getByRole('switch', { name: 'Mute music' }).click();
+  await page.getByRole('switch', { name: 'Reduced motion' }).click();
   await page.mouse.click(2, 2);
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.reload();
@@ -624,11 +632,11 @@ test('short dialogs scroll, trap Tab both ways, close on backdrop and retain pre
     'aria-checked',
     'false',
   );
-  await expect(page.getByRole('switch', { name: 'Mute music' })).toHaveAttribute(
+  await expect(page.getByRole('switch', { name: 'Reduced motion' })).toHaveAttribute(
     'aria-checked',
-    'true',
+    'false',
   );
-  await expect(page.getByRole('dialog')).toContainText('Audio playback is not available yet.');
+  await expect(page.getByRole('dialog').getByRole('switch')).toHaveCount(2);
 });
 
 test('integrated import rejects corrupt/oversize data, retains pending file input across resize and respects camera bounds', async ({
@@ -815,7 +823,7 @@ test('rendered text and essential control colors retain contrast in each UI stat
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
   await measure('OFF switch thumb', '.switch span', 'background-color', 3);
-  await page.getByRole('switch', { name: 'Mute music' }).click();
+  await page.getByRole('switch', { name: 'Reduced motion' }).click();
   await measure('ON switch thumb', '.switch.on span', 'background-color', 3);
   const table = [
     '# Rendered UI contrast audit',

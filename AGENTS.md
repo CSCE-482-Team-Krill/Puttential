@@ -2,7 +2,7 @@
 
 ## Project Structure & Assets
 
-UI reference images live in `mock ui/`; research, a basic HTML sketch, and the independent A/B Next.js/TypeScript mockups live in `ui_ux_research/`. `design_a/` uses the green palette and `design_b/` uses blue glass styling. Design C combines the glass styling with A's green palette and now lives in `src/frontend/`, the working Next.js workspace. Its page and styles are in `src/frontend/app/page.tsx` and `app/globals.css`; Figma modals, shared canvas, controls and simulation hooks live alongside the app in `src/frontend/`. It loads the daily course and saves completed runs through same-origin API routes backed by `src/backend/`; stats, leaderboard and streak panels still use sample data. The deterministic Rapier engine lives in `src/game/` (see its README). The desktop editor lives in `level-editor/` and saves canonical engine JSON plus editor metadata sidecars under `src/game/levels/authored/`. Both apps import shared drawing, controls, styles and simulation hooks from `src/frontend/`; never fork editor physics. Register new forces/shapes in `src/game/objects/catalog.ts` and `presets.ts` so the editor inherits them.
+The working Next.js frontend lives in `src/frontend/`. Its page and styles are in `src/frontend/app/page.tsx` and `app/globals.css`; Figma modals, shared canvas, controls and simulation hooks live alongside the app in `src/frontend/`. It loads dated courses and persists guest progress, verified results and standings through same-origin API routes backed by `src/backend/`. The deterministic Rapier engine lives in `src/game/` (see its README). The desktop editor lives in `level-editor/` and saves canonical engine JSON plus editor metadata sidecars under `src/game/levels/authored/`. Both apps import shared drawing, controls, styles and simulation hooks from `src/frontend/`; never fork editor physics. Register new forces/shapes in `src/game/objects/catalog.ts` and `presets.ts` so the editor inherits them. Logo generation scripts live in `scripts/`; generated review evidence goes under `artifacts/`. Earlier prototypes, mockups and review evidence remain available in Git history.
 
 ## Game Design Principles
 
@@ -10,7 +10,7 @@ Puttential is a web-first daily physics puzzle. Every player must receive the sa
 
 ## Development and Verification
 
-Use Node 22.12+. Run `npm install` at the repository root for the frontend/editor workspaces. `npm run editor` starts 127.0.0.1:3001; `npm run game` starts 127.0.0.1:3000. Build with `npm run editor:build` and `npm run game:build`. Run `npm test` for codecs, bounds, history, persistence and Rapier equivalence; `npm run test:e2e` runs browser checks after `npx playwright install chromium`. Run `npm run db:generate` when the backend client is absent, then `npm run typecheck`. A/B keep their independent install/dev/build commands. Inspect screenshots at native size and review `git diff --check`, `git diff --stat` and `git status --short`.
+Use Node 22.12+. Run `npm install` at the repository root for the frontend/editor workspaces. `npm run editor` starts 127.0.0.1:3001; `npm run game` starts 127.0.0.1:3000. Build with `npm run editor:build` and `npm run game:build`. Run `npm test` for codecs, bounds, history, persistence and Rapier equivalence; `npm run test:e2e` runs browser checks after `npx playwright install chromium`. Run `npm run db:generate` when the backend client is absent, then `npm run typecheck`. Inspect screenshots at native size and review `git diff --check`, `git diff --stat` and `git status --short`.
 
 ## Naming and Editing Conventions
 
@@ -18,7 +18,7 @@ Use descriptive, lowercase file names with hyphens, following the existing `putt
 
 ## Testing Guidelines
 
-Tests live in `tests/`: Node's test runner through tsx covers model/engine behavior, and Playwright covers desktop interactions. Verify existing-level round trips and identical Rapier replays in the same runtime when changing codecs or physics. Editor operations must reject geometry outside board bounds and preserve authored data across playtest. New force registration should supply serialization, palette and property controls automatically. Daily puzzle validation should confirm solvability and multiple practical solutions. Include before-and-after images when a pull request changes a mockup.
+Tests live in `tests/`: Node's test runner through tsx covers model/engine behavior, and Playwright covers desktop interactions. Verify existing-level round trips and identical Rapier replays in the same runtime when changing codecs or physics. Editor operations allow geometry outside board bounds and must preserve authored data across playtest. New force registration should supply serialization, palette and property controls automatically. Daily puzzle validation should confirm solvability and multiple practical solutions. Include before-and-after images when a pull request changes a mockup.
 
 ## Commits and Pull Requests
 

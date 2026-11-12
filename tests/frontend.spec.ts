@@ -77,7 +77,7 @@ test('migrated Figma modals retain focus, keyboard controls and preferences', as
   }
 });
 
-test('legacy daily data is rejected honestly and practice never uses legacy writes', async ({
+test('legacy daily data is rejected and legacy courses never use legacy writes', async ({
   page,
 }) => {
   let posts = 0;
@@ -98,9 +98,23 @@ test('legacy daily data is rejected honestly and practice never uses legacy writ
   );
   await page.goto('http://127.0.0.1:3000');
   await expect(page.locator('.api-notice')).toContainText('incompatible puzzle data');
-  await page.getByRole('button', { name: 'Play practice', exact: true }).click();
-  await expect(page.locator('.challenge-label')).toContainText('Practice challenge');
+  await page.getByRole('button', { name: 'Play legacy course', exact: true }).click();
+  await expect(page.locator('.challenge-label')).toHaveText('Legacy course');
   await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'So close' })).toBeVisible();
+  await expect(page.getByRole('dialog')).toContainText('Legacy course');
+  await expect(page.getByRole('dialog')).not.toContainText(/unranked|not submitted/i);
+  await page.getByRole('button', { name: 'Copy result', exact: true }).click();
+  await expect(page.getByLabel('Result text')).toHaveValue(/Bar Around Corner — Legacy course/);
+  await page.getByRole('button', { name: 'Close panel', exact: true }).click();
+  await page.getByRole('tab', { name: 'Runs', exact: true }).click();
+  await expect(page.locator('.runs-content')).toContainText('Legacy course');
+  await expect(page.locator('.runs-content')).not.toContainText(/unranked|not submitted/i);
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Legacy courses', exact: true })).toBeVisible();
+  await expect(page.locator('.legacy-course')).toHaveCount(2);
+  await page.getByRole('button', { name: 'Radial Relay', exact: true }).click();
+  await expect(page.locator('h1')).toHaveText('Radial Relay');
+  await expect(page.locator('.challenge-label')).toHaveText('Legacy course');
   expect(posts).toBe(0);
 });

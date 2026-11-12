@@ -57,7 +57,8 @@ for (const frameMs of [8, 67]) {
       ).toBeVisible();
       await expect(page.getByRole('dialog')).toContainText('Practice — unranked');
       await expect(page.getByRole('dialog')).toContainText(
-        `${((hazardFirst ? 125 : 121) / 120).toFixed(2)}s`,
+        // Lava triggers once the ball's center enters it (#15), 12 ticks later than first contact.
+        `${((hazardFirst ? 137 : 121) / 120).toFixed(2)}s`,
       );
       expect(attempts).toHaveLength(0);
       expect(solutions).toBe(0);

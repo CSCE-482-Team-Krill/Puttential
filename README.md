@@ -50,11 +50,13 @@ Use **Node 22.12+** and **PostgreSQL 17** (or Docker Desktop). Run commands from
 
    Open **http://127.0.0.1:3001**. See [the editor guide](level-editor/README.md). Courses save as canonical JSON with editor sidecars under `src/game/levels/authored/`. Use **Open local course** to playtest saved JSON, or publish it with two reviewed solutions as a daily course. The editor and practice/local-course play do not need a database; practice runs are not submitted.
 
+   The game's **Editor** tab opens the shared editor inside the website. It saves drafts on this device and supports JSON import/export; **Back to game** preserves your draft and game setup. It only needs `npm run game`. The separate `npm run editor` app remains available for repository file saving. To publish, open **Playtest**, solve your map, enter a title and optional description, then select **Publish map**. The server verifies your solution before saving the map. **Community** lists published maps, which can be played and shared with `/?community=<map-id>` links. Community play is unranked. Publishing and browsing require the migrated database. See [community publishing](docs/community-publishing.md).
+
 For a production build, run `npm run game:build`, then `npm run game:start` with `DATABASE_URL` set. The frontend's `prebuild` step generates Prisma Client, including on clean CI checkouts. Apply `npm run db:migrate` to the deployment database and provision dated courses before serving players. `docker compose stop db` stops the local database and retains its data.
 
 ## Vercel deployment
 
-Set the Vercel project's **Root Directory** to `src/frontend`, with **Next.js** as the framework. Enable **Include source files outside of the Root Directory in the Build Step** so the build can access the shared engine, backend, Prisma schema and root workspace dependencies. The former `ui_ux_research/design_c` directory is documentation only.
+Set the Vercel project's **Root Directory** to `src/frontend`, with **Next.js** as the framework. Enable **Include source files outside of the Root Directory in the Build Step** so the build can access the shared engine, backend, Prisma schema and root workspace dependencies.
 
 The checked-in `src/frontend/vercel.json` runs `npm run build`; its `prebuild` generates the ignored Prisma Client before Next.js compiles API routes. Use the root npm workspace lockfile and the default install command. Keep the Output Directory at its Next.js default (`.next`).
 
@@ -83,7 +85,7 @@ npm.cmd run courses:publish -- schedule
 npm.cmd run game
 ```
 
-**http://127.0.0.1:3000/modal-preview** is a development-only review page, with clearly labeled example courses and six example leaderboard rows. It returns **404 in production**. The real Profile and Leaderboard use persisted guest progress and verified results. Settings persist on this device; audio preferences are not connected to playback.
+**http://127.0.0.1:3000/modal-preview** is a development-only review page, with clearly labeled example courses and six example leaderboard rows. It returns **404 in production**. The real Profile and Leaderboard use persisted guest progress and verified results. Display settings persist on this device.
 
 For a production preview, stop the development server with Ctrl+C, then:
 
@@ -102,7 +104,7 @@ npm.cmd run game:build
 npm.cmd run test:ui:production
 ```
 
-The production smoke script temporarily serves the built app on **127.0.0.1:3002**, checks `/` is 200 and `/modal-preview` is 404, then stops its server. Previous visual evidence is in [artifacts/ui-polish](artifacts/ui-polish/implementation-notes.md); revision 3.1 evidence is in [artifacts/iteration-two](artifacts/iteration-two/implementation-evidence.md). Browser tests intercept API calls and do not prove database integration. Select a toolkit tile to edit X/Y without a pointer; rotation requires E0.
+The production smoke script temporarily serves the built app on **127.0.0.1:3002**, checks `/` is 200 and `/modal-preview` is 404, then stops its server. Tests recreate review evidence under `artifacts/`; earlier captures and verification records remain available in Git history. Browser tests intercept API calls and do not prove database integration. Select a toolkit tile to edit X/Y without a pointer; rotation requires E0.
 
 ## Integration status
 
@@ -122,8 +124,9 @@ The older attempt/solution prototype endpoints remain unranked and isolated from
 - `src/frontend/`: shared canvas, controls, icons, modals, API client and simulation hook; also the runnable frontend workspace.
 - `src/backend/`: services, API types, request validation, Prisma integration and seed script.
 - `src/game/`: framework-independent simulation, geometry, catalog and level codecs. See [the game API](src/game/README.md).
-- `level-editor/`: desktop authoring UI, history and local save API.
-- `ui_ux_research/`: research and independent A/B prototypes. Design C moved to `src/frontend`.
+- `src/editor/`: shared browser editor, model, history, canvas, inspector and playtest.
+- `level-editor/`: trusted localhost wrapper, repository persistence adapter and local save API.
+- `scripts/`: logo generation tools. Run `powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/build-logo.ps1` on Windows, then `node scripts/render-logo.mjs` to regenerate the PNG, monochrome and reversed exports in `src/frontend/public/`.
 
 Run workspace commands from the repository root. `db:generate` and `db:migrate` use `prisma7.config.ts`; `db:seed` publishes the reviewed opening schedule.
 
@@ -139,4 +142,4 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Browser tests start/reuse both apps. Most UI regressions intercept HTTP; the unmocked daily browser test requires `TEST_DATABASE_URL` and servers using the matching `DATABASE_URL`. Run `npm run test:integration` against a disposable migrated and provisioned PostgreSQL database; CI provides one. `npm run format` uses the repository Prettier configuration.
+Browser tests start/reuse both apps. Most UI regressions intercept HTTP; the unmocked daily browser test requires `TEST_DATABASE_URL` and servers using the matching `DATABASE_URL`. Run `npm run test:integration` against a disposable migrated and provisioned PostgreSQL database; CI provides one. `npm run format` uses the repository Prettier configuration, including backend, shared code and scripts. CI runs `npm run format:check` without modifying files; test files are outside this check, and generated Next.js declarations are ignored.

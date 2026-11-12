@@ -1,4 +1,5 @@
 import { parseLevel, isCourseObject } from '../game';
+import type { Level } from '../game';
 import { LIMITS } from '../shared/puzzle-contracts';
 import type {
   ArchiveResponse,
@@ -7,6 +8,8 @@ import type {
   ProgressResponse,
   PuzzleResponse,
   RunResponse,
+  ReplayResponse,
+  PuzzleRules,
 } from '../shared/puzzle-contracts';
 import type { StartRunRequest } from '../shared/puzzle-contracts';
 
@@ -95,7 +98,6 @@ export function decodePlayer(x: unknown): { player: Player } {
 export function decodePuzzle(x: unknown): PuzzleResponse {
   check(obj(x));
   const configuration = parseLevel(x.configuration);
-  const r = x.rules;
   check(
     text(x.id) &&
       text(x.title) &&
@@ -108,6 +110,13 @@ export function decodePuzzle(x: unknown): PuzzleResponse {
       instant(x.nextDailyAt) &&
       availability(x.availability, x.id),
   );
+  const rules = decodePuzzleRules(x.rules, configuration);
+  return { ...x, configuration, rules } as PuzzleResponse;
+}
+
+/** Shape and inventory checks are shared by daily and community responses. */
+export function decodePuzzleRules(value: unknown, configuration: Level): PuzzleRules {
+  const r = value;
   check(
     obj(r) &&
       text(r.rulesVersion) &&
@@ -120,16 +129,20 @@ export function decodePuzzle(x: unknown): PuzzleResponse {
     obj(b) &&
       ['minX', 'minY', 'maxX', 'maxY'].every((k) => Number.isFinite(b[k])) &&
       b.minX < b.maxX &&
-      b.minY < b.maxY,
+      b.minY < b.maxY &&
+      Number.isFinite(b.maxX - b.minX) &&
+      Number.isFinite(b.maxY - b.minY),
   );
   const fields = configuration.fields.filter((f) => !isCourseObject(f.force));
   check(
     fields.length <= LIMITS.fields &&
       obj(r.tileCosts) &&
       Object.keys(r.tileCosts).length === fields.length &&
-      fields.every((f) => integer(r.tileCosts[f.id], 1, LIMITS.maxCost)),
+      fields.every(
+        (f) => Object.hasOwn(r.tileCosts, f.id) && integer(r.tileCosts[f.id], 1, LIMITS.maxCost),
+      ),
   );
-  return { ...x, configuration } as PuzzleResponse;
+  return r as PuzzleRules;
 }
 export function decodeProgress(x: unknown): ProgressResponse {
   check(obj(x) && progress(x.progress) && availability(x.availability, x.progress.puzzleId));
@@ -221,11 +234,19 @@ export function decodeBoard(x: unknown): LeaderboardResponse {
       integer(x.totalPlayers) &&
       nullable(x.nextCursor, text) &&
       instant(x.asOf) &&
+      obj(x.replayAccess) &&
+      typeof x.replayAccess.available === 'boolean' &&
+      instant(x.replayAccess.unlocksAt) &&
       typeof x.submissionClosed === 'boolean' &&
       integer(x.pendingEligibleCount) &&
       typeof x.final === 'boolean',
   );
   check(!x.final || (x.scope === 'daily' && x.submissionClosed && x.pendingEligibleCount === 0));
+  check(
+    !x.replayAccess.available ||
+      (x.availability.publicationStatus === 'active' &&
+        Date.parse(x.asOf) >= Date.parse(x.replayAccess.unlocksAt)),
+  );
   check(x.totalPlayers !== 0 || (x.me === null && x.rows.length === 0));
   check(
     x.availability.publicationStatus !== 'canceled' ||
@@ -238,6 +259,44 @@ export function decodeBoard(x: unknown): LeaderboardResponse {
   check(new Set(x.rows.map((v: any) => v.player.id)).size === x.rows.length);
   return x as LeaderboardResponse;
 }
+export function decodeReplay(x: unknown): ReplayResponse {
+  check(
+    obj(x) &&
+      text(x.viewerGuestId) &&
+      text(x.puzzleId) &&
+      ['daily', 'archive'].includes(x.scope) &&
+      player(x.player) &&
+      availability(x.availability, x.puzzleId) &&
+      x.availability.publicationStatus === 'active' &&
+      saved(x.result) &&
+      x.result.verification === 'verified' &&
+      x.result.outcome === 'success' &&
+      (x.scope !== 'daily' || x.result.dailyEligible),
+  );
+  const p = x.placement;
+  check(
+    obj(p) &&
+      text(p.levelId) &&
+      integer(p.levelVersion) &&
+      text(p.rulesVersion) &&
+      text(p.simulationVersion) &&
+      Array.isArray(p.commands) &&
+      p.commands.length <= LIMITS.commands &&
+      p.commands.every(
+        (c: any, i: number) =>
+          obj(c) &&
+          text(c.fieldId) &&
+          c.sequence === i &&
+          (c.type === 'move-field'
+            ? Number.isSafeInteger(c.xQ) && Number.isSafeInteger(c.yQ)
+            : c.type === 'set-field-angle'
+              ? integer(c.angleQ, 0, 3599)
+              : c.type === 'set-field-enabled' && typeof c.enabled === 'boolean'),
+      ),
+  );
+  return x as ReplayResponse;
+}
+
 export function decodeArchive(x: unknown): ArchiveResponse {
   check(
     obj(x) &&

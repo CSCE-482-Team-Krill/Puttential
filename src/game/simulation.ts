@@ -107,7 +107,11 @@ class Simulation implements Game {
   private renderFields: readonly RenderField[] | undefined;
   private renderState!: RenderState;
 
-  constructor(data: Level, snapshot?: GameSnapshot) {
+  constructor(
+    data: Level,
+    snapshot?: GameSnapshot,
+    private readonly boundsFailure: 'any-body' | 'goal-body' = 'goal-body',
+  ) {
     const level = parseLevel(data);
     this.level = level;
     this.bounds = levelBounds(level);
@@ -179,7 +183,7 @@ class Simulation implements Game {
   step(): void {
     if (this.failure) return;
     this.applyQueuedCommands();
-    this.checkBounds();
+    if (this.boundsFailure === 'any-body') this.checkBounds();
     if (this.failure) {
       this.renderState = this.buildRenderState();
       return;
@@ -282,7 +286,7 @@ class Simulation implements Game {
     assertPositiveInteger(maxTicks, 'prediction maxTicks');
     assertPositiveInteger(sampleEveryTicks, 'prediction sampleEveryTicks');
 
-    const copy = new Simulation(this.level, this.snapshot());
+    const copy = new Simulation(this.level, this.snapshot(), this.boundsFailure);
     try {
       for (const command of Array.isArray(commands) ? commands : [commands]) {
         copy.queueCommand(command);
@@ -637,6 +641,7 @@ class Simulation implements Game {
 
   private checkBounds(): void {
     for (const body of this.dynamicBodies) {
+      if (this.boundsFailure === 'goal-body' && body.id !== this.level.goal.bodyId) continue;
       if (this.destroyedBodies[body.id] || this.pendingTeleports[body.id]) continue;
       const rigid = this.rigidBody(body.id);
       if (!bodyTouchesBounds(body.pieces, rigid.translation(), rigid.rotation(), this.bounds)) {
@@ -731,8 +736,11 @@ class Simulation implements Game {
 
 let rapierInitialization: Promise<void> | undefined;
 
-export async function createGame(level: Level): Promise<Game> {
+export async function createGame(
+  level: Level,
+  options: { boundsFailure?: 'any-body' | 'goal-body' } = {},
+): Promise<Game> {
   rapierInitialization ??= RAPIER.init();
   await rapierInitialization;
-  return new Simulation(level);
+  return new Simulation(level, undefined, options.boundsFailure);
 }

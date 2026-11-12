@@ -7,7 +7,7 @@ This folder contains the deterministic, framework-independent TypeScript simulat
 ```ts
 import { createGame, parseLevel, quantizePosition } from 'puttential/game';
 
-const response = await fetch('/levels/bar-around-corner.json');
+const response = await fetch('/levels/legacy/bar-around-corner.json');
 const level = parseLevel(await response.json());
 const game = await createGame(level);
 game.queueCommand({
@@ -34,7 +34,7 @@ Competitive setup uses `game.applySetup(commands)` on an untouched tick-zero wor
 
 ## Levels
 
-A level is plain JSON with no code in it, so it can come from a file, the `Puzzle.configuration` database column, or a level editor without being bundled with the engine. `levels/types.ts` defines the format (`Level`), and `levels/bar-around-corner.json` and `levels/radial-relay.json` are the two sample levels.
+A level is plain JSON with no code in it, so it can come from a file, the `Puzzle.configuration` database column, or a level editor without being bundled with the engine. `levels/types.ts` defines the format (`Level`). `levels/legacy/bar-around-corner.json` and `levels/legacy/radial-relay.json` preserve two courses from an earlier game version. The bundled tutorial lives in `levels/tutorial.json`.
 
 `parseLevel(data)` takes untrusted data, checks all of it, and returns a `Level`; it throws an error naming the first bad property, such as `level.fields[0].force.kind is unsupported`. `createGame` runs the same check. `JSON.stringify(parseLevel(data))` writes a level back out with its properties in a fixed order.
 
@@ -65,9 +65,11 @@ Unknown properties and unknown `kind` values are rejected instead of ignored, so
 
 ## Playable bounds and optional walls
 
-A board does not require an outer box. Physical borders are ordinary static bodies; the editor’s **Level borders** toggle adds/removes only its managed wall IDs. `bounds` preserves the playable area when walls are removed, resized, saved or imported. Initial editor geometry still needs to fit inside the board.
+A board does not require an outer box. Physical borders are ordinary static bodies; the editor’s **Level borders** toggle adds/removes only its managed wall IDs. `bounds` preserves the board frame when walls are removed, resized, saved or imported. Authored geometry, goals and force fields may extend outside it.
 
-At runtime, partial overhang is valid. The level fails when any non-sunk, non-transiting dynamic body has no piece touching the playable rectangle. Circles use their true radius; convex polygons use separating-axis tests, and compound bodies remain valid while any piece overlaps. Edge tangency counts as contact, with a small float32 tolerance. This avoids false results from centers or axis-aligned bounding boxes at corners.
+At runtime, partial overhang is valid. New courses fail only when the goal body has no piece touching the board; other bodies continue simulating outside it. Circles use their true radius; convex polygons use separating-axis tests, and compound bodies remain valid while any piece overlaps. Edge tangency counts as contact, with a small float32 tolerance.
+
+Rules `puttential-daily-v1` with simulation `puttential-rapier-0.20.0-v2` retain the previous bounded placements and failure when any body exits. Pass `simulationOptions(rules)` when creating a world for published rules; prediction inherits the world's policy. New defaults are rules v2/simulation v3. Never reinterpret an existing publication under new rules.
 
 The engine exposes `RenderState.failure = { reason: 'out-of-bounds', bodyId }`, freezes at that terminal tick, and preserves the failure in snapshots. Prediction terminates on failure too. The shared frontend rejects goal completion on that tick, reports the failure in editor playtest and the daily game, and records an unsuccessful run. Restoring the setup snapshot clears the failure.
 

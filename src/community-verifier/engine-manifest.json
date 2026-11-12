@@ -1,0 +1,10 @@
+{
+  "contract": "community-engine-manifest-v1",
+  "simulationVersion": "puttential-rapier-0.20.0-v3",
+  "rulesVersion": "puttential-daily-v2",
+  "artifactDigest": "a95c3660110a6a54f4e043185d28f1974cf1293d2abfc8682eca798489720f3b",
+  "bundler": "esbuild-0.28.2",
+  "format": "esm",
+  "target": "es2022",
+  "bytes": 2152301
+}

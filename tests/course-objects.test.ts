@@ -192,15 +192,12 @@ test('portals: paired placement, velocity preservation/rotation, lockout, and sn
       }),
     /at most two/,
   );
-  assert.throws(
-    () =>
-      place(
-        freshDocument(),
-        presets.find((p) => p.id === 'fields:portal')!,
-        { x: 6, y: 0 },
-      ),
-    /outside the board/,
+  const outside = place(
+    freshDocument(),
+    presets.find((p) => p.id === 'fields:portal')!,
+    { x: 6, y: 0 },
   );
+  assert.equal(outside.doc.level.fields[1]!.position.x, 8);
 });
 
 test('fast portal crossings resolve before later lava, but a hazardous exit still fails', async () => {
