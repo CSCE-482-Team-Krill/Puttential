@@ -2,6 +2,8 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { communityPublishingFixture } from './community-publishing-fixtures';
+import { decodeBoard, decodeReplay, decodeRun } from '../src/shared/response-validation';
+import { decodeCommunityMap } from '../src/shared/community-response-validation';
 
 const connection = process.env.TEST_DATABASE_URL;
 if (!connection) throw new Error('Set TEST_DATABASE_URL to a local test database.');
@@ -23,6 +25,13 @@ after(async () => {
   await prisma.apiRateLimit.deleteMany({
     where: { key: { in: guests.map((id) => `community-publish:${id}`) } },
   });
+  await prisma.competitiveRun.deleteMany({
+    where: { puzzle: { communityMap: { authorId: { in: guests } } } },
+  });
+  await prisma.guestProgress.deleteMany({
+    where: { puzzle: { communityMap: { authorId: { in: guests } } } },
+  });
+  await prisma.puzzle.deleteMany({ where: { communityMap: { authorId: { in: guests } } } });
   await prisma.communityMap.deleteMany({ where: { authorId: { in: guests } } });
   await prisma.guest.deleteMany({ where: { id: { in: guests } } });
   await prisma.$disconnect();
@@ -93,6 +102,143 @@ test('publishing verifies a real replay, persists an immutable map, and retries 
     1,
   );
   assert.equal((await call('/00000000-0000-0000-0000-000000000000')).status, 404);
+});
+
+test('community standings use verified runs, attempts, ties, pagination, best results and replays', async () => {
+  const a = await guest(),
+    b = await guest(),
+    c = await guest();
+  const fixture = communityPublishingFixture();
+  const publication = await call(
+    '',
+    {
+      ...fixture,
+      requestId: randomUUID(),
+      expectedGuestId: a.player.id,
+      title: 'Ranked community course',
+      description: '',
+    },
+    a.cookie,
+  );
+  assert.equal(publication.status, 201);
+  const { map } = await publication.json();
+  const detail = decodeCommunityMap(await (await call(`/${map.id}`)).json(), map.id);
+  assert.equal(detail.competition.date, null);
+  assert.equal(detail.competition.communityMapId, map.id);
+  const id = detail.competition.id;
+  const ranked = (g: typeof a, path: string, input?: unknown) =>
+    guestHandler(
+      new Request(`${origin}/api/${path}`, {
+        method: input === undefined ? 'GET' : 'POST',
+        headers: { Origin: origin, Cookie: g.cookie, 'Content-Type': 'application/json' },
+        ...(input === undefined ? {} : { body: JSON.stringify(input) }),
+      }),
+    );
+  const start = async (g: typeof a, requestId = randomUUID(), placement = fixture.placement) => {
+    const response = await ranked(g, 'runs', {
+      expectedGuestId: g.player.id,
+      requestId,
+      puzzleId: id,
+      placement,
+    });
+    assert.equal(response.status, 200, JSON.stringify(await response.clone().json()));
+    return decodeRun(await response.json());
+  };
+  const finish = async (g: typeof a, runId: string, kind: 'terminal' | 'aborted' = 'terminal') => {
+    const intent = {
+      expectedGuestId: g.player.id,
+      kind,
+      ...(kind === 'aborted' ? { observedTick: 0 } : {}),
+    };
+    const response = await ranked(g, `runs/${runId}/complete`, intent);
+    assert.equal(response.status, 200);
+    return decodeRun(await response.json());
+  };
+  const board = async (g: typeof a, query = '') => {
+    const response = await ranked(g, `puzzles/${id}/leaderboard?${query}`);
+    assert.equal(response.status, 200, JSON.stringify(await response.clone().json()));
+    return decodeBoard(await response.json());
+  };
+  assert.equal((await board(a)).totalPlayers, 0);
+  const requestId = randomUUID();
+  const aborted = await start(a, requestId);
+  assert.equal((await start(a, requestId)).runId, aborted.runId);
+  await finish(a, aborted.runId, 'aborted');
+  assert.equal((await board(a)).totalPlayers, 0);
+  // A community solve remains rankable days after publication, without a daily cutoff.
+  const old = new Date('2026-10-01T12:00:00.000Z');
+  await prisma.puzzle.update({ where: { id }, data: { createdAt: old } });
+  for (const g of [a, b, c]) {
+    const accepted = await start(g);
+    await prisma.competitiveRun.update({ where: { id: accepted.runId }, data: { startedAt: old } });
+    const result = await finish(g, accepted.runId);
+    assert.equal(result.state, 'saved');
+    if (result.state !== 'saved') throw new Error('Expected a verified result');
+    assert.equal(result.result.verification, 'verified');
+    assert.equal(result.result.outcome, 'success');
+    assert.equal(result.result.dailyEligible, false);
+    assert.equal(result.progress.bestDaily, null);
+    assert.equal(result.progress.bestArchive?.runId, result.runId);
+    assert.equal((await finish(g, accepted.runId)).runId, result.runId);
+  }
+  const standings = await board(a);
+  assert.equal(standings.scope, 'archive');
+  assert.equal(standings.totalPlayers, 3);
+  assert.deepEqual(
+    standings.rows.map((row) => row.rank),
+    [1, 1, 3],
+  );
+  assert.equal(standings.me?.rank, 3);
+  assert.equal(standings.me?.firstSolveAttempts, 2);
+  assert.equal(standings.submissionClosed, false);
+  assert.equal(standings.final, false);
+  assert.equal(standings.replayAccess.available, true);
+  assert.ok(Math.abs(Date.parse(standings.asOf) - Date.now()) < 5000);
+  assert.equal((await board(a, 'view=around-me&limit=1')).rows[0]?.player.id, a.player.id);
+  const first = await board(a, 'limit=1');
+  assert.ok(first.nextCursor);
+  const next = await board(a, `limit=1&cursor=${encodeURIComponent(first.nextCursor)}`);
+  assert.notEqual(first.rows[0]?.player.id, next.rows[0]?.player.id);
+  assert.equal(
+    (await ranked(b, `puzzles/${id}/leaderboard?cursor=${encodeURIComponent(first.nextCursor)}`))
+      .status,
+    409,
+  );
+  assert.equal((await ranked(a, `puzzles/${id}/leaderboard?scope=daily`)).status, 400);
+  const replayResponse = await ranked(a, `puzzles/${id}/replays/${b.player.id}?scope=archive`);
+  assert.equal(replayResponse.status, 200);
+  const replay = decodeReplay(await replayResponse.json());
+  assert.deepEqual(replay.placement, fixture.placement);
+  assert.equal(replay.result.runId, (await board(b)).me?.bestRunId);
+  const best = standings.me!.bestRunId;
+  // Repeating an equal solution counts a start without replacing the saved best.
+  await finish(a, (await start(a)).runId);
+  assert.equal((await board(a)).me?.bestRunId, best);
+  assert.equal(
+    (await ranked(a, `puzzles/${id}/leaderboard?cursor=${encodeURIComponent(first.nextCursor)}`))
+      .status,
+    409,
+  );
+  const progress = await (await ranked(a, `me/progress?puzzleId=${id}`)).json();
+  assert.equal(progress.progress.attemptsStarted, 3);
+  assert.equal(progress.progress.firstSolveAttempts, 2);
+  const archive = await (await ranked(a, 'puzzles')).json();
+  assert.ok(!archive.items.some((course: { id: string }) => course.id === id));
+  const otherMap = await (
+    await call(
+      '',
+      {
+        ...fixture,
+        requestId: randomUUID(),
+        expectedGuestId: a.player.id,
+        title: 'Separate community course',
+        description: '',
+      },
+      a.cookie,
+    )
+  ).json();
+  const otherBoard = await (await ranked(a, `puzzles/${otherMap.map.id}/leaderboard`)).json();
+  assert.equal(otherBoard.totalPlayers, 0);
 });
 
 test('unsolved, changed, malformed and oversized map submissions never publish', async () => {

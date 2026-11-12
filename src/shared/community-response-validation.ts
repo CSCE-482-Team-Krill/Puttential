@@ -1,5 +1,6 @@
 import { parseLevel } from '../game/levels/parse';
-import { decodePuzzleRules } from './response-validation';
+import { canonicalJson } from './community-canonical-json';
+import { decodePuzzle, decodePuzzleRules } from './response-validation';
 import type { CommunityMapDetail, CommunityMapList, CommunityMapSummary } from './community-maps';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -52,7 +53,14 @@ export function decodeCommunityMap(value: unknown, requestedId: string): Communi
   check(summary.id === requestedId);
   const configuration = parseLevel(map.configuration);
   const rules = decodePuzzleRules(map.rules, configuration);
-  return { ...summary, configuration, rules };
+  const competition = decodePuzzle(map.competition);
+  check(
+    competition.communityMapId === summary.id &&
+      competition.title === summary.title &&
+      canonicalJson(competition.configuration) === canonicalJson(configuration) &&
+      canonicalJson(competition.rules) === canonicalJson(rules),
+  );
+  return { ...summary, configuration, rules, competition };
 }
 
 export function decodeCommunityPublication(value: unknown): { map: CommunityMapSummary } {

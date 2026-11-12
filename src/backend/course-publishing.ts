@@ -223,6 +223,6 @@ export async function clearUnplayedFrom(date: string): Promise<string[]> {
   const kept = await prisma.puzzle.findMany({ where: from, orderBy: { date: 'asc' } });
   return [
     `Removed ${count} unplayed course(s) from ${date}.`,
-    ...kept.map((p) => `${p.date.toISOString().slice(0, 10)}: kept ${p.title} (already played)`),
+    ...kept.map((p) => `${p.date!.toISOString().slice(0, 10)}: kept ${p.title} (already played)`),
   ];
 }

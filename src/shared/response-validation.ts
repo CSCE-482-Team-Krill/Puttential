@@ -103,9 +103,10 @@ export function decodePuzzle(x: unknown): PuzzleResponse {
       text(x.title) &&
       typeof x.seed === 'string' &&
       integer(x.difficulty) &&
-      validDate(x.date) &&
+      (x.communityMapId === undefined
+        ? validDate(x.date) && x.date <= x.todayDate
+        : text(x.communityMapId) && x.date === null) &&
       validDate(x.todayDate) &&
-      x.date <= x.todayDate &&
       instant(x.serverNow) &&
       instant(x.nextDailyAt) &&
       availability(x.availability, x.id),
