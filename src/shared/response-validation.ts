@@ -43,6 +43,25 @@ export function validNickname(value: string) {
 function player(x: any): boolean {
   return obj(x) && text(x.id) && typeof x.nickname === 'string' && validNickname(x.nickname);
 }
+const rankOrNull = (x: any) => nullable(x, (v) => integer(v, 1));
+const percentOrNull = (x: any) =>
+  nullable(x, (v) => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 100);
+/** Both boards: rank, players and percentile are all null or all present, with rank ≤ players. */
+function standingFields(x: any): boolean {
+  return (['daily', 'archive'] as const).every((board) => {
+    const rank = x[`${board}Rank`],
+      players = x[`${board}Players`],
+      percentile = x[`${board}Percentile`];
+    return (
+      rankOrNull(rank) &&
+      rankOrNull(players) &&
+      percentOrNull(percentile) &&
+      (rank === null) === (players === null) &&
+      (rank === null) === (percentile === null) &&
+      (rank === null || rank <= players)
+    );
+  });
+}
 function availability(x: any, id: string): boolean {
   return (
     obj(x) &&
@@ -315,7 +334,8 @@ export function decodeArchive(x: unknown): ArchiveResponse {
         integer(v.difficulty) &&
         ['unplayed', 'attempted', 'solved'].includes(v.status) &&
         revision(v.progressRevision) &&
-        availability(v.availability, v.id),
+        availability(v.availability, v.id) &&
+        standingFields(v),
     ),
   );
   check(x.items.every((v: any, i: number) => i === 0 || x.items[i - 1].date >= v.date));

@@ -81,6 +81,8 @@ export async function competitiveHandler(request: Request): Promise<Response> {
       result = await api.renameGuest(request, input);
     else if (path.join('/') === 'me/progress' && request.method === 'GET')
       result = await api.readProgress(guest, url.searchParams.get('puzzleId') ?? '');
+    else if (path.join('/') === 'me/stats' && request.method === 'GET')
+      result = await (await import('./player-stats')).readPlayerStats(guest);
     else if (path.join('/') === 'runs' && request.method === 'POST') {
       if (typeof input.requestId !== 'string' || !/^[0-9a-f-]{36}$/i.test(input.requestId))
         throw new api.CompetitiveError(400, 'INVALID_SETUP', 'A valid request ID is required.');
