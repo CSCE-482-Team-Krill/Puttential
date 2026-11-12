@@ -14,7 +14,7 @@ import {
   polygonBounds,
   containsBounds,
 } from '../game';
-import type { Game, GameSnapshot, Level, RenderState, Vec2 } from '../game';
+import type { Game, GameSnapshot, Level, SoundEvent, RenderState, Vec2 } from '../game';
 import type {
   Placement,
   PuzzleRules,
@@ -25,6 +25,7 @@ import type {
 import type { EngineAdapter } from './engine-adapter';
 import { displayedForceCost } from './score-display';
 import { simulationOptions, usesLegacyBounds } from '../game/run-evaluation';
+import { physicsAudio } from './physics-audio';
 
 export type Mode = 'loading' | 'setup' | 'running' | 'done' | 'error';
 export type FieldDraft = Readonly<{ position: Vec2; angle?: number; enabled: boolean }>;
@@ -129,7 +130,11 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
     setAttempts(0);
     setTick(0);
     selectField(null);
-    void createGame(level, rulesRef.current ? simulationOptions(rulesRef.current) : {})
+    physicsAudio.prepare();
+    void createGame(level, {
+      ...(rulesRef.current ? simulationOptions(rulesRef.current) : {}),
+      soundEvents: true,
+    })
       .then((created) => {
         if (canceled) {
           created.destroy();
@@ -214,6 +219,7 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
       });
     return () => {
       canceled = true;
+      physicsAudio.stopAll();
       game?.destroy();
       gameRef.current = null;
       frameRef.current = null;
@@ -311,12 +317,15 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
     if (mode !== 'running' || !game) return;
     let accumulator = 0,
       previous = performance.now();
+    const sound = { bounds: levelBounds(level) };
     let frame = requestAnimationFrame(function loop(now) {
+      const events: SoundEvent[] = [];
       const elapsed = Math.max(0, now - previous) / 1000;
       accumulator = Math.min(accumulator + elapsed, MAX_STEPS_PER_FRAME * FIXED_DT);
       previous = now;
       while (accumulator >= FIXED_DT) {
         game.step();
+        events.push(...game.soundEvents());
         const state = game.getRenderState();
         goalRef.current = advanceGoal(goalRef.current, state);
         frameRef.current = state;
@@ -353,6 +362,8 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
               displayedForceCost(level, draftRef.current, rulesRef.current?.tileCosts),
             ...(authoritative ? { metrics: authoritative.metrics } : {}),
           };
+          // The finishing tick often carries the loudest moment (a sink or burn).
+          physicsAudio.play(events, sound);
           setTick(state.tick);
           setResult(finished);
           if (runRef.current) setCompletedRun({ ...runRef.current, result: finished });
@@ -361,6 +372,7 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
           return;
         }
       }
+      physicsAudio.play(events, sound);
       setTick(frameRef.current?.tick ?? 0);
       frame = requestAnimationFrame(loop);
     });
@@ -406,6 +418,7 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
       setup = setupRef.current;
     if (!game || !setup) return;
     game.restore(setup);
+    physicsAudio.stopAll();
     goalRef.current = initialGoal(level.goal);
     frameRef.current = game.getRenderState();
     setResult(null);
