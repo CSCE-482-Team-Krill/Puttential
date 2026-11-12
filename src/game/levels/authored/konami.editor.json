@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "4ff1c6f9a7cbe46f548c5754f237404f7a326727e30be57ae63268806cc42642",
+  "editor": {
+    "name": "konami",
+    "arena": {
+      "bounds": {
+        "minX": -7.4,
+        "maxX": 7.4,
+        "minY": -4.25,
+        "maxY": 4.25
+      },
+      "walls": [
+        "left-rail",
+        "right-rail",
+        "bottom-rail",
+        "top-rail"
+      ],
+      "thickness": 0.5
+    }
+  }
+}

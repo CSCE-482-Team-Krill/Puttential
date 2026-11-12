@@ -44,6 +44,7 @@ A level is plain JSON with no code in it, so it can come from a file, the `Puzzl
 | `id`, `version` | Identify the level's content. Snapshots and saved solutions record both; raise `version` whenever a change would alter a replay. |
 | `gravity` | World gravity vector. |
 | `bounds` | Optional playable `{ minX, maxX, minY, maxY }`, independent of physical walls. Older levels infer bounds from their initial geometry. |
+| `colorScheme` | Optional cosmetic background/wall preset: `classic`, `lagoon`, `sandstone`, `rose`, `lavender`, `slate`, `black`, or `yellow`. Custom colors use `{ "kind": "custom", "primary": "#243045", "secondary": "#ffd966" }`: primary sets the background, secondary sets walls. Both must be six-digit hex colors. Omitted means Classic green. Other objects, physics and scoring are unchanged. |
 | `dynamicBodies`, `staticBodies` | Bodies made of `pieces`, each with a convex `shape`. `material.restitution` is the bounce, from 0 to 1. |
 | `fields` | Force zones; see below. |
 | `goal` | `{ bodyId, minX, maxX, minY, maxY, holdSeconds }`: solved once the body's position stays inside the bounds for `holdSeconds`. The shared run evaluator checks it on every tick. |

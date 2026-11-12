@@ -5,6 +5,7 @@ import type { RefObject } from 'react';
 import { drawZone, drawLiquid } from './zone-drawing';
 import { portalPairColors } from './portal-colors';
 import { directionHint } from './direction-hint';
+import { levelPalette } from './level-colors';
 import {
   isCourseObject,
   polygonBounds,
@@ -299,7 +300,7 @@ function draw(
   }
 
   // Walls.
-  context.fillStyle = '#2e7d32';
+  context.fillStyle = levelPalette(props.level.colorScheme).walls;
   for (const body of state.staticBodies) {
     for (const piece of body.pieces) context.fill(piecePath(view, piece));
   }
@@ -458,6 +459,12 @@ export function CourseCanvas(props: Props) {
     <canvas
       ref={canvasRef}
       className={`course-canvas ${props.mode === 'setup' ? 'editable' : ''}`}
+      style={{ backgroundColor: levelPalette(props.level.colorScheme).background }}
+      data-color-scheme={
+        typeof props.level.colorScheme === 'object'
+          ? 'custom'
+          : (props.level.colorScheme ?? 'classic')
+      }
       aria-label={
         props.ariaLabel ?? 'Puzzle course. Drag force fields to move them before pressing Play.'
       }

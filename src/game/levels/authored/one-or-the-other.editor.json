@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "levelRevision": "9424adef86139300fd648a9ec717e582f56432f3dc1c65a7239bc5252565619a",
+  "editor": {
+    "name": "Untitled course",
+    "arena": {
+      "bounds": {
+        "minX": -7.4,
+        "maxX": 7.4,
+        "minY": -4.25,
+        "maxY": 4.25
+      },
+      "walls": [],
+      "thickness": 0.5
+    }
+  }
+}

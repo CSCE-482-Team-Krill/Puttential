@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "levelRevision": "9e8e006907320d1ce38c9cf2b8c3fcd292653465d943c44ef001e435639f6b5c",
+  "editor": {
+    "name": "sputnik",
+    "arena": {
+      "bounds": {
+        "minX": -5.5,
+        "maxX": 5.5,
+        "minY": -14.5,
+        "maxY": 3.5
+      },
+      "walls": [],
+      "thickness": 0.5
+    }
+  }
+}

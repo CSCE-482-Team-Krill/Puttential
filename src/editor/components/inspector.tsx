@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { forceDefinition, polygonBounds, rectangle, shapeOutline, shapePolygon } from '../../game';
 import type { LevelDocument, Vec2, FieldParam } from '../../game';
+import { LEVEL_COLOR_SCHEMES } from '../../game/levels/color-schemes';
+import { levelPalette, levelPalettes } from '../../frontend/level-colors';
 import {
   edit,
   isDynamic,
@@ -126,6 +128,8 @@ export function Inspector({
   useEffect(() => setOutlineText(''), [selection?.id]);
   const modify = (fn: (draft: DraftDocument) => void) => apply((d) => edit(d, fn));
   const object = selection ? item(doc, selection) : undefined;
+  const customColors = typeof doc.level.colorScheme === 'object' ? doc.level.colorScheme : null;
+  const palette = levelPalette(doc.level.colorScheme);
   const change = (fn: (object: Item) => void) => modify((d) => fn(mutableItem(d, selection!)));
   if (!selection)
     return (
@@ -162,6 +166,89 @@ export function Inspector({
         <p className="muted">
           Saving changed game data advances the content version automatically.
         </p>
+        <fieldset className="level-color-schemes">
+          <legend>Color scheme</legend>
+          <p className="muted">Background and walls only.</p>
+          <div className="level-color-options">
+            {LEVEL_COLOR_SCHEMES.map((scheme) => {
+              const palette = levelPalettes[scheme];
+              return (
+                <label key={scheme} className="level-color-option">
+                  <input
+                    type="radio"
+                    name="level-color-scheme"
+                    value={scheme}
+                    checked={(doc.level.colorScheme ?? 'classic') === scheme}
+                    onChange={() =>
+                      modify((d) => {
+                        if (scheme === 'classic') delete d.level.colorScheme;
+                        else d.level.colorScheme = scheme;
+                      })
+                    }
+                  />
+                  <span
+                    className="level-color-swatch"
+                    aria-hidden="true"
+                    style={{ backgroundColor: palette.background, borderColor: palette.walls }}
+                  />
+                  <span>{palette.label}</span>
+                </label>
+              );
+            })}
+            <label className="level-color-option level-color-custom">
+              <input
+                type="radio"
+                name="level-color-scheme"
+                value="custom"
+                checked={customColors !== null}
+                onChange={() =>
+                  modify((d) => {
+                    d.level.colorScheme = {
+                      kind: 'custom',
+                      primary: palette.background,
+                      secondary: palette.walls,
+                    };
+                  })
+                }
+              />
+              <span
+                className="level-color-swatch"
+                aria-hidden="true"
+                style={{ backgroundColor: palette.background, borderColor: palette.walls }}
+              />
+              <span>Custom</span>
+            </label>
+          </div>
+          {customColors && (
+            <div className="level-custom-colors">
+              {(
+                [
+                  ['primary', 'Primary', 'Background'],
+                  ['secondary', 'Secondary', 'Walls'],
+                ] as const
+              ).map(([key, label, target]) => (
+                <label key={key} className="level-custom-color">
+                  <span>
+                    <strong>{label}</strong>
+                    <small>{target}</small>
+                  </span>
+                  <input
+                    type="color"
+                    aria-label={`${label} color (${target.toLowerCase()})`}
+                    value={customColors[key]}
+                    onChange={(e) => {
+                      const color = e.target.value;
+                      modify((d) => {
+                        d.level.colorScheme = { ...customColors, [key]: color };
+                      });
+                    }}
+                  />
+                  <code>{customColors[key]}</code>
+                </label>
+              ))}
+            </div>
+          )}
+        </fieldset>
         <label className="check">
           <input
             type="checkbox"
