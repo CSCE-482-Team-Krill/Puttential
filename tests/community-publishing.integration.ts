@@ -224,6 +224,14 @@ test('community standings use verified runs, attempts, ties, pagination, best re
   assert.equal(progress.progress.firstSolveAttempts, 2);
   const archive = await (await ranked(a, 'puzzles')).json();
   assert.ok(!archive.items.some((course: { id: string }) => course.id === id));
+  const statsResponse = await ranked(a, 'me/stats');
+  assert.equal(statsResponse.status, 200);
+  const stats = await statsResponse.json();
+  assert.ok(!stats.days.some((course: { puzzleId: string }) => course.puzzleId === id));
+  assert.equal(stats.stats.gamesPlayed, 0);
+  assert.equal(stats.stats.gamesSolved, 0);
+  assert.equal(stats.stats.dailySolves, 0);
+  assert.equal(stats.stats.currentStreak, 0);
   const otherMap = await (
     await call(
       '',

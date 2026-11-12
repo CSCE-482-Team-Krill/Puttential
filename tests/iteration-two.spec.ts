@@ -86,6 +86,13 @@ test('archive reads summaries, paginates, opens date links and retains canvas on
           difficulty: 1,
           status: i ? 'attempted' : 'solved',
           progressRevision: '0',
+          // The solved course has both standings; attempted courses have none.
+          dailyRank: i ? null : 2,
+          dailyPlayers: i ? null : 10,
+          dailyPercentile: i ? null : 80,
+          archiveRank: i ? null : 3,
+          archivePlayers: i ? null : 12,
+          archivePercentile: i ? null : 75,
           availability: v.availability,
         })),
         nextCursor: cursor ? null : 'next-page',

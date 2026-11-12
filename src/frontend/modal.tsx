@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, ReactNode, RefObject } from 'react';
 import { Icon } from './icon';
+import { useSoundEffects } from './physics-audio';
 
 export type Panel =
   'archive' | 'stats' | 'leaderboard' | 'community' | 'settings' | 'help' | 'result' | null;
@@ -117,6 +118,13 @@ function SettingSwitch({
         <span />
       </button>
     </div>
+  );
+}
+
+function SoundSetting() {
+  const [enabled, setEnabled] = useSoundEffects();
+  return (
+    <SettingSwitch label="Sound effects" checked={enabled} change={() => setEnabled(!enabled)} />
   );
 }
 
@@ -280,6 +288,12 @@ export function Modal({
                 checked={preferences.showPreview}
                 change={() => togglePreference('showPreview')}
               />
+            </section>
+            <section className="settings-section" aria-labelledby="sound-settings">
+              <h3 className="modal-section-heading" id="sound-settings">
+                Sound
+              </h3>
+              <SoundSetting />
             </section>
             {courseImport && (
               <section className="settings-section" aria-labelledby="local-course-settings">

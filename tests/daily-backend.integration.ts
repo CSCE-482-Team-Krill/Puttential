@@ -209,6 +209,11 @@ test('real PostgreSQL daily flow: ownership, replay, idempotency, ties, optimiza
     await (await call('puzzles?limit=20', 'GET', undefined, a.cookie)).json(),
   );
   assert.ok(history.items.length >= 4);
+  // The archive list reports the same daily standing as the leaderboard.
+  const todayItem = history.items.find((item) => item.id === p.id)!;
+  assert.equal(todayItem.dailyRank, fullBoard.me?.rank);
+  assert.equal(todayItem.dailyPlayers, fullBoard.totalPlayers);
+  assert.ok(todayItem.archivePlayers! >= todayItem.dailyPlayers!);
   for (let days = -3; days < 0; days++)
     assert.equal(
       (await call(`puzzles/by-date/${shiftDate(centralDateString(), days)}`)).status,

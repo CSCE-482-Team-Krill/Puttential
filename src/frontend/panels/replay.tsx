@@ -3,12 +3,14 @@
 import { useEffect, useRef, useState } from 'react';
 import type { RenderState } from '../../game/types';
 import { FIXED_DT } from '../../game/simulation';
+import { levelBounds } from '../../game/levels/codec';
 import { initialGoal } from '../goal-progress';
 import type { Player, PuzzleResponse, ReplayResponse, Scope } from '../../shared/puzzle-contracts';
 import { ApiError, puzzleApi } from '../api';
 import { deliveredEngine } from '../engine-adapter';
 import type { AuthoritativeState } from '../authoritative-state';
 import { CourseCanvas } from '../course-canvas';
+import { physicsAudio } from '../physics-audio';
 import { ReplayPlayback } from '../replay-playback';
 import type { ReplaySpeed } from '../replay-playback';
 
@@ -48,6 +50,8 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
     let canceled = false;
     let frame = 0;
     let previous = performance.now();
+    const bounds = levelBounds(puzzle.configuration);
+    physicsAudio.prepare();
     void ReplayPlayback.create(puzzle.configuration, puzzle.rules, replay.placement, replay.result)
       .then((created) => {
         if (canceled) {
@@ -62,6 +66,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
           const before = created.frame.tick;
           const status = created.status;
           created.advance((now - previous) / 1000);
+          physicsAudio.play(created.takeSoundEvents(), { bounds });
           previous = now;
           frameRef.current = created.frame;
           goalRef.current = created.goal;
@@ -86,6 +91,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
       document.removeEventListener('visibilitychange', visibility);
       playback.current?.destroy();
       playback.current = null;
+      physicsAudio.stopAll();
       frameRef.current = null;
     };
     // Published course versions are immutable; focus refreshes must not reset a paused replay.
@@ -132,6 +138,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
             <button
               onClick={() => {
                 current.restart();
+                physicsAudio.stopAll();
                 frameRef.current = current.frame;
                 goalRef.current = current.goal;
                 update((n) => n + 1);

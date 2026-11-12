@@ -430,7 +430,7 @@ export async function completeRun(guest: Guest, id: string, intent: CompleteRunR
   await verifyRun(id);
   return readRun(guest, id);
 }
-function score(result: SavedResult, first: number) {
+export function score(result: SavedResult, first: number) {
   const m = result.metrics!;
   return [m.forceCost, m.tileCount, first, m.completionTick, m.pathLengthQ];
 }
@@ -817,7 +817,15 @@ export async function archive(guest: Guest, params: URLSearchParams) {
     take: limit + 1,
     include: { guestProgress: { where: { guestId: guest.id } } },
   });
-  const items = puzzles.slice(0, limit).map((p) => {
+  const page = puzzles.slice(0, limit);
+  // Dynamic import: standings.ts imports score/compareScore from this file.
+  const { loadStandings, NO_STANDINGS } = await import('./standings');
+  const standings = await loadStandings(
+    page
+      .filter((p) => !p.canceledAt)
+      .map((p) => ({ puzzleId: p.id, progress: p.guestProgress[0] })),
+  );
+  const items = page.map((p) => {
     const g = p.guestProgress[0];
     return {
       id: p.id,
@@ -826,6 +834,7 @@ export async function archive(guest: Guest, params: URLSearchParams) {
       difficulty: p.difficulty,
       status: g?.bestArchive ? 'solved' : g?.attemptsStarted ? 'attempted' : 'unplayed',
       progressRevision: String(g?.revision ?? 0),
+      ...(standings.get(p.id) ?? NO_STANDINGS),
       availability: availability(p),
     };
   });
