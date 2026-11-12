@@ -175,7 +175,7 @@
   "engine": {
     "simulationVersion": "puttential-rapier-0.20.0-v3",
     "rulesVersion": "puttential-daily-v2",
-    "artifactDigest": "f3044546fe2343b8bbb3b31b24a39d4de15ab0f1a209c0d3dae82e9d48198f11"
+    "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
   },
   "candidate": {
     "contract": "community-record-v1",
@@ -184,11 +184,11 @@
     "engine": {
       "simulationVersion": "puttential-rapier-0.20.0-v3",
       "rulesVersion": "puttential-daily-v2",
-      "artifactDigest": "f3044546fe2343b8bbb3b31b24a39d4de15ab0f1a209c0d3dae82e9d48198f11"
+      "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
     },
     "configuration": {
       "formatVersion": 1,
-      "id": "c-f423f36a2ebe6af95e1d14f506fcc4ae619ec4ed855b4cd2ba6e51146aa9d807",
+      "id": "c-47fa70cbe9c3792aacb003174e46e59ca893e1924a6a220820cfbece793ef06a",
       "version": 1,
       "gravity": {
         "x": 0,
@@ -368,21 +368,21 @@
         "uniform-1": 1
       }
     },
-    "gameHash": "f423f36a2ebe6af95e1d14f506fcc4ae619ec4ed855b4cd2ba6e51146aa9d807",
-    "candidateHash": "679820247a7475cf8411af2863dd41f58b3ee5bfabaf53854047b9dbb6d05aad"
+    "gameHash": "47fa70cbe9c3792aacb003174e46e59ca893e1924a6a220820cfbece793ef06a",
+    "candidateHash": "95121299d9d1615e6d5cc8ee1ea7a190d08477f770cc852307f50fea696bb234"
   },
   "metadata": {
     "title": "Café course",
     "description": "A 😀 course with  two spaces.",
     "creatorNameSnapshot": "Creator"
   },
-  "publicationHash": "dd7c13ad895b0cb11824cc6010b32ed8a851e756e93fd7920bd9f8929ad724c0",
+  "publicationHash": "3a2731ee0cbaf97599522007ebe4b9c16b97d6829f833da76e09ed2015367b52",
   "proof": {
     "candidateId": "04784c12-c0ad-4637-a3ed-f9eadb1851f1",
-    "candidateHash": "679820247a7475cf8411af2863dd41f58b3ee5bfabaf53854047b9dbb6d05aad",
-    "engineArtifactDigest": "f3044546fe2343b8bbb3b31b24a39d4de15ab0f1a209c0d3dae82e9d48198f11",
+    "candidateHash": "95121299d9d1615e6d5cc8ee1ea7a190d08477f770cc852307f50fea696bb234",
+    "engineArtifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7",
     "placement": {
-      "levelId": "c-f423f36a2ebe6af95e1d14f506fcc4ae619ec4ed855b4cd2ba6e51146aa9d807",
+      "levelId": "c-47fa70cbe9c3792aacb003174e46e59ca893e1924a6a220820cfbece793ef06a",
       "levelVersion": 1,
       "rulesVersion": "puttential-daily-v2",
       "simulationVersion": "puttential-rapier-0.20.0-v3",
@@ -409,7 +409,7 @@
       ]
     }
   },
-  "proofHash": "97954a2c68de701968d536a7da34b3efec04d2dc94ac3be99fdebbaf7f149b8c",
+  "proofHash": "a648fa23ea737612c8729b55d91de694b034afb3b9e56ec596432d8e5c894bcd",
   "result": {
     "outcome": "success",
     "metrics": {
@@ -419,5 +419,5 @@
       "pathLengthQ": 0
     }
   },
-  "canonicalCandidate": "{\"candidateHash\":\"679820247a7475cf8411af2863dd41f58b3ee5bfabaf53854047b9dbb6d05aad\",\"configuration\":{\"bounds\":{\"maxX\":7.4,\"maxY\":4.25,\"minX\":-7.4,\"minY\":-4.25},\"dynamicBodies\":[{\"angle\":0,\"angularVelocity\":0,\"canSleep\":true,\"ccd\":true,\"density\":1,\"id\":\"ball\",\"linearVelocity\":{\"x\":0,\"y\":0},\"material\":{\"restitution\":0.8},\"pieces\":[{\"density\":1,\"id\":\"ball-piece\",\"shape\":{\"kind\":\"circle\",\"radius\":0.4}}],\"position\":{\"x\":-4,\"y\":0}}],\"fields\":[{\"angle\":0,\"enabled\":false,\"force\":{\"density\":{\"x\":4,\"y\":0},\"kind\":\"uniform\"},\"id\":\"uniform-1\",\"position\":{\"x\":0,\"y\":0},\"shape\":{\"height\":2,\"kind\":\"rectangle\",\"width\":2}}],\"formatVersion\":1,\"goal\":{\"bodyId\":\"ball\",\"holdSeconds\":0.05,\"maxX\":-3,\"maxY\":1,\"minX\":-5,\"minY\":-1},\"gravity\":{\"x\":0,\"y\":0},\"id\":\"c-f423f36a2ebe6af95e1d14f506fcc4ae619ec4ed855b4cd2ba6e51146aa9d807\",\"prediction\":{\"maxTicks\":1200,\"sampleEveryTicks\":8},\"staticBodies\":[{\"angle\":0,\"id\":\"left-rail\",\"material\":{\"restitution\":0.8},\"pieces\":[{\"id\":\"left-rail-piece\",\"shape\":{\"height\":8.5,\"kind\":\"rectangle\",\"width\":0.5}}],\"position\":{\"x\":-7.15,\"y\":0}},{\"angle\":0,\"id\":\"right-rail\",\"material\":{\"restitution\":0.8},\"pieces\":[{\"id\":\"right-rail-piece\",\"shape\":{\"height\":8.5,\"kind\":\"rectangle\",\"width\":0.5}}],\"position\":{\"x\":7.15,\"y\":0}},{\"angle\":0,\"id\":\"bottom-rail\",\"material\":{\"restitution\":0.8},\"pieces\":[{\"id\":\"bottom-rail-piece\",\"shape\":{\"height\":0.5,\"kind\":\"rectangle\",\"width\":14.8}}],\"position\":{\"x\":0,\"y\":-4}},{\"angle\":0,\"id\":\"top-rail\",\"material\":{\"restitution\":0.8},\"pieces\":[{\"id\":\"top-rail-piece\",\"shape\":{\"height\":0.5,\"kind\":\"rectangle\",\"width\":14.8}}],\"position\":{\"x\":0,\"y\":4}}],\"version\":1},\"contract\":\"community-record-v1\",\"engine\":{\"artifactDigest\":\"f3044546fe2343b8bbb3b31b24a39d4de15ab0f1a209c0d3dae82e9d48198f11\",\"rulesVersion\":\"puttential-daily-v2\",\"simulationVersion\":\"puttential-rapier-0.20.0-v3\"},\"gameHash\":\"f423f36a2ebe6af95e1d14f506fcc4ae619ec4ed855b4cd2ba6e51146aa9d807\",\"levelId\":\"b3c12425-cca4-43a5-a6af-02e2c2a4e843\",\"profile\":\"community-v1\",\"rules\":{\"maxTicks\":7200,\"placementBounds\":{\"maxX\":7.4,\"maxY\":4.25,\"minX\":-7.4,\"minY\":-4.25},\"rotationAllowed\":true,\"rulesVersion\":\"puttential-daily-v2\",\"simulationVersion\":\"puttential-rapier-0.20.0-v3\",\"tileCosts\":{\"uniform-1\":1}}}"
+  "canonicalCandidate": "{\"candidateHash\":\"95121299d9d1615e6d5cc8ee1ea7a190d08477f770cc852307f50fea696bb234\",\"configuration\":{\"bounds\":{\"maxX\":7.4,\"maxY\":4.25,\"minX\":-7.4,\"minY\":-4.25},\"dynamicBodies\":[{\"angle\":0,\"angularVelocity\":0,\"canSleep\":true,\"ccd\":true,\"density\":1,\"id\":\"ball\",\"linearVelocity\":{\"x\":0,\"y\":0},\"material\":{\"restitution\":0.8},\"pieces\":[{\"density\":1,\"id\":\"ball-piece\",\"shape\":{\"kind\":\"circle\",\"radius\":0.4}}],\"position\":{\"x\":-4,\"y\":0}}],\"fields\":[{\"angle\":0,\"enabled\":false,\"force\":{\"density\":{\"x\":4,\"y\":0},\"kind\":\"uniform\"},\"id\":\"uniform-1\",\"position\":{\"x\":0,\"y\":0},\"shape\":{\"height\":2,\"kind\":\"rectangle\",\"width\":2}}],\"formatVersion\":1,\"goal\":{\"bodyId\":\"ball\",\"holdSeconds\":0.05,\"maxX\":-3,\"maxY\":1,\"minX\":-5,\"minY\":-1},\"gravity\":{\"x\":0,\"y\":0},\"id\":\"c-47fa70cbe9c3792aacb003174e46e59ca893e1924a6a220820cfbece793ef06a\",\"prediction\":{\"maxTicks\":1200,\"sampleEveryTicks\":8},\"staticBodies\":[{\"angle\":0,\"id\":\"left-rail\",\"material\":{\"restitution\":0.8},\"pieces\":[{\"id\":\"left-rail-piece\",\"shape\":{\"height\":8.5,\"kind\":\"rectangle\",\"width\":0.5}}],\"position\":{\"x\":-7.15,\"y\":0}},{\"angle\":0,\"id\":\"right-rail\",\"material\":{\"restitution\":0.8},\"pieces\":[{\"id\":\"right-rail-piece\",\"shape\":{\"height\":8.5,\"kind\":\"rectangle\",\"width\":0.5}}],\"position\":{\"x\":7.15,\"y\":0}},{\"angle\":0,\"id\":\"bottom-rail\",\"material\":{\"restitution\":0.8},\"pieces\":[{\"id\":\"bottom-rail-piece\",\"shape\":{\"height\":0.5,\"kind\":\"rectangle\",\"width\":14.8}}],\"position\":{\"x\":0,\"y\":-4}},{\"angle\":0,\"id\":\"top-rail\",\"material\":{\"restitution\":0.8},\"pieces\":[{\"id\":\"top-rail-piece\",\"shape\":{\"height\":0.5,\"kind\":\"rectangle\",\"width\":14.8}}],\"position\":{\"x\":0,\"y\":4}}],\"version\":1},\"contract\":\"community-record-v1\",\"engine\":{\"artifactDigest\":\"e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7\",\"rulesVersion\":\"puttential-daily-v2\",\"simulationVersion\":\"puttential-rapier-0.20.0-v3\"},\"gameHash\":\"47fa70cbe9c3792aacb003174e46e59ca893e1924a6a220820cfbece793ef06a\",\"levelId\":\"b3c12425-cca4-43a5-a6af-02e2c2a4e843\",\"profile\":\"community-v1\",\"rules\":{\"maxTicks\":7200,\"placementBounds\":{\"maxX\":7.4,\"maxY\":4.25,\"minX\":-7.4,\"minY\":-4.25},\"rotationAllowed\":true,\"rulesVersion\":\"puttential-daily-v2\",\"simulationVersion\":\"puttential-rapier-0.20.0-v3\",\"tileCosts\":{\"uniform-1\":1}}}"
 }
