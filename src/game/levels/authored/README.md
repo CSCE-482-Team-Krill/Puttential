@@ -16,7 +16,15 @@ Five playtest courses include an enabled launch tile: open one in the editor, ch
 | Open Water Hop / `open-water-hop` | Water and one portal pair, no outer walls   | Transfer to the lower goal lane. Keep part of the ball inside the dashed board bounds to avoid failure. |
 | Prism Relay / `prism-relay`       | Two portal pairs, outer walls and obstacles | Chain the two matching-color pairs to cross the divider and finish in the lower lane.                   |
 
-Portal transfers take 0.25 seconds and have a 0.75-second return cooldown. These are local editing/playtest courses; adding them here does not publish them as daily puzzles.
+Portal transfers take 0.25 seconds and have a 0.75-second return cooldown. Authored courses can be edited and playtested locally; saving a file here does not itself publish a dated puzzle.
+
+Official daily rotation is registered separately in `src/backend/authored-courses.ts`.
+All committed authored courses are included, including Big Boom, Konami, One Or The
+Other and Sputnik, with their saved preset or custom colors. Deploying this registry
+lets the normal daily scheduler select them for unfilled dates; existing published
+dates are preserved. Official designer courses use daily publishing and replay
+budgets. Community-submission limits apply only to user-submitted community maps
+and do not exclude larger official courses such as Big Boom and Konami.
 
 Saving changed engine data, including prediction settings, raises the content version to at least the previous version plus one. Metadata-only edits do not automatically raise it. Saves retain an explicitly higher version and reject stale disk revisions. Open an existing repository level before overwriting it, or change the ID to Save As.
 

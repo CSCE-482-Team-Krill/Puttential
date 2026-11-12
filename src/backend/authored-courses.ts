@@ -76,6 +76,14 @@ import prismRelay from '../game/levels/authored/prism-relay.json';
 import straightForward from '../game/levels/authored/straight-forward.json';
 import tidalTransfer from '../game/levels/authored/tidal-transfer.json';
 import whirlyGig from '../game/levels/authored/whirly-gig.json';
+import dodgeOne from '../game/levels/authored/dodge-1.json';
+import lavaBounce from '../game/levels/authored/lava-bounce.json';
+import pushPull from '../game/levels/authored/push-pull.json';
+import subtlety from '../game/levels/authored/subtlety.json';
+import bigBoom from '../game/levels/authored/big-boom.json';
+import konami from '../game/levels/authored/konami.json';
+import oneOrTheOther from '../game/levels/authored/one-or-the-other.json';
+import sputnik from '../game/levels/authored/sputnik.json';
 
 /** Every designer-made course from the level editor, in daily rotation order. */
 const RAW = [
@@ -90,6 +98,14 @@ const RAW = [
   straightForward,
   tidalTransfer,
   whirlyGig,
+  dodgeOne,
+  lavaBounce,
+  pushPull,
+  subtlety,
+  bigBoom,
+  konami,
+  oneOrTheOther,
+  sputnik,
 ];
 export const AUTHORED_COURSE_COUNT = RAW.length;
 
