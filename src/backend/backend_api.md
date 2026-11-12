@@ -38,3 +38,15 @@ See [release and publishing](../../docs/iteration-two-release.md) for database s
 `POST /api/community` verifies a solved editor document and publishes an immutable
 map using the existing guest cookie, origin checks and a retryable request ID.
 See [community publishing](../../docs/community-publishing.md) for the request and deployment details.
+
+Community map details include a `competition` course with a null `date` and a
+`communityMapId`. Its ID uses the same `/api/runs`, `/api/me/progress`, leaderboard,
+and replay endpoints as daily courses. Community standings use `scope=archive`
+(also the default when omitted for a community course) and stay open indefinitely.
+Daily scope is rejected for community courses. Verified solves use the same force
+cost, tile count, first-solve attempts, completion tick and path-length ranking,
+ties, percentiles, viewer-bound pagination and best-run selection as daily play.
+Community replays are available immediately after publication. Publishing an
+author proof does not submit a ranked player run. The community leaderboard
+migration backfills existing maps without changing their public URLs or adding
+them to the daily calendar.
