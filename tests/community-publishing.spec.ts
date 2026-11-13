@@ -414,10 +414,15 @@ test('a creator solves and publishes a map; another browser discovers, shares an
     });
     await card.getByRole('button', { name: `Play ${map.title}`, exact: true }).click();
     await visitor.getByRole('button', { name: 'Play', exact: true }).click();
-    await expect(visitor.getByRole('dialog', { name: 'Nice work!', exact: true })).toBeVisible();
-    await visitor.getByRole('button', { name: 'Copy result', exact: true }).click();
+    const result = visitor.getByRole('dialog', { name: 'Nice work!', exact: true });
+    await expect(result).toBeVisible();
+    await expect(
+      result.getByRole('status').filter({ hasText: /^Saved and verified\.$/ }),
+    ).toBeVisible();
+    await result.getByRole('button', { name: 'Copy result', exact: true }).click();
     // Clipboard availability varies by environment; the selectable result is always shown.
     await expect(visitor.getByLabel('Result text')).toHaveValue(/Community solved/);
+    await expect(visitor.getByLabel('Result text')).toHaveValue(/Verified historical result/);
     await expect(visitor.getByLabel('Result text')).toHaveValue(new RegExp(map.id));
     expect(rankedStarts).toBe(1);
     expect(errors).toEqual([]);
