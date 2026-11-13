@@ -622,21 +622,26 @@ test('short dialogs scroll, trap Tab both ways, close on backdrop and retain pre
   await expect(page.getByRole('button', { name: 'Open local course', exact: true })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(close).toBeFocused();
-  await page.getByRole('switch', { name: 'Show path preview' }).click();
-  await page.getByRole('switch', { name: 'Reduced motion' }).click();
+  const settings = page.getByRole('dialog', { name: 'Settings', exact: true });
+  const preferenceNames = ['Show path preview', 'Reduced motion', 'Sound effects'];
+  await expect(settings.getByRole('switch')).toHaveCount(preferenceNames.length);
+  for (const name of preferenceNames) {
+    const toggle = settings.getByRole('switch', { name, exact: true });
+    await expect(toggle).toHaveAttribute('aria-checked', 'true');
+    await toggle.click();
+    await expect(toggle).toHaveAttribute('aria-checked', 'false');
+  }
   await page.mouse.click(2, 2);
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await page.reload();
   await page.getByRole('button', { name: 'Settings', exact: true }).click();
-  await expect(page.getByRole('switch', { name: 'Show path preview' })).toHaveAttribute(
-    'aria-checked',
-    'false',
-  );
-  await expect(page.getByRole('switch', { name: 'Reduced motion' })).toHaveAttribute(
-    'aria-checked',
-    'false',
-  );
-  await expect(page.getByRole('dialog').getByRole('switch')).toHaveCount(2);
+  for (const name of preferenceNames) {
+    await expect(settings.getByRole('switch', { name, exact: true })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+  }
+  await expect(settings.getByRole('switch')).toHaveCount(preferenceNames.length);
 });
 
 test('integrated import rejects corrupt/oversize data, retains pending file input across resize and respects camera bounds', async ({
