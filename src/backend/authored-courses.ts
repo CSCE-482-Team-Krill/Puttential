@@ -130,8 +130,7 @@ export function authoredCourse(index: number) {
     fields: authored.fields.map((f) => (isCourseObject(f.force) ? f : { ...f, enabled: false })),
   });
   const rules = defaultRules(level);
-  // The editor layout is kept as the reference. Not every course has been re-tuned for the
-  // current physics yet, so it is stored without requiring a successful replay.
+  // Keep the editor layout as a candidate, not as evidence that a course is solvable.
   const reference = makePlacement(
     level,
     Object.fromEntries(

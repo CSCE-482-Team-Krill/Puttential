@@ -68,6 +68,12 @@ test('schemes recolor the background and walls while objects retain their colors
   page,
 }, testInfo) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  const textureUrls = new Map<string, string>();
+  page.on('response', (response) => {
+    if (response.ok())
+      for (const kind of ['water', 'lava'])
+        if (response.url().includes(`${kind}-tile.`)) textureUrls.set(kind, response.url());
+  });
   await page.goto('http://127.0.0.1:3001');
   page.on('dialog', (dialog) => dialog.accept());
   await page.locator('input[type=file]').setInputFiles({
@@ -77,6 +83,22 @@ test('schemes recolor the background and walls while objects retain their colors
   });
   const canvas = page.locator('.editor-course canvas');
   await expect(page.getByRole('radio', { name: 'Classic green', exact: true })).toBeChecked();
+  // The first liquid frame uses fallback fills until the image textures decode.
+  // Compare completed texture frames rather than capturing those fallback colors.
+  await expect.poll(() => textureUrls.size).toBe(2);
+  await page.evaluate(
+    async (urls) => {
+      await Promise.all(
+        urls.map(async (url) => {
+          const image = new Image();
+          image.src = url;
+          await image.decode();
+        }),
+      );
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    },
+    [...textureUrls.values()],
+  );
   await expect.poll(async () => (await pixel(canvas, -1, 2.15))[3]).toBeGreaterThan(0);
   await expect.poll(async () => (await pixel(canvas, -1, -2.15))[3]).toBeGreaterThan(0);
   const points = [
@@ -95,8 +117,10 @@ test('schemes recolor the background and walls while objects retain their colors
     await expect
       .poll(async () => (await pixel(canvas, -7.15, 2.5)).slice(0, 3))
       .toEqual(rgb(palette.walls));
-    const actualBackground = await canvas.evaluate((c) => getComputedStyle(c).backgroundColor);
-    expect(actualBackground).toBe(`rgb(${rgb(palette.background).join(', ')})`);
+    await expect(canvas).toHaveCSS(
+      'background-color',
+      `rgb(${rgb(palette.background).join(', ')})`,
+    );
     expect(await Promise.all(points.map(([x, y]) => pixel(canvas, x!, y!)))).toEqual(original);
     if (scheme === 'black' || scheme === 'yellow')
       await page.screenshot({ path: testInfo.outputPath(`${scheme}-editor.png`), fullPage: true });
