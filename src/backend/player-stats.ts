@@ -14,6 +14,7 @@ export async function readPlayerStats(guest: Guest): Promise<PlayerStatsResponse
   const today = centralDateString();
   const puzzles = await prisma.puzzle.findMany({
     where: {
+      communityMapId: null,
       date: {
         lte: new Date(`${today}T00:00:00Z`),
         gte: new Date(`${shiftDate(today, -(STATS_HISTORY_DAYS - 1))}T00:00:00Z`),
@@ -35,7 +36,7 @@ export async function readPlayerStats(guest: Guest): Promise<PlayerStatsResponse
     const archive = (progress?.bestArchive as SavedResult | null | undefined) ?? null;
     return {
       puzzleId: p.id,
-      date: p.date.toISOString().slice(0, 10),
+      date: p.date!.toISOString().slice(0, 10),
       title: p.title,
       status: archive ? 'solved' : progress?.attemptsStarted ? 'attempted' : 'unplayed',
       attemptsStarted: progress?.attemptsStarted ?? 0,

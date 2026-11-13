@@ -8,13 +8,13 @@ import { identical } from './authoritative-state';
 export const retryDelay = (failures: number) =>
   [1000, 2000, 4000, 8000, 16000, 30000][Math.min(5, Math.max(0, failures - 1))]!;
 export const terminal = (r: RunResponse) => ['saved', 'rejected', 'canceled'].includes(r.state);
-export function runMessage(r: RunResponse): string {
+export function runMessage(r: RunResponse, community = false): string {
   if (r.availability.publicationStatus === 'canceled')
     return `Course canceled. ${r.availability.cancellationMessage}`;
   if (r.state === 'saved')
     return r.result.verification === 'not-applicable'
       ? 'Stopped run saved.'
-      : r.result.dailyEligible
+      : community || r.result.dailyEligible
         ? 'Saved and verified.'
         : 'Saved and verified outside daily window.';
   if (r.state === 'rejected') return `Invalid replay: ${r.rejection.message}`;
@@ -112,7 +112,7 @@ export class SubmissionQueue {
         return;
       }
       record.failures = 0;
-      record.message = runMessage(record.response);
+      record.message = runMessage(record.response, !!record.context.communityMapId);
       if (terminal(record.response)) record.phase = 'terminal';
       await this.storage.put(record);
       this.changed(record);
