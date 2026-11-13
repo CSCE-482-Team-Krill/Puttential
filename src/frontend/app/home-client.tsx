@@ -41,14 +41,17 @@ const EmbeddedEditor = dynamic(() => import('../embedded-editor'), {
   loading: () => <p role="status">Loading level editor…</p>,
 });
 
-export default function Home() {
-  const [view, setView] = useState<'game' | 'editor'>('game');
+type View = 'game' | 'editor' | 'community';
+
+export default function Home({ initialView = 'game' }: { initialView?: View }) {
+  const [view, setView] = useState<View>(initialView);
   const [editorVisited, setEditorVisited] = useState(false);
   const [context, setContext] = useState<CourseContext | null>(null);
   const contextRef = useRef(context);
   contextRef.current = context;
   const [daily, setDaily] = useState<PuzzleResponse | null>(null);
   const [notice, setNotice] = useState('');
+  const [communityNotice, setCommunityNotice] = useState('');
   const [loading, setLoading] = useState(true);
   const [importBounds, setImportBounds] = useState<Bounds | null>(null);
   const [panel, setPanel] = useState<Panel>(null);
@@ -230,6 +233,36 @@ export default function Home() {
     if (unresolved) await session?.cancel(record.start.requestId);
     return true;
   }, []);
+  const showView = useCallback(
+    async (next: View, history = true) => {
+      const current = contextRef.current;
+      const gameUrl = current?.community
+        ? communityMapUrl(current.community.id)
+        : current?.puzzle
+          ? `/?date=${current.puzzle.date}`
+          : '/';
+      if (next !== 'game') {
+        if (!(await leaveOwned())) {
+          if (!history) window.history.pushState(null, '', gameUrl);
+          return;
+        }
+        ++selectedGeneration.current;
+        selectionAbort.current?.abort();
+        if (executorRef.current.mode === 'running') executorRef.current.rewind();
+        setLoading(false);
+      }
+      setPanel(null);
+      setCommunityNotice('');
+      if (next === 'editor') setEditorVisited(true);
+      setView(next);
+      if (history)
+        window.history.pushState(null, '', next === 'community' ? '/community' : gameUrl);
+    },
+    [leaveOwned],
+  );
+  useEffect(() => {
+    if (view === 'community') document.getElementById('community-title')?.focus();
+  }, [view]);
   const chooseDate = useCallback(
     async (date: string, history = true) => {
       if (!validDate(date)) {
@@ -246,8 +279,8 @@ export default function Home() {
             contextRef.current?.community
               ? communityMapUrl(contextRef.current.community.id)
               : contextRef.current?.puzzle
-                ? `?date=${contextRef.current.puzzle.date}`
-                : window.location.pathname,
+                ? `/?date=${contextRef.current.puzzle.date}`
+                : '/',
           );
         return;
       }
@@ -277,7 +310,7 @@ export default function Home() {
         setNotice('');
         setPanel(null);
         if (!sameContent) activeRequest.current = null;
-        if (history) window.history.pushState(null, '', `?date=${date}`);
+        if (history) window.history.pushState(null, '', `/?date=${date}`);
       } catch (e) {
         if (generation === selectedGeneration.current && !controller.signal.aborted)
           setNotice(e instanceof Error ? e.message : 'Selected course unavailable.');
@@ -298,8 +331,8 @@ export default function Home() {
             contextRef.current?.community
               ? communityMapUrl(contextRef.current.community.id)
               : contextRef.current?.puzzle
-                ? `?date=${contextRef.current.puzzle.date}`
-                : window.location.pathname,
+                ? `/?date=${contextRef.current.puzzle.date}`
+                : '/',
           );
         return;
       }
@@ -309,6 +342,7 @@ export default function Home() {
       selectionAbort.current = controller;
       setLoading(true);
       setNotice('Loading community map…');
+      setCommunityNotice('Loading community map…');
       try {
         const map = await communityApi.read(id, controller.signal);
         if (controller.signal.aborted || generation !== selectedGeneration.current) return;
@@ -324,12 +358,16 @@ export default function Home() {
         setImportBounds(map.rules.placementBounds);
         setView('game');
         setPanel(null);
+        setCommunityNotice('');
         setNotice(deliveredEngine.supports(map.rules) ? '' : ENGINE_UNAVAILABLE);
         if (!sameContent) activeRequest.current = null;
         if (history) window.history.pushState(null, '', communityMapUrl(map.id));
       } catch (cause) {
-        if (!controller.signal.aborted && generation === selectedGeneration.current)
-          setNotice(cause instanceof Error ? cause.message : 'Community map unavailable.');
+        if (!controller.signal.aborted && generation === selectedGeneration.current) {
+          const message = cause instanceof Error ? cause.message : 'Community map unavailable.';
+          setNotice(message);
+          setCommunityNotice(message);
+        }
       } finally {
         if (!controller.signal.aborted && generation === selectedGeneration.current)
           setLoading(false);
@@ -352,7 +390,7 @@ export default function Home() {
     setLoading(false);
     activeRequest.current = null;
     setNotice('');
-    window.history.pushState(null, '', window.location.pathname);
+    window.history.pushState(null, '', '/');
   }
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -362,6 +400,10 @@ export default function Home() {
     if (communityId) void chooseCommunity(communityId, false);
     else if (requested) void chooseDate(requested, false);
     const back = () => {
+      if (window.location.pathname === '/community') {
+        void showView('community', false);
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       const date = params.get('date');
       const communityId = params.get('community');
@@ -371,7 +413,11 @@ export default function Home() {
         void (async () => {
           if (await leaveOwned()) {
             ++selectedGeneration.current;
+            selectionAbort.current?.abort();
+            if (executorRef.current.mode === 'running') executorRef.current.rewind();
             activeRequest.current = null;
+            setView('game');
+            setPanel(null);
             await refreshToday(true);
           } else {
             window.history.pushState(
@@ -380,8 +426,8 @@ export default function Home() {
               contextRef.current?.community
                 ? communityMapUrl(contextRef.current.community.id)
                 : contextRef.current?.puzzle
-                  ? `?date=${contextRef.current.puzzle.date}`
-                  : window.location.pathname,
+                  ? `/?date=${contextRef.current.puzzle.date}`
+                  : '/',
             );
           }
         })();
@@ -392,7 +438,7 @@ export default function Home() {
       selectionAbort.current?.abort();
       dailyAbort.current?.abort();
     };
-  }, [refreshToday, chooseDate, chooseCommunity]);
+  }, [refreshToday, chooseDate, chooseCommunity, showView]);
   useEffect(() => {
     const current = rollover.current;
     if (!current) return;
@@ -557,7 +603,7 @@ export default function Home() {
     return `⛳ Puttential — ${community?.title ?? p?.date ?? (legacy ? levelName(level) : 'Practice')} — ${p ? 'Unverified' : community ? 'Community — unranked' : legacy ? 'Legacy course' : 'Practice — unranked'}\n${puzzle.result?.solved ? 'Solved' : (puzzle.result?.outcome ?? 'Finished')}\nForce ${puzzle.result?.forceCost ?? 0} · Tiles ${puzzle.result?.tiles ?? 0}\nBall time ${(puzzle.result?.seconds ?? 0).toFixed(2)}s${community ? `\n${window.location.origin}${communityMapUrl(community.id)}` : p ? `\n${window.location.origin}/?date=${p.date}` : ''}`;
   }
   const nav: {
-    name: Exclude<Panel, 'result' | null> | 'editor';
+    name: Exclude<Panel, 'result' | null> | 'editor' | 'community';
     label: string;
     icon: IconName;
   }[] = [
@@ -581,8 +627,8 @@ export default function Home() {
           className="brand"
           aria-label="Puttential home"
           onClick={() => {
-            if (view === 'editor') {
-              setView('game');
+            if (view !== 'game') {
+              void showView('game');
               return;
             }
             if (daily?.date) void chooseDate(daily.date);
@@ -593,25 +639,19 @@ export default function Home() {
         </button>
         <nav className="main-nav" aria-label="Main navigation">
           {nav.map(({ name, label, icon }) =>
-            name === 'editor' ? (
+            name === 'editor' || name === 'community' ? (
               <button
                 key={name}
-                className={`nav-button ${view === 'editor' ? 'active' : ''}`}
-                aria-pressed={view === 'editor'}
-                aria-controls="editor-view"
-                aria-label="Editor"
-                title="Editor"
+                className={`nav-button ${view === name ? 'active' : ''}`}
+                aria-pressed={view === name}
+                aria-current={view === name ? 'page' : undefined}
+                aria-controls={`${name}-view`}
+                aria-label={label}
+                title={label}
                 disabled={startingPlay}
-                onClick={async () => {
-                  if (view === 'editor') {
-                    setView('game');
-                    return;
-                  }
-                  if (!(await leaveOwned())) return;
-                  if (puzzle.mode === 'running') puzzle.rewind();
-                  setPanel(null);
-                  setEditorVisited(true);
-                  setView('editor');
+                onClick={() => {
+                  if (view === name && name === 'community') return;
+                  void showView(view === name ? 'game' : name);
                 }}
               >
                 <Icon name={icon} size={20} />
@@ -864,6 +904,19 @@ export default function Home() {
           </>
         )}
       </main>
+      {view === 'community' && (
+        <main
+          id="community-view"
+          className="dashboard community-page"
+          aria-labelledby="community-title"
+        >
+          <CommunityPanel
+            choose={(id) => void chooseCommunity(id)}
+            create={() => void showView('editor')}
+            notice={communityNotice}
+          />
+        </main>
+      )}
       {editorVisited && (
         <section
           id="editor-view"
@@ -871,7 +924,7 @@ export default function Home() {
           aria-label="Level editor"
           hidden={view !== 'editor'}
         >
-          <EmbeddedEditor active={view === 'editor'} onExit={() => setView('game')} />
+          <EmbeddedEditor active={view === 'editor'} onExit={() => void showView('game')} />
         </section>
       )}
       {panel && (
@@ -889,92 +942,75 @@ export default function Home() {
           courseImport={
             <LevelImport onLoad={(next, bounds) => void chooseLocal(next, bounds, 'local')} />
           }
-          {...(panel === 'community'
+          {...(panel === 'archive'
             ? {
                 body: (
-                  <CommunityPanel
-                    choose={(id) => void chooseCommunity(id)}
-                    create={() => {
-                      void (async () => {
-                        if (!(await leaveOwned())) return;
-                        if (puzzle.mode === 'running') puzzle.rewind();
-                        setPanel(null);
-                        setEditorVisited(true);
-                        setView('editor');
-                      })();
-                    }}
-                  />
+                  <>
+                    <ArchivePanel
+                      player={player}
+                      {...(p?.date ? { date: p.date } : {})}
+                      state={state}
+                      choose={(date) => void chooseDate(date)}
+                      reconcileGuest={reconcileGuest}
+                    />
+                    <h3>Legacy courses</h3>
+                    <p>Courses from an earlier version of Puttential.</p>
+                    {starterLevels.map((course) => (
+                      <button
+                        className="modal-row legacy-course"
+                        key={course.id}
+                        onClick={() => void chooseLocal(course, undefined, 'legacy')}
+                      >
+                        {levelName(course)}
+                      </button>
+                    ))}
+                  </>
                 ),
               }
-            : panel === 'archive'
+            : panel === 'leaderboard'
               ? {
                   body: (
-                    <>
-                      <ArchivePanel
-                        player={player}
-                        {...(p?.date ? { date: p.date } : {})}
-                        state={state}
-                        choose={(date) => void chooseDate(date)}
-                        reconcileGuest={reconcileGuest}
-                      />
-                      <h3>Legacy courses</h3>
-                      <p>Courses from an earlier version of Puttential.</p>
-                      {starterLevels.map((course) => (
-                        <button
-                          className="modal-row legacy-course"
-                          key={course.id}
-                          onClick={() => void chooseLocal(course, undefined, 'legacy')}
-                        >
-                          {levelName(course)}
-                        </button>
-                      ))}
-                    </>
+                    <LeaderboardPanel
+                      key={`${p?.id ?? 'none'}/${player?.id ?? 'none'}`}
+                      puzzle={p}
+                      player={player}
+                      state={state}
+                      reconcileGuest={reconcileGuest}
+                      runActive={startingPlay || puzzle.mode === 'running'}
+                    />
                   ),
                 }
-              : panel === 'leaderboard'
+              : panel === 'stats'
                 ? {
                     body: (
-                      <LeaderboardPanel
-                        key={`${p?.id ?? 'none'}/${player?.id ?? 'none'}`}
-                        puzzle={p}
+                      <ProfilePanel
                         player={player}
-                        state={state}
-                        reconcileGuest={reconcileGuest}
-                        runActive={startingPlay || puzzle.mode === 'running'}
+                        progress={progress}
+                        update={(next) =>
+                          setPlayer((current) => (current?.id === next.id ? next : current))
+                        }
+                        retry={reconcileGuest}
+                        memoryOnly={recoveryLimited}
                       />
                     ),
                   }
-                : panel === 'stats'
+                : panel === 'result'
                   ? {
                       body: (
-                        <ProfilePanel
-                          player={player}
+                        <ResultPanel
+                          legacy={legacy}
+                          community={!!community}
+                          result={puzzle.result}
+                          record={record}
                           progress={progress}
-                          update={(next) =>
-                            setPlayer((current) => (current?.id === next.id ? next : current))
-                          }
-                          retry={reconcileGuest}
-                          memoryOnly={recoveryLimited}
+                          compose={() => compose()}
+                          retry={() => {
+                            if (record) void session?.retry(record.start.requestId);
+                          }}
                         />
                       ),
                     }
-                  : panel === 'result'
-                    ? {
-                        body: (
-                          <ResultPanel
-                            legacy={legacy}
-                            community={!!community}
-                            result={puzzle.result}
-                            record={record}
-                            progress={progress}
-                            compose={() => compose()}
-                            retry={() => {
-                              if (record) void session?.retry(record.start.requestId);
-                            }}
-                          />
-                        ),
-                      }
-                    : {})}
+                  : {})}
         />
       )}
       {tutorialOpen && <Tutorial close={closeTutorial} reducedMotion={preferences.reducedMotion} />}
