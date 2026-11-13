@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "levelRevision": "596867594815145b38201557ff101496a35f95d3ae09f4c948e6ac2ae886a3c3",
+  "editor": {
+    "name": "Big Boom",
+    "arena": {
+      "bounds": {
+        "minX": -7.4,
+        "maxX": 6,
+        "minY": -5.5,
+        "maxY": 4.25
+      },
+      "walls": [],
+      "thickness": 0.5
+    }
+  }
+}

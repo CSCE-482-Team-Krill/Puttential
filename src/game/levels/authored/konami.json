@@ -1,0 +1,905 @@
+{
+  "formatVersion": 1,
+  "id": "konami",
+  "version": 1,
+  "gravity": {
+    "x": 0,
+    "y": 0
+  },
+  "colorScheme": {
+    "kind": "custom",
+    "primary": "#f087f7",
+    "secondary": "#66ffd9"
+  },
+  "dynamicBodies": [
+    {
+      "id": "hexagon-1",
+      "position": {
+        "x": -4,
+        "y": 1.75
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "hexagon-1-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.6,
+                "y": 0
+              },
+              {
+                "x": 0.30000000000000004,
+                "y": 0.5196152422706631
+              },
+              {
+                "x": -0.2999999999999999,
+                "y": 0.5196152422706632
+              },
+              {
+                "x": -0.6,
+                "y": 7.347880794884119e-17
+              },
+              {
+                "x": -0.30000000000000027,
+                "y": -0.519615242270663
+              },
+              {
+                "x": 0.30000000000000004,
+                "y": -0.5196152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1",
+      "position": {
+        "x": 0.25,
+        "y": -2.5
+      },
+      "angle": 1.5707963267948966,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-1",
+      "position": {
+        "x": 2.5,
+        "y": 0.75
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-1-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-2",
+      "position": {
+        "x": -2.75,
+        "y": -1
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-2-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-1-1",
+      "position": {
+        "x": 1.75,
+        "y": -1.75
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-1-1-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-1-2",
+      "position": {
+        "x": 0.5,
+        "y": 1.75
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-1-2-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-1-3",
+      "position": {
+        "x": -1,
+        "y": -1.5
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-1-3-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-1-4",
+      "position": {
+        "x": -1,
+        "y": -1.5
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-1-4-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-3",
+      "position": {
+        "x": 0,
+        "y": 0
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-3-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-4",
+      "position": {
+        "x": 1.75,
+        "y": -0.25
+      },
+      "angle": 1.5707963267948966,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-4-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-5",
+      "position": {
+        "x": -1.5,
+        "y": 1.75
+      },
+      "angle": 1.5707963267948966,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-5-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-6",
+      "position": {
+        "x": -4.75,
+        "y": -0.25
+      },
+      "angle": 1.5707963267948966,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-6-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-7",
+      "position": {
+        "x": -2,
+        "y": -2.5
+      },
+      "angle": -3.141592653589793,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-7-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-8",
+      "position": {
+        "x": -1.75,
+        "y": 0.25
+      },
+      "angle": 1.5707963267948966,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-8-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-7-1",
+      "position": {
+        "x": -3.25,
+        "y": -2.75
+      },
+      "angle": 1.5707963267948966,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-7-1-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-7-2",
+      "position": {
+        "x": -1.25,
+        "y": -0.5
+      },
+      "angle": -3.141592653589793,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-7-2-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-7-3",
+      "position": {
+        "x": 0.75,
+        "y": -1.25
+      },
+      "angle": -3.141592653589793,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-7-3-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-7-4",
+      "position": {
+        "x": 1.25,
+        "y": 1
+      },
+      "angle": -3.141592653589793,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-7-4-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-7-5",
+      "position": {
+        "x": -2.75,
+        "y": 0.5
+      },
+      "angle": -3.141592653589793,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-7-5-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "triangle-1-7-6",
+      "position": {
+        "x": -4.75,
+        "y": -1.5
+      },
+      "angle": -3.141592653589793,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "triangle-1-7-6-piece-1",
+          "shape": {
+            "kind": "polygon",
+            "points": [
+              {
+                "x": 0.2666666666666667,
+                "y": 0
+              },
+              {
+                "x": -0.13333333333333333,
+                "y": 0.2696152422706632
+              },
+              {
+                "x": -0.1333333333333335,
+                "y": -0.2696152422706631
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "staticBodies": [
+    {
+      "id": "left-rail",
+      "position": {
+        "x": -7.15,
+        "y": 0
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "left-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 8.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "right-rail",
+      "position": {
+        "x": 7.15,
+        "y": 0
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "right-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 8.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "bottom-rail",
+      "position": {
+        "x": 0,
+        "y": -4
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "bottom-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 14.8,
+            "height": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "top-rail",
+      "position": {
+        "x": 0,
+        "y": 4
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "top-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 14.8,
+            "height": 0.5
+          }
+        }
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "id": "attractor-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2,
+        "height": 2
+      },
+      "position": {
+        "x": -4.5,
+        "y": -1
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "attractor",
+        "source": {
+          "x": 0,
+          "y": 0
+        },
+        "strength": 4
+      }
+    },
+    {
+      "id": "uniform-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 3,
+        "height": 0.5
+      },
+      "position": {
+        "x": -0.25,
+        "y": 2.75
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "uniform-2",
+      "shape": {
+        "kind": "rectangle",
+        "width": 3,
+        "height": 0.5
+      },
+      "position": {
+        "x": 3.25,
+        "y": 0.5
+      },
+      "angle": -1.5707963267948966,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "lava-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2,
+        "height": 2
+      },
+      "position": {
+        "x": 5.5,
+        "y": 2.25
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "lava"
+      }
+    }
+  ],
+  "goal": {
+    "bodyId": "hexagon-1",
+    "minX": 5,
+    "maxX": 6,
+    "minY": -3,
+    "maxY": -2,
+    "holdSeconds": 1
+  }
+}

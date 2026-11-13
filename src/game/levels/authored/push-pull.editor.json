@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "e419a0cae2ba21e7663a17276beac5360b3e6469105edcafda334020e65a979c",
+  "editor": {
+    "name": "push-pull",
+    "arena": {
+      "bounds": {
+        "minX": -8.75,
+        "maxX": 6.25,
+        "minY": -7.25,
+        "maxY": 4
+      },
+      "walls": [
+        "left-rail",
+        "right-rail",
+        "bottom-rail",
+        "top-rail"
+      ],
+      "thickness": 0.5
+    }
+  }
+}

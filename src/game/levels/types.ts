@@ -1,5 +1,6 @@
 import type { Bounds } from '../geometry/polygon';
 import type { Vec2 } from '../types';
+import type { LevelColorScheme } from './color-schemes';
 
 /**
  * A level is plain JSON data: everything here must survive
@@ -96,6 +97,8 @@ export type Level = Readonly<{
   gravity: Vec2;
   /** Playable area, independent of physical walls. Older levels infer this from geometry. */
   bounds?: Bounds;
+  /** Cosmetic background/wall preset or custom primary/secondary pair; absent means classic green. */
+  colorScheme?: LevelColorScheme;
   dynamicBodies: readonly DynamicBodyDefinition[];
   staticBodies: readonly StaticBodyDefinition[];
   fields: readonly FieldZoneDefinition[];

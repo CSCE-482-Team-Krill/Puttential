@@ -1,6 +1,8 @@
 export { POSITION_QUANTUM, quantizePosition } from './commands';
 export { parseLevel } from './levels/parse';
 export { LEVEL_FORMAT_VERSION } from './levels/types';
+export { LEVEL_COLOR_SCHEMES } from './levels/color-schemes';
+export type { LevelColorScheme, LevelColorPreset, CustomLevelColors } from './levels/color-schemes';
 export type {
   CircleShape,
   ConvexPieceDefinition,

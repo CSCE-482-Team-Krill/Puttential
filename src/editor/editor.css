@@ -1,4 +1,81 @@
 @scope (.editor-wrap) {
+  .level-color-schemes {
+    min-width: 0;
+    margin: 18px 0;
+    padding: 0;
+    border: 0;
+  }
+  .level-color-schemes legend {
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .level-color-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .level-color-option {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 6px;
+    border: 1px solid #cfe2d0;
+    border-radius: 8px;
+    background: #ffffffb0;
+    cursor: pointer;
+    font-size: 11px;
+  }
+  .level-color-option:has(input:checked) {
+    border-color: #2e7d32;
+    box-shadow: 0 0 0 1px #2e7d32;
+  }
+  .level-color-option:focus-within {
+    outline: 2px solid #2e7d32;
+    outline-offset: 2px;
+  }
+  .level-color-option input {
+    margin: 0;
+    accent-color: #2e7d32;
+  }
+  .level-color-swatch {
+    flex: 0 0 23px;
+    height: 23px;
+    border: 5px solid;
+    border-radius: 5px;
+  }
+  .level-color-custom {
+    grid-column: 1 / -1;
+  }
+  .level-custom-colors {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .level-custom-color {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 40px 65px;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .level-custom-color small {
+    display: block;
+    margin-top: 2px;
+    color: var(--muted);
+    font-size: 11px;
+  }
+  .level-custom-color input {
+    width: 40px;
+    height: 34px;
+    padding: 2px;
+    border: 1px solid #cfe2d0;
+    border-radius: 6px;
+    background: #fff;
+    cursor: pointer;
+  }
+  .level-custom-color code {
+    font-size: 11px;
+  }
   :scope {
     min-height: 100vh;
   }

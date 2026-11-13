@@ -195,10 +195,15 @@ for (const runtime of ['source', 'standalone'] as const)
       if (errors.reduce((sum, data) => sum + data.length, 0) < 4096) errors.push(data);
     });
     let timedOut = false;
-    const timer = setTimeout(() => {
-      timedOut = true;
-      child.kill();
-    }, 5000);
+    // Source mode also cold-loads TSX and WASM while other test files run in parallel.
+    // Keep the bundled runtime deadline and production admission budgets unchanged.
+    const timer = setTimeout(
+      () => {
+        timedOut = true;
+        child.kill();
+      },
+      runtime === 'source' ? 15000 : 5000,
+    );
     const exited = new Promise<number | null>((resolve, reject) => {
       child.once('close', resolve);
       child.once('error', reject);

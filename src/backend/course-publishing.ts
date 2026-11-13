@@ -136,14 +136,7 @@ export async function publishSchedule(today = centralDateString()): Promise<stri
       try {
         const course = authoredCourse(authoredIndexForDate(date));
         lines.push(
-          await publishCourse(
-            date,
-            course.level,
-            course.rules,
-            course.title,
-            course.solutions,
-            false,
-          ),
+          await publishCourse(date, course.level, course.rules, course.title, course.solutions),
         );
         continue;
       } catch (error) {
