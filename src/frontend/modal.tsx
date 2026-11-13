@@ -5,8 +5,7 @@ import type { Dispatch, SetStateAction, ReactNode, RefObject } from 'react';
 import { Icon } from './icon';
 import { useSoundEffects } from './physics-audio';
 
-export type Panel =
-  'archive' | 'stats' | 'leaderboard' | 'community' | 'settings' | 'help' | 'result' | null;
+export type Panel = 'archive' | 'stats' | 'leaderboard' | 'settings' | 'help' | 'result' | null;
 
 type Preferences = {
   reducedMotion: boolean;
@@ -198,7 +197,6 @@ export function Modal({
     archive: 'Calendar',
     stats: 'Profile',
     leaderboard: 'Leaderboard',
-    community: 'Community',
     settings: 'Settings',
     help: 'Help',
     result: resultSolved ? 'Nice work!' : 'So close',
@@ -258,19 +256,6 @@ export function Modal({
           </div>
         )}
 
-        {panel === 'community' && !body && (
-          <div className="modal-body community-empty">
-            <span className="community-empty-icon">
-              <Icon name="community" size={32} />
-            </span>
-            <h3>Community maps</h3>
-            <p>Discover and play courses created by other players.</p>
-            <p>
-              Open the Editor tab to create a course. Playtest and solve it to publish it to
-              Community. Drafts are saved on this device.
-            </p>
-          </div>
-        )}
         {body && <div className="modal-body modal-stack">{body}</div>}
         {panel === 'settings' && (
           <div className="modal-body modal-stack">

@@ -72,7 +72,7 @@ export class CourseSession {
     if (
       !this.executor.supports(puzzle) ||
       puzzle.availability.publicationStatus !== 'active' ||
-      puzzle.date > puzzle.todayDate
+      (puzzle.date !== null && puzzle.date > puzzle.todayDate)
     )
       throw new Error('Unavailable in this version.');
     this.starting.add(key);
@@ -153,7 +153,7 @@ export class CourseSession {
     record.response = this.state.runs.get(`${response.guestId}/${response.runId}`)!;
     if (terminal(record.response)) {
       record.phase = 'terminal';
-      record.message = runMessage(record.response);
+      record.message = runMessage(record.response, !!record.context.communityMapId);
       await this.storage.put(record);
       this.publish(record);
       this.release(record);
@@ -162,7 +162,7 @@ export class CourseSession {
     if (record.response.state === 'processing') {
       record.intent = record.response.completion.intent;
       record.phase = 'pending';
-      record.message = runMessage(record.response);
+      record.message = runMessage(record.response, !!record.context.communityMapId);
       await this.storage.put(record);
       this.publish(record);
       this.release(record);

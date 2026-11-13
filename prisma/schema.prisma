@@ -34,19 +34,21 @@ model User {
 // =========================
 
 model Puzzle {
-  id                   String    @id @default(uuid()) @map("puzzle_id")
-  date                 DateTime  @unique @db.Date
+  id                   String        @id @default(uuid()) @map("puzzle_id")
+  date                 DateTime?     @unique @db.Date
+  communityMapId       String?       @unique @map("community_map_id")
+  communityMap         CommunityMap? @relation(fields: [communityMapId], references: [id])
   seed                 String
   configuration        Json
   difficulty           Int
-  authorSolution       Json?     @map("author_solution")
-  createdAt            DateTime  @default(now()) @map("created_at")
-  title                String    @default("")
+  authorSolution       Json?         @map("author_solution")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  title                String        @default("")
   rules                Json?
-  availabilityRevision BigInt    @default(0) @map("availability_revision")
-  boardRevision        BigInt    @default(0) @map("board_revision")
-  canceledAt           DateTime? @map("canceled_at")
-  cancellationMessage  String?   @map("cancellation_message")
+  availabilityRevision BigInt        @default(0) @map("availability_revision")
+  boardRevision        BigInt        @default(0) @map("board_revision")
+  canceledAt           DateTime?     @map("canceled_at")
+  cancellationMessage  String?       @map("cancellation_message")
 
   attempts      Attempt[]
   solutions     Solution[]
@@ -83,6 +85,7 @@ model CommunityMap {
   authorSolution Json     @map("author_solution")
   createdAt      DateTime @default(now()) @map("created_at")
   author         Guest    @relation(fields: [authorId], references: [id])
+  competition    Puzzle?
 
   @@unique([authorId, requestId])
   @@index([createdAt, id])

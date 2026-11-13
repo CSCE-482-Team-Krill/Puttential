@@ -7,9 +7,11 @@ import { communityApi } from '../community-api';
 export function CommunityPanel({
   choose,
   create,
+  notice,
 }: {
   choose: (id: string) => void;
   create: () => void;
+  notice: string;
 }) {
   const [items, setItems] = useState<CommunityMapSummary[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
@@ -47,17 +49,27 @@ export function CommunityPanel({
     return () => controller.current?.abort();
   }, []);
   return (
-    <section className="community-panel modal-stack" aria-label="Community maps">
-      <p>
-        Maps created by players. Every published map has a solution checked by the server. Play is
-        unranked.
-      </p>
-      <div className="panel-actions">
-        <button onClick={create}>Create a map</button>
-        <button disabled={busy} onClick={() => void load()}>
-          Refresh maps
-        </button>
-      </div>
+    <section className="community-panel" aria-label="Community maps">
+      <header className="community-heading">
+        <div>
+          <h1 id="community-title" tabIndex={-1}>
+            Community
+          </h1>
+        </div>
+        <div className="panel-actions">
+          <button className="community-create" onClick={create}>
+            Create a map
+          </button>
+          <button disabled={busy} onClick={() => void load()}>
+            Refresh maps
+          </button>
+        </div>
+      </header>
+      {notice && (
+        <p className="api-notice" role="status">
+          {notice}
+        </p>
+      )}
       {busy && <p role="status">Loading community maps…</p>}
       {error && (
         <p role="alert">
@@ -68,40 +80,42 @@ export function CommunityPanel({
         </p>
       )}
       {loaded && !busy && !error && !items.length && (
-        <p>No community maps yet. Create and publish the first one!</p>
+        <p className="community-empty">No community maps yet. Create and publish the first one!</p>
       )}
-      {items.map((map) => (
-        <article key={map.id} className="community-map-card">
-          <h3>
-            <a
-              href={communityMapUrl(map.id)}
-              onClick={(event) => {
-                if (
-                  event.button ||
-                  event.metaKey ||
-                  event.ctrlKey ||
-                  event.shiftKey ||
-                  event.altKey
-                )
-                  return;
-                event.preventDefault();
-                choose(map.id);
-              }}
-            >
-              {map.title}
-            </a>
-          </h3>
-          <p className="muted">
-            By {map.creatorName} · {new Date(map.createdAt).toLocaleDateString()}
-          </p>
-          {map.description && <p className="community-description">{map.description}</p>}
-          <button onClick={() => choose(map.id)} aria-label={`Play ${map.title}`}>
-            Play map
-          </button>
-        </article>
-      ))}
+      <div className="community-map-grid">
+        {items.map((map) => (
+          <article key={map.id} className="community-map-card">
+            <h2>
+              <a
+                href={communityMapUrl(map.id)}
+                onClick={(event) => {
+                  if (
+                    event.button ||
+                    event.metaKey ||
+                    event.ctrlKey ||
+                    event.shiftKey ||
+                    event.altKey
+                  )
+                    return;
+                  event.preventDefault();
+                  choose(map.id);
+                }}
+              >
+                {map.title}
+              </a>
+            </h2>
+            <p className="muted">
+              By {map.creatorName} · {new Date(map.createdAt).toLocaleDateString()}
+            </p>
+            {map.description && <p className="community-description">{map.description}</p>}
+            <button onClick={() => choose(map.id)} aria-label={`Play ${map.title}`}>
+              Play map
+            </button>
+          </article>
+        ))}
+      </div>
       {cursor && (
-        <button disabled={busy} onClick={() => void load(cursor)}>
+        <button className="community-load-more" disabled={busy} onClick={() => void load(cursor)}>
           Load more maps
         </button>
       )}

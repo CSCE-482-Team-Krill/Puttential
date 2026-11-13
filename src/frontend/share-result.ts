@@ -4,8 +4,10 @@ import type {
   SavedResult,
   Scope,
 } from '../shared/puzzle-contracts';
+import { communityMapUrl } from '../shared/community-maps';
 export type ShareInput = {
-  date: string;
+  date: string | null;
+  community?: { id: string; title: string };
   puzzleId: string;
   guestId: string;
   scope: Scope;
@@ -19,6 +21,7 @@ export type ShareInput = {
 export function shareResult(input: ShareInput) {
   const {
     date,
+    community,
     puzzleId,
     guestId,
     scope,
@@ -44,7 +47,7 @@ export function shareResult(input: ShareInput) {
     board.availability.publicationStatus === 'active' &&
     BigInt(board.availability.revision) >= BigInt(availability.revision);
   const lines = [
-    `⛳ Puttential — ${date} — ${scope === 'daily' ? 'Daily' : 'Archive'} ${result.outcome === 'success' ? 'solved' : result.outcome}`,
+    `⛳ Puttential — ${community?.title ?? date} — ${community ? 'Community' : scope === 'daily' ? 'Daily' : 'Archive'} ${result.outcome === 'success' ? 'solved' : result.outcome}`,
     verified ? 'Verified historical result' : 'Unverified result',
   ];
   if (result.metrics) {
@@ -58,8 +61,10 @@ export function shareResult(input: ShareInput) {
   else if (scope === 'daily' && !result.dailyEligible) lines.push('Saved outside daily window');
   if (hasRank)
     lines.push(
-      `${scope === 'daily' ? 'Daily' : 'Archive'} rank #${board.me!.rank} · ${board.me!.percentile.toFixed(1)}% strictly behind · as of ${board.asOf}`,
+      `${community ? 'Community' : scope === 'daily' ? 'Daily' : 'Archive'} rank #${board.me!.rank} · ${board.me!.percentile.toFixed(1)}% strictly behind · as of ${board.asOf}`,
     );
-  lines.push(`${origin.replace(/\/$/, '')}/?date=${date}`);
+  lines.push(
+    `${origin.replace(/\/$/, '')}${community ? communityMapUrl(community.id) : `/?date=${date}`}`,
+  );
   return lines.join('\n');
 }
