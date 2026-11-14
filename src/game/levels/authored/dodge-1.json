@@ -1,0 +1,399 @@
+{
+  "formatVersion": 1,
+  "id": "dodge-1",
+  "version": 1,
+  "gravity": {
+    "x": 0,
+    "y": 0
+  },
+  "bounds": {
+    "minX": -8.75,
+    "maxX": 6.25,
+    "minY": -8.5,
+    "maxY": 6.75
+  },
+  "dynamicBodies": [
+    {
+      "id": "ball",
+      "position": {
+        "x": 3.75,
+        "y": -4.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "ball-piece",
+          "shape": {
+            "kind": "circle",
+            "radius": 0.4
+          }
+        }
+      ]
+    },
+    {
+      "id": "rectangle-1",
+      "position": {
+        "x": 1,
+        "y": 2.75
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "rectangle-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1.6,
+            "height": 0.6
+          }
+        }
+      ]
+    },
+    {
+      "id": "rectangle-1-1",
+      "position": {
+        "x": -3.75,
+        "y": 0
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "rectangle-1-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1.6,
+            "height": 0.6
+          }
+        }
+      ]
+    },
+    {
+      "id": "rectangle-1-3",
+      "position": {
+        "x": 1.5,
+        "y": 0.75
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "rectangle-1-3-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1.6,
+            "height": 0.6
+          }
+        }
+      ]
+    },
+    {
+      "id": "rectangle-1-4",
+      "position": {
+        "x": -0.75,
+        "y": 0.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "rectangle-1-4-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1.6,
+            "height": 0.6
+          }
+        }
+      ]
+    },
+    {
+      "id": "rectangle-1-6",
+      "position": {
+        "x": -0.75,
+        "y": 4.5
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "rectangle-1-6-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1.6,
+            "height": 0.6
+          }
+        }
+      ]
+    },
+    {
+      "id": "rectangle-1-7",
+      "position": {
+        "x": -2.5,
+        "y": 2.5
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "rectangle-1-7-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1.6,
+            "height": 0.6
+          }
+        }
+      ]
+    }
+  ],
+  "staticBodies": [
+    {
+      "id": "left-rail",
+      "position": {
+        "x": -8.5,
+        "y": -0.875
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "left-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 15.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "right-rail",
+      "position": {
+        "x": 6,
+        "y": -0.875
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "right-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 0.5,
+            "height": 15.25
+          }
+        }
+      ]
+    },
+    {
+      "id": "bottom-rail",
+      "position": {
+        "x": -1.25,
+        "y": -8.25
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "bottom-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 15,
+            "height": 0.5
+          }
+        }
+      ]
+    },
+    {
+      "id": "top-rail",
+      "position": {
+        "x": -1.25,
+        "y": 6.5
+      },
+      "angle": 0,
+      "material": {
+        "restitution": 0.8
+      },
+      "pieces": [
+        {
+          "id": "top-rail-piece",
+          "shape": {
+            "kind": "rectangle",
+            "width": 15,
+            "height": 0.5
+          }
+        }
+      ]
+    }
+  ],
+  "fields": [
+    {
+      "id": "repulsor-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2,
+        "height": 2
+      },
+      "position": {
+        "x": 0.75,
+        "y": -5.25
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "repulsor",
+        "source": {
+          "x": 0,
+          "y": 0
+        },
+        "strength": 4
+      }
+    },
+    {
+      "id": "uniform-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2,
+        "height": 2
+      },
+      "position": {
+        "x": 1.75,
+        "y": -2.5
+      },
+      "angle": -3.926990816987241,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "water-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 0.5,
+        "height": 6.5
+      },
+      "position": {
+        "x": 3.25,
+        "y": 2.75
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "water",
+        "drag": 12,
+        "sinkSpeed": 0.06
+      }
+    },
+    {
+      "id": "repulsor-1-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 5,
+        "height": 5
+      },
+      "position": {
+        "x": -4.5,
+        "y": -3
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "repulsor",
+        "source": {
+          "x": 0,
+          "y": 0
+        },
+        "strength": 4
+      }
+    },
+    {
+      "id": "uniform-2",
+      "shape": {
+        "kind": "rectangle",
+        "width": 4.5,
+        "height": 0.5
+      },
+      "position": {
+        "x": -6.25,
+        "y": 1.25
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "uniform-3",
+      "shape": {
+        "kind": "rectangle",
+        "width": 5.5,
+        "height": 1.5
+      },
+      "position": {
+        "x": -2,
+        "y": -0.5
+      },
+      "angle": -4.71238898038469,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    }
+  ],
+  "goal": {
+    "bodyId": "ball",
+    "minX": -4.75,
+    "maxX": -3.25,
+    "minY": 4.5,
+    "maxY": 6,
+    "holdSeconds": 1
+  }
+}

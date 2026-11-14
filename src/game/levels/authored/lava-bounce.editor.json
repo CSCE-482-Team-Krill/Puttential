@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "455136c25e334ec401f9a7dfc79b02d0d5bdc9d61d15eb1936687723b823634d",
+  "editor": {
+    "name": "lava-bounce",
+    "arena": {
+      "bounds": {
+        "minX": -7,
+        "maxX": 4.75,
+        "minY": -7.5,
+        "maxY": 23
+      },
+      "walls": [
+        "left-rail",
+        "right-rail",
+        "bottom-rail",
+        "top-rail"
+      ],
+      "thickness": 0.5
+    }
+  }
+}
