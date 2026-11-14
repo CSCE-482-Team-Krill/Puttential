@@ -37,6 +37,16 @@ The **Repository library** lists authored levels. **Legacy courses** loads cours
 
 ## Author a course
 
+In **Course properties → Color scheme**, choose Classic green, Lagoon, Sandstone,
+Rose garden, Lavender, Slate, Black or Yellow. The eight presets pair coordinated
+background and wall colors. Choose **Custom** to pick a **Primary** color for the
+background and a **Secondary** color for the walls; it starts with the currently
+selected preset's colors. Only the course background and static walls change; balls, goals, force
+tiles, water, lava and portal colors stay the same. The preview updates immediately,
+supports undo/redo, and carries through playtest, JSON import/export, device drafts,
+repository saves and community maps. Schemes are cosmetic and do not change physics
+or scoring. Older levels default to Classic green.
+
 - Start a new course, open a legacy course, import JSON, or open a saved repository level.
 - Drag a preset from the palette, or select it and click on the course. Use the object list to select overlapping objects, the goal, or disabled fields.
 - Ctrl/Cmd-click objects on the canvas or in the object list to toggle multiple selections. Right-drag a rectangle to select fully enclosed objects; Ctrl/Cmd-right-drag adds a region. Managed walls are excluded. Drag a selected object to move the whole group.

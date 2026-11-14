@@ -20,6 +20,44 @@
     },
     {
       "group": "authored",
+      "name": "big-boom.json",
+      "sourceHash": "596867594815145b38201557ff101496a35f95d3ae09f4c948e6ac2ae886a3c3",
+      "sidecarHash": "102eb3de331fd40beb85c1d3a9237544ac7e0fb9d61c1f3be7202a7f381e67d0",
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.dynamicBodies.length",
+            "expected": "integer in [1, 16]"
+          },
+          {
+            "code": "RANGE",
+            "path": "level.totalPieces",
+            "expected": "in [1, 256]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.dynamicBodies.length",
+            "expected": "integer in [1, 16]"
+          },
+          {
+            "code": "RANGE",
+            "path": "level.totalPieces",
+            "expected": "in [1, 256]"
+          }
+        ]
+      },
+      "adjustedHash": "738ecef170ea4294b5eba50986d9db083f5cf7622347e929171a13e61f9a8f18",
+      "originalDocumentHash": "738ecef170ea4294b5eba50986d9db083f5cf7622347e929171a13e61f9a8f18"
+    },
+    {
+      "group": "authored",
       "name": "big-u.json",
       "sourceHash": "e8e4d19b79f4112331ca636710efc38baabddd3142718defc2dc8be662a2983f",
       "sidecarHash": "0a66fa75c124638c240af0ba7df3408b14d67f5da9c4db11ee7898edaf3ff4a3",
@@ -64,6 +102,22 @@
     },
     {
       "group": "authored",
+      "name": "dodge-1.json",
+      "sourceHash": "2dfa0a3fc7d28d630b695f6a901d45f64acc7e92565f1b18923ef363347f6647",
+      "sidecarHash": "b17605b4d16ecd7c914a6ba298b7453d7f923017189f5189038da4754e382f65",
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "d4aa031b7d0a9d22270ae0088f08b9c580dd04c44694f88ac36535a3b379c8b4",
+      "originalDocumentHash": "d4aa031b7d0a9d22270ae0088f08b9c580dd04c44694f88ac36535a3b379c8b4"
+    },
+    {
+      "group": "authored",
       "name": "ember-alley.json",
       "sourceHash": "869656758505e7d055e0b7f1196ce96d1d859ea365ab946e5ffa905dfee2a393",
       "sidecarHash": "3f039925e0151a183e9a96a8e22b43c59e947d3633f37de46b2cc0f570486f33",
@@ -99,6 +153,66 @@
       },
       "adjustedHash": "883bc0b7f2f191925ffe42ed86d2e9ba7735c051c4ad1ed4899642167c573ab6",
       "originalDocumentHash": "883bc0b7f2f191925ffe42ed86d2e9ba7735c051c4ad1ed4899642167c573ab6"
+    },
+    {
+      "group": "authored",
+      "name": "konami.json",
+      "sourceHash": "4ff1c6f9a7cbe46f548c5754f237404f7a326727e30be57ae63268806cc42642",
+      "sidecarHash": "4984dac791c96ce932121a04be9f47b4ec8a719457730f47b3727a3f90c2ca7f",
+      "original": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.dynamicBodies.length",
+            "expected": "integer in [1, 16]"
+          }
+        ]
+      },
+      "adjusted": {
+        "accepted": false,
+        "issues": [
+          {
+            "code": "RANGE",
+            "path": "level.dynamicBodies.length",
+            "expected": "integer in [1, 16]"
+          }
+        ]
+      },
+      "adjustedHash": "7cff611c5c7051be0ec13bca64e4a812892b30ce2d2549983514504be1cf4ede",
+      "originalDocumentHash": "7cff611c5c7051be0ec13bca64e4a812892b30ce2d2549983514504be1cf4ede"
+    },
+    {
+      "group": "authored",
+      "name": "lava-bounce.json",
+      "sourceHash": "455136c25e334ec401f9a7dfc79b02d0d5bdc9d61d15eb1936687723b823634d",
+      "sidecarHash": "7b9d88dd0b7b4c4d39a07a572f95077f4a73a6db4c48601169034d899d7f5f16",
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "31b3decd92e2100f76bd0fe6bbcfef172619a72a24216bf2a66bff835fbc8d01",
+      "originalDocumentHash": "31b3decd92e2100f76bd0fe6bbcfef172619a72a24216bf2a66bff835fbc8d01"
+    },
+    {
+      "group": "authored",
+      "name": "one-or-the-other.json",
+      "sourceHash": "9424adef86139300fd648a9ec717e582f56432f3dc1c65a7239bc5252565619a",
+      "sidecarHash": "ac1f6dafb60d021f599d71f14758c8f801b6fc837ee998c62f5eed65b88d3afe",
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "880492f8a02ce7f0979484cad32a59a5ddcd13a223dc0f39ac429d83d7c1ffdc",
+      "originalDocumentHash": "880492f8a02ce7f0979484cad32a59a5ddcd13a223dc0f39ac429d83d7c1ffdc"
     },
     {
       "group": "authored",
@@ -168,6 +282,38 @@
     },
     {
       "group": "authored",
+      "name": "push-pull.json",
+      "sourceHash": "e419a0cae2ba21e7663a17276beac5360b3e6469105edcafda334020e65a979c",
+      "sidecarHash": "1d18ea4a033d996991cf484eec4608007097771101184064597c324cc21400bf",
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "07b47729b5069181ac0b0d77cf665fbc301909195a7d7f6fa81556682e388e88",
+      "originalDocumentHash": "07b47729b5069181ac0b0d77cf665fbc301909195a7d7f6fa81556682e388e88"
+    },
+    {
+      "group": "authored",
+      "name": "sputnik.json",
+      "sourceHash": "9e8e006907320d1ce38c9cf2b8c3fcd292653465d943c44ef001e435639f6b5c",
+      "sidecarHash": "7f4f5a30f5375c82f99e07616e246fb1ec7deeec7e4d399c3658768d9f12b1d8",
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "2a6827fb49a96fe261ecd91999275228b824a39e29dd7d00aac01ba7de73d2f9",
+      "originalDocumentHash": "2a6827fb49a96fe261ecd91999275228b824a39e29dd7d00aac01ba7de73d2f9"
+    },
+    {
+      "group": "authored",
       "name": "straight-forward.json",
       "sourceHash": "68773922a66a9a1b69abcfb40d12e147235ff3d02844da825171b24ed9297991",
       "sidecarHash": "773fa5e172535970d2fec67bcc1e2537f6026ba396596dfe4fd2b8ea5f62c641",
@@ -187,6 +333,22 @@
       },
       "adjustedHash": "f3903d92ac631cf0fa3562eb42b10ce8571166c0bfdd94ffd60a7b0f214c88eb",
       "originalDocumentHash": "7bbf6536997a7b079d30ecfd0a826e502c852b6ba2727676841088a8e0f823b5"
+    },
+    {
+      "group": "authored",
+      "name": "subtlety.json",
+      "sourceHash": "c2c499c8b8ac13ddd8791d46ff77c4560206e9c9d4befd8f6cc88dda779f8b83",
+      "sidecarHash": "b7b23866273c96e7b7110bbbb84c367d738df74707fe42801724f4ba4c8124de",
+      "original": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjusted": {
+        "accepted": true,
+        "issues": []
+      },
+      "adjustedHash": "148912595197816755b32c9ff11d8da5b557338bedca2828f5a0fe8ca9b9b725",
+      "originalDocumentHash": "148912595197816755b32c9ff11d8da5b557338bedca2828f5a0fe8ca9b9b725"
     },
     {
       "group": "authored",

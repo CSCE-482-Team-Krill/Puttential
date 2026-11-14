@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "c2c499c8b8ac13ddd8791d46ff77c4560206e9c9d4befd8f6cc88dda779f8b83",
+  "editor": {
+    "name": "subtlety",
+    "arena": {
+      "bounds": {
+        "minX": -8.75,
+        "maxX": 6.25,
+        "minY": -7.25,
+        "maxY": 6.75
+      },
+      "walls": [
+        "left-rail",
+        "right-rail",
+        "bottom-rail",
+        "top-rail"
+      ],
+      "thickness": 0.5
+    }
+  }
+}
