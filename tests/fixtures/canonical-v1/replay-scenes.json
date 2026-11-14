@@ -241,11 +241,11 @@
       "engine": {
         "simulationVersion": "puttential-rapier-0.20.0-v3",
         "rulesVersion": "puttential-daily-v2",
-        "artifactDigest": "2c30bd251ff639cc7b72bd707467af19a4f7f521fd7a8ebfafd0f525264d42c8"
+        "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-f20565fc33abc90d2571bde2d48e71596ca911c46e7573ceb63b1bb5a77b9ac5",
+        "id": "c-185f6cb66e10b07f115cd404b6cbeebf6b23261713099e8fd60f8c337bb13c1e",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -489,11 +489,11 @@
           "strong-push": 1
         }
       },
-      "gameHash": "f20565fc33abc90d2571bde2d48e71596ca911c46e7573ceb63b1bb5a77b9ac5",
-      "candidateHash": "89083f68276c056522614345c941eb6fc9ce9d937437852f45b5d818004c53cd"
+      "gameHash": "185f6cb66e10b07f115cd404b6cbeebf6b23261713099e8fd60f8c337bb13c1e",
+      "candidateHash": "c7f1405ed9aeba72d074a4a8636b80d9a1b8470d4363f699c944feafd874a686"
     },
     "placement": {
-      "levelId": "c-f20565fc33abc90d2571bde2d48e71596ca911c46e7573ceb63b1bb5a77b9ac5",
+      "levelId": "c-185f6cb66e10b07f115cd404b6cbeebf6b23261713099e8fd60f8c337bb13c1e",
       "levelVersion": 1,
       "simulationVersion": "puttential-rapier-0.20.0-v3",
       "rulesVersion": "puttential-daily-v2",
@@ -790,11 +790,11 @@
       "engine": {
         "simulationVersion": "puttential-rapier-0.20.0-v3",
         "rulesVersion": "puttential-daily-v2",
-        "artifactDigest": "2c30bd251ff639cc7b72bd707467af19a4f7f521fd7a8ebfafd0f525264d42c8"
+        "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-713bb1373786c286e84b5b3dd876e98471a7311941040dd454785eac0296a888",
+        "id": "c-c2dd31bd67c05a0d4bd99c2c1a3730e8def6fa434f2cf04905f42af6c8934730",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -1038,11 +1038,11 @@
           "strong-push": 1
         }
       },
-      "gameHash": "713bb1373786c286e84b5b3dd876e98471a7311941040dd454785eac0296a888",
-      "candidateHash": "a8c957938287b2441fb0a4ba4f6120df35c026fe305fac18cf1ae4263ee60ac8"
+      "gameHash": "c2dd31bd67c05a0d4bd99c2c1a3730e8def6fa434f2cf04905f42af6c8934730",
+      "candidateHash": "cef8b438873a480a313b03f2bee1bc78af6c22714f39460468b26a02f389b706"
     },
     "placement": {
-      "levelId": "c-713bb1373786c286e84b5b3dd876e98471a7311941040dd454785eac0296a888",
+      "levelId": "c-c2dd31bd67c05a0d4bd99c2c1a3730e8def6fa434f2cf04905f42af6c8934730",
       "levelVersion": 1,
       "simulationVersion": "puttential-rapier-0.20.0-v3",
       "rulesVersion": "puttential-daily-v2",
@@ -1339,11 +1339,11 @@
       "engine": {
         "simulationVersion": "puttential-rapier-0.20.0-v3",
         "rulesVersion": "puttential-daily-v2",
-        "artifactDigest": "2c30bd251ff639cc7b72bd707467af19a4f7f521fd7a8ebfafd0f525264d42c8"
+        "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-6977168cd4eb05d106a4d513efa4065d617249aaf99883cc0bf070cee056bea3",
+        "id": "c-a64ba27e316a73903f65187009e8a51046c8696e1eecbe5d2f04dc579435994c",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -1587,11 +1587,11 @@
           "strong-push": 1
         }
       },
-      "gameHash": "6977168cd4eb05d106a4d513efa4065d617249aaf99883cc0bf070cee056bea3",
-      "candidateHash": "a67c52a335939fb79d4043b78f3f89cc18fa6581fdc895329bbaf4dcdc54534f"
+      "gameHash": "a64ba27e316a73903f65187009e8a51046c8696e1eecbe5d2f04dc579435994c",
+      "candidateHash": "421f91d32726efaa5981ce99731eb7c94100dab736836384a0c3df3f90302027"
     },
     "placement": {
-      "levelId": "c-6977168cd4eb05d106a4d513efa4065d617249aaf99883cc0bf070cee056bea3",
+      "levelId": "c-a64ba27e316a73903f65187009e8a51046c8696e1eecbe5d2f04dc579435994c",
       "levelVersion": 1,
       "simulationVersion": "puttential-rapier-0.20.0-v3",
       "rulesVersion": "puttential-daily-v2",
@@ -1888,11 +1888,11 @@
       "engine": {
         "simulationVersion": "puttential-rapier-0.20.0-v3",
         "rulesVersion": "puttential-daily-v2",
-        "artifactDigest": "2c30bd251ff639cc7b72bd707467af19a4f7f521fd7a8ebfafd0f525264d42c8"
+        "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-3e08fddec58a81cee73901f3c136eeec0d3a6d50cb780da2812d089d22acf395",
+        "id": "c-20f9e51d5ca425dc6014da22225a5027304ccae22b145620e519b32ed88c7481",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -2136,11 +2136,11 @@
           "strong-push": 1
         }
       },
-      "gameHash": "3e08fddec58a81cee73901f3c136eeec0d3a6d50cb780da2812d089d22acf395",
-      "candidateHash": "b97461e0756a3857759ee2fea5c9265de36d0632a8b0f87617f6ef85a099ad77"
+      "gameHash": "20f9e51d5ca425dc6014da22225a5027304ccae22b145620e519b32ed88c7481",
+      "candidateHash": "2cc42bd8442e4bd38f140d5ee04c99f5fd91c53bc9c1be0cf72bf7031a2b4a61"
     },
     "placement": {
-      "levelId": "c-3e08fddec58a81cee73901f3c136eeec0d3a6d50cb780da2812d089d22acf395",
+      "levelId": "c-20f9e51d5ca425dc6014da22225a5027304ccae22b145620e519b32ed88c7481",
       "levelVersion": 1,
       "simulationVersion": "puttential-rapier-0.20.0-v3",
       "rulesVersion": "puttential-daily-v2",
@@ -2445,11 +2445,11 @@
       "engine": {
         "simulationVersion": "puttential-rapier-0.20.0-v3",
         "rulesVersion": "puttential-daily-v2",
-        "artifactDigest": "2c30bd251ff639cc7b72bd707467af19a4f7f521fd7a8ebfafd0f525264d42c8"
+        "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-44a4e153282f21b7f6642b53024a3137327252b29e5ce4d1dd0a413feda477c2",
+        "id": "c-0b5c943e49fa77908d90911ebaad357fbed07c0ab447edec0eb13bcb642b4420",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -2702,11 +2702,11 @@
           "strong-push": 1
         }
       },
-      "gameHash": "44a4e153282f21b7f6642b53024a3137327252b29e5ce4d1dd0a413feda477c2",
-      "candidateHash": "ff6b38695a4bc649282b837e940f00ed1697f12a71d9d0f4edc93658af561238"
+      "gameHash": "0b5c943e49fa77908d90911ebaad357fbed07c0ab447edec0eb13bcb642b4420",
+      "candidateHash": "92ea82a1721c0337ba01b6bf21d063533617e2d0183d7084d73cadf2a4a51cc7"
     },
     "placement": {
-      "levelId": "c-44a4e153282f21b7f6642b53024a3137327252b29e5ce4d1dd0a413feda477c2",
+      "levelId": "c-0b5c943e49fa77908d90911ebaad357fbed07c0ab447edec0eb13bcb642b4420",
       "levelVersion": 1,
       "simulationVersion": "puttential-rapier-0.20.0-v3",
       "rulesVersion": "puttential-daily-v2",
@@ -3027,11 +3027,11 @@
       "engine": {
         "simulationVersion": "puttential-rapier-0.20.0-v3",
         "rulesVersion": "puttential-daily-v2",
-        "artifactDigest": "2c30bd251ff639cc7b72bd707467af19a4f7f521fd7a8ebfafd0f525264d42c8"
+        "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-855eb1e50fe7a9e19fbac65ebe920890148e89c013df4b67a1373dac56d32082",
+        "id": "c-7196d316714a7b7ac29036a2425998b352126c9e4d13514d404130230121339d",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -3299,11 +3299,11 @@
           "strong-push": 1
         }
       },
-      "gameHash": "855eb1e50fe7a9e19fbac65ebe920890148e89c013df4b67a1373dac56d32082",
-      "candidateHash": "9a8d920fc2f48b520691d0b7ae93f5016037c1ab4b3de311b9723e6d539fe9b5"
+      "gameHash": "7196d316714a7b7ac29036a2425998b352126c9e4d13514d404130230121339d",
+      "candidateHash": "bec5656bf3ca9d1665d11c5e6a7236d0ce77cb815e8a1d44897e98c2ef4f3d4f"
     },
     "placement": {
-      "levelId": "c-855eb1e50fe7a9e19fbac65ebe920890148e89c013df4b67a1373dac56d32082",
+      "levelId": "c-7196d316714a7b7ac29036a2425998b352126c9e4d13514d404130230121339d",
       "levelVersion": 1,
       "simulationVersion": "puttential-rapier-0.20.0-v3",
       "rulesVersion": "puttential-daily-v2",
@@ -3536,11 +3536,11 @@
       "engine": {
         "simulationVersion": "puttential-rapier-0.20.0-v3",
         "rulesVersion": "puttential-daily-v2",
-        "artifactDigest": "2c30bd251ff639cc7b72bd707467af19a4f7f521fd7a8ebfafd0f525264d42c8"
+        "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-6e373dc080c8fb0d28651e41bd995ed405977cf7f68a711dc3cccb27ab4bb7f0",
+        "id": "c-96ec7abf051ed016e76cf4ffa723aa838d4bda2dd64c80984ad9e564f9088de7",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -3716,11 +3716,11 @@
         },
         "tileCosts": {}
       },
-      "gameHash": "6e373dc080c8fb0d28651e41bd995ed405977cf7f68a711dc3cccb27ab4bb7f0",
-      "candidateHash": "024986583eefffb31e654737acc4a9ae30c742d1f8d5d6d106021392f01cb1c2"
+      "gameHash": "96ec7abf051ed016e76cf4ffa723aa838d4bda2dd64c80984ad9e564f9088de7",
+      "candidateHash": "f6f1d8baadc60b3f4cbce22fe39f1cba123b348eec845e1fb9677c0d3b0a7add"
     },
     "placement": {
-      "levelId": "c-6e373dc080c8fb0d28651e41bd995ed405977cf7f68a711dc3cccb27ab4bb7f0",
+      "levelId": "c-96ec7abf051ed016e76cf4ffa723aa838d4bda2dd64c80984ad9e564f9088de7",
       "levelVersion": 1,
       "rulesVersion": "puttential-daily-v2",
       "simulationVersion": "puttential-rapier-0.20.0-v3",
@@ -3912,11 +3912,11 @@
       "engine": {
         "simulationVersion": "puttential-rapier-0.20.0-v3",
         "rulesVersion": "puttential-daily-v2",
-        "artifactDigest": "2c30bd251ff639cc7b72bd707467af19a4f7f521fd7a8ebfafd0f525264d42c8"
+        "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-04db56e07feb930c88619a30d62e3a17fc1f861543dd8d62faddd4db738f3c46",
+        "id": "c-1d9516509244c03686ecb24c7ba682601fb3fefca7625b1f6ffb1d9777e6f3fc",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -4090,11 +4090,11 @@
         },
         "tileCosts": {}
       },
-      "gameHash": "04db56e07feb930c88619a30d62e3a17fc1f861543dd8d62faddd4db738f3c46",
-      "candidateHash": "95a41d9bfadafa4e5e94156a33afc3f61887e4f436aedf9f24cf4e81fa904877"
+      "gameHash": "1d9516509244c03686ecb24c7ba682601fb3fefca7625b1f6ffb1d9777e6f3fc",
+      "candidateHash": "75dfdc206fab6a8918a8742f4816937c61b723410dab7b6fbad28acab8a61fc9"
     },
     "placement": {
-      "levelId": "c-04db56e07feb930c88619a30d62e3a17fc1f861543dd8d62faddd4db738f3c46",
+      "levelId": "c-1d9516509244c03686ecb24c7ba682601fb3fefca7625b1f6ffb1d9777e6f3fc",
       "levelVersion": 1,
       "rulesVersion": "puttential-daily-v2",
       "simulationVersion": "puttential-rapier-0.20.0-v3",
@@ -4307,11 +4307,11 @@
       "engine": {
         "simulationVersion": "puttential-rapier-0.20.0-v3",
         "rulesVersion": "puttential-daily-v2",
-        "artifactDigest": "2c30bd251ff639cc7b72bd707467af19a4f7f521fd7a8ebfafd0f525264d42c8"
+        "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-5a4c25335705d37e33aa37f8c2f2abb6ab0e0ae334f4b30f45672356a8b7c981",
+        "id": "c-333a523f2dc6ff0ffc038f664a5546ee92062b9f5c945658d0f05aabae6c1ad4",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -4510,11 +4510,11 @@
         },
         "tileCosts": {}
       },
-      "gameHash": "5a4c25335705d37e33aa37f8c2f2abb6ab0e0ae334f4b30f45672356a8b7c981",
-      "candidateHash": "f827ec5fe2c0fa5982765a560c072a648c9800c78fdf06af0cb835b2d1fbbf26"
+      "gameHash": "333a523f2dc6ff0ffc038f664a5546ee92062b9f5c945658d0f05aabae6c1ad4",
+      "candidateHash": "98623507b33d7c28fc0a4d347913d0e9b2e6e31e89667af7bdb3d2f641df76c7"
     },
     "placement": {
-      "levelId": "c-5a4c25335705d37e33aa37f8c2f2abb6ab0e0ae334f4b30f45672356a8b7c981",
+      "levelId": "c-333a523f2dc6ff0ffc038f664a5546ee92062b9f5c945658d0f05aabae6c1ad4",
       "levelVersion": 1,
       "rulesVersion": "puttential-daily-v2",
       "simulationVersion": "puttential-rapier-0.20.0-v3",
@@ -4602,11 +4602,11 @@
       "engine": {
         "simulationVersion": "puttential-rapier-0.20.0-v3",
         "rulesVersion": "puttential-daily-v2",
-        "artifactDigest": "2c30bd251ff639cc7b72bd707467af19a4f7f521fd7a8ebfafd0f525264d42c8"
+        "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-bf514a6bfbe13e700be02b19458e5d9527c25ef2f320c43eb9b8fd03aaf37a0b",
+        "id": "c-3b97a1f2c18168b76f8e644567b791d2a52856c2da5f86002ab1ea6f8efb980d",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -4677,11 +4677,11 @@
         },
         "tileCosts": {}
       },
-      "gameHash": "bf514a6bfbe13e700be02b19458e5d9527c25ef2f320c43eb9b8fd03aaf37a0b",
-      "candidateHash": "c8e176bc9596b9c51f70bb0116076c0bc2a88f53168a3821b7766d88e7137688"
+      "gameHash": "3b97a1f2c18168b76f8e644567b791d2a52856c2da5f86002ab1ea6f8efb980d",
+      "candidateHash": "1102c842eab02891c20ba68a69e7068914e90021cae251e232934cba93c3de95"
     },
     "placement": {
-      "levelId": "c-bf514a6bfbe13e700be02b19458e5d9527c25ef2f320c43eb9b8fd03aaf37a0b",
+      "levelId": "c-3b97a1f2c18168b76f8e644567b791d2a52856c2da5f86002ab1ea6f8efb980d",
       "levelVersion": 1,
       "rulesVersion": "puttential-daily-v2",
       "simulationVersion": "puttential-rapier-0.20.0-v3",
@@ -4769,11 +4769,11 @@
       "engine": {
         "simulationVersion": "puttential-rapier-0.20.0-v3",
         "rulesVersion": "puttential-daily-v2",
-        "artifactDigest": "2c30bd251ff639cc7b72bd707467af19a4f7f521fd7a8ebfafd0f525264d42c8"
+        "artifactDigest": "e59fa678f7b28bf74f01b9ca232bb6179a4ae44c623577f746ffe6639bacb5e7"
       },
       "configuration": {
         "formatVersion": 1,
-        "id": "c-40a2b08f824b05c81ee95ddcc72ebb13609a47e12cc4d25d1e50fac56914d53b",
+        "id": "c-0922464c620b9c7082a35b0a9597ec482a56716bfeb4e437d30524d2a7ce89c6",
         "version": 1,
         "gravity": {
           "x": 0,
@@ -4844,11 +4844,11 @@
         },
         "tileCosts": {}
       },
-      "gameHash": "40a2b08f824b05c81ee95ddcc72ebb13609a47e12cc4d25d1e50fac56914d53b",
-      "candidateHash": "60e5905fcf79bc14fe5bf1e969cfd8b7149dc026104c4f8a717a2a397de9768d"
+      "gameHash": "0922464c620b9c7082a35b0a9597ec482a56716bfeb4e437d30524d2a7ce89c6",
+      "candidateHash": "cd3e19fb6259f6b2293257222f00c68bcf2725cdc49fb4e4ec2d7158837fd7b3"
     },
     "placement": {
-      "levelId": "c-40a2b08f824b05c81ee95ddcc72ebb13609a47e12cc4d25d1e50fac56914d53b",
+      "levelId": "c-0922464c620b9c7082a35b0a9597ec482a56716bfeb4e437d30524d2a7ce89c6",
       "levelVersion": 1,
       "rulesVersion": "puttential-daily-v2",
       "simulationVersion": "puttential-rapier-0.20.0-v3",

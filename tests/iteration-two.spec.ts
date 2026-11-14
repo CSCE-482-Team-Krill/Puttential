@@ -111,14 +111,26 @@ test('archive reads summaries, paginates, opens date links and retains canvas on
   await page.getByRole('button', { name: /Historical 2026-10-24/ }).click();
   await expect(page).toHaveURL(/date=2026-10-24/);
   await expect(page.locator('.challenge-label')).toContainText('Archive challenge');
+  await page.reload();
+  await expect(page.locator('.challenge-label')).toContainText('2026-10-24');
   await page.evaluate(() =>
     Object.assign(window, { retainedCanvas: document.querySelector('canvas') }),
   );
-  await page.reload();
-  await expect(page.locator('.challenge-label')).toContainText('2026-10-24');
   await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const refreshed = page.waitForResponse((response) =>
+    response.url().endsWith('/api/puzzles/by-date/2026-10-24'),
+  );
   await page.getByRole('button', { name: /Historical 2026-10-24/ }).click();
+  expect((await refreshed).ok()).toBe(true);
+  // The date is already visible while this same-course refresh is still pending.
+  // Wait for selection to finish (including its history entry) before going Back.
+  await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.challenge-label')).toContainText('2026-10-24');
+  expect(
+    await page.evaluate(() =>
+      Object.is(Reflect.get(window, 'retainedCanvas'), document.querySelector('canvas')),
+    ),
+  ).toBe(true);
   await page.goBack();
   await expect(page.locator('.challenge-label')).toContainText('2026-10-24');
 });

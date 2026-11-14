@@ -1,0 +1,613 @@
+{
+  "formatVersion": 1,
+  "id": "big-boom",
+  "version": 1,
+  "gravity": {
+    "x": 0,
+    "y": 0
+  },
+  "bounds": {
+    "minX": -7.4,
+    "maxX": 6,
+    "minY": -5.5,
+    "maxY": 4.25
+  },
+  "colorScheme": "yellow",
+  "dynamicBodies": [
+    {
+      "id": "square-1",
+      "position": {
+        "x": 1.5,
+        "y": -1.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "ball-2",
+      "position": {
+        "x": -3,
+        "y": 1.5
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "ball-2-piece-1",
+          "shape": {
+            "kind": "circle",
+            "radius": 0.4
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-1",
+      "position": {
+        "x": 2.5,
+        "y": -1.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-2",
+      "position": {
+        "x": 3.5,
+        "y": -1.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-2-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-3",
+      "position": {
+        "x": 4.5,
+        "y": -1.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-3-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-4",
+      "position": {
+        "x": 4.5,
+        "y": -3.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-4-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-5",
+      "position": {
+        "x": 3.5,
+        "y": -2.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-5-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-6",
+      "position": {
+        "x": 1.5,
+        "y": -0.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-6-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-1-1",
+      "position": {
+        "x": 2.5,
+        "y": -0.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-1-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-2-1",
+      "position": {
+        "x": 3.5,
+        "y": -0.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-2-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-3-1",
+      "position": {
+        "x": 4.5,
+        "y": -0.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-3-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-5-1",
+      "position": {
+        "x": 4.5,
+        "y": -2.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-5-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-5-2",
+      "position": {
+        "x": 2.5,
+        "y": -2.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-5-2-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-4-1",
+      "position": {
+        "x": 4.5,
+        "y": -4.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-4-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-4-2",
+      "position": {
+        "x": 1.5,
+        "y": -2.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-4-2-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-4-3",
+      "position": {
+        "x": 1.5,
+        "y": -3.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-4-3-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-4-1-1",
+      "position": {
+        "x": 1.5,
+        "y": -4.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-4-1-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-4-1-2",
+      "position": {
+        "x": 2.5,
+        "y": -4.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-4-1-2-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-4-4",
+      "position": {
+        "x": 2.5,
+        "y": -3.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-4-4-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-4-5",
+      "position": {
+        "x": 3.5,
+        "y": -3.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-4-5-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-4-1-3",
+      "position": {
+        "x": 3.5,
+        "y": -4.25
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-4-1-3-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    }
+  ],
+  "staticBodies": [],
+  "fields": [
+    {
+      "id": "uniform-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2.5,
+        "height": 1
+      },
+      "position": {
+        "x": -1.5,
+        "y": -0.5
+      },
+      "angle": 1.5707963267948966,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "uniform-1-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2.5,
+        "height": 1
+      },
+      "position": {
+        "x": -5.5,
+        "y": 2.75
+      },
+      "angle": -1.5707963267948966,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "lava-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 3,
+        "height": 1.5
+      },
+      "position": {
+        "x": -1.5,
+        "y": -4
+      },
+      "angle": 0,
+      "enabled": true,
+      "force": {
+        "kind": "lava"
+      }
+    },
+    {
+      "id": "uniform-1-1-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2.5,
+        "height": 1
+      },
+      "position": {
+        "x": -0.75,
+        "y": 2
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    },
+    {
+      "id": "repulsor-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 2,
+        "height": 2
+      },
+      "position": {
+        "x": -3.5,
+        "y": -0.75
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "repulsor",
+        "source": {
+          "x": 0,
+          "y": 0
+        },
+        "strength": 4
+      }
+    }
+  ],
+  "goal": {
+    "bodyId": "ball-2",
+    "minX": 1,
+    "maxX": 5,
+    "minY": -4.75,
+    "maxY": 0.25,
+    "holdSeconds": 1
+  }
+}

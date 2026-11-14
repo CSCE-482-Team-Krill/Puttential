@@ -1,0 +1,96 @@
+{
+  "formatVersion": 1,
+  "id": "one-or-the-other",
+  "version": 1,
+  "gravity": {
+    "x": 0,
+    "y": 0
+  },
+  "bounds": {
+    "minX": -7.4,
+    "maxX": 7.4,
+    "minY": -4.25,
+    "maxY": 4.25
+  },
+  "colorScheme": "lavender",
+  "dynamicBodies": [
+    {
+      "id": "square-1",
+      "position": {
+        "x": -3,
+        "y": -0.5
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    },
+    {
+      "id": "square-1-1",
+      "position": {
+        "x": -3,
+        "y": 1.5
+      },
+      "angle": 0,
+      "density": 1,
+      "material": {
+        "restitution": 0.8
+      },
+      "ccd": true,
+      "pieces": [
+        {
+          "id": "square-1-1-piece-1",
+          "shape": {
+            "kind": "rectangle",
+            "width": 1,
+            "height": 1
+          }
+        }
+      ]
+    }
+  ],
+  "staticBodies": [],
+  "fields": [
+    {
+      "id": "uniform-1",
+      "shape": {
+        "kind": "rectangle",
+        "width": 1.5,
+        "height": 1.5
+      },
+      "position": {
+        "x": -0.75,
+        "y": 2
+      },
+      "angle": 0,
+      "enabled": false,
+      "force": {
+        "kind": "uniform",
+        "density": {
+          "x": 4,
+          "y": 0
+        }
+      }
+    }
+  ],
+  "goal": {
+    "bodyId": "square-1",
+    "minX": 2.75,
+    "maxX": 7.25,
+    "minY": -2.25,
+    "maxY": 3.25,
+    "holdSeconds": 1
+  }
+}

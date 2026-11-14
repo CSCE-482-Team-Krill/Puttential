@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "levelRevision": "2dfa0a3fc7d28d630b695f6a901d45f64acc7e92565f1b18923ef363347f6647",
+  "editor": {
+    "name": "dodge-1",
+    "arena": {
+      "bounds": {
+        "minX": -8.75,
+        "maxX": 6.25,
+        "minY": -8.5,
+        "maxY": 6.75
+      },
+      "walls": [
+        "left-rail",
+        "right-rail",
+        "bottom-rail",
+        "top-rail"
+      ],
+      "thickness": 0.5
+    }
+  }
+}
