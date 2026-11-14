@@ -14,6 +14,18 @@ export type CommunityMapDetail = CommunityMapSummary & {
   competition: PuzzleResponse;
 };
 export type CommunityMapList = { items: CommunityMapSummary[]; nextCursor: string | null };
+export type CommunityMapFilters = {
+  query: string;
+  creator: string;
+  published: 'all' | 'week' | 'month';
+  sort: 'newest' | 'oldest' | 'title';
+};
+export const defaultCommunityMapFilters: CommunityMapFilters = {
+  query: '',
+  creator: '',
+  published: 'all',
+  sort: 'newest',
+};
 export type PublishCommunityMap = {
   requestId: string;
   expectedGuestId: string;

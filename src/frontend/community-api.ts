@@ -1,4 +1,4 @@
-import type { PublishCommunityMap } from '../shared/community-maps';
+import type { CommunityMapFilters, PublishCommunityMap } from '../shared/community-maps';
 import {
   decodeCommunityList,
   decodeCommunityMap,
@@ -51,12 +51,19 @@ async function request<T>(
   }
 }
 export const communityApi = {
-  list: (cursor?: string, signal?: AbortSignal) =>
-    request(
-      `/api/community${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`,
+  list: (cursor?: string, signal?: AbortSignal, filters?: CommunityMapFilters) => {
+    const params = new URLSearchParams();
+    if (cursor) params.set('cursor', cursor);
+    if (filters?.query.trim()) params.set('q', filters.query.trim());
+    if (filters?.creator.trim()) params.set('creator', filters.creator.trim());
+    if (filters && filters.published !== 'all') params.set('published', filters.published);
+    if (filters && filters.sort !== 'newest') params.set('sort', filters.sort);
+    return request(
+      `/api/community${params.size ? `?${params}` : ''}`,
       (value) => decodeCommunityList(value, cursor),
       { ...(signal ? { signal } : {}) },
-    ),
+    );
+  },
   read: (id: string, signal?: AbortSignal) =>
     request(`/api/community/${encodeURIComponent(id)}`, (value) => decodeCommunityMap(value, id), {
       ...(signal ? { signal } : {}),
