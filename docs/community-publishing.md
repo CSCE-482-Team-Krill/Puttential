@@ -23,6 +23,13 @@ creates a new map/link. Creator names use the existing guest profile nickname.
 Maps are listed newest first, 20 per page. Solutions and internal ownership fields
 are excluded from public responses.
 
+Community search matches titles, descriptions and creator names without regard to
+case. Combine it with a creator name filter, publication windows (last 7 days,
+last 30 days or any time), and newest, oldest or title sorting. Select **Apply
+filters** or press Enter to search; **Clear filters** restores the full gallery.
+Filtering happens before pagination, so results include maps beyond the first
+page. Refresh, retry and load more keep the applied filters.
+
 The publishing form journals its exact submission and request ID in sessionStorage
 before sending. If the server commits but its response is lost, reopening playtest
 offers **Retry publication**, which resends the saved proof and metadata without
@@ -48,6 +55,10 @@ Builds do not automatically migrate databases. Generate the client locally with
 ## API
 
 - `GET /api/community?cursor=<last-map-id>`: public summaries and next cursor.
+  Optional parameters: `q` (up to 100 characters), `creator` (up to 40 characters),
+  `published=all|week|month`, and `sort=newest|oldest|title`. Search text is a
+  literal substring, including `%`, `_` and backslashes. Defaults are all dates
+  and newest first. Keep filters unchanged when following a cursor.
 - `GET /api/community/<id>`: public map, configuration, immutable rules and
   `competition` course for the shared run, progress, leaderboard and replay APIs.
   Community boards use `scope=archive` and remain open indefinitely.
