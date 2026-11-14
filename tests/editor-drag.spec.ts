@@ -4,8 +4,15 @@ test('undo during a drag cannot recommit the obsolete document on pointer releas
   page,
 }) => {
   await page.goto('http://127.0.0.1:3001/');
+  // Server-rendered inputs are editable before hydration. Wait for the canvas's
+  // first client frame so initialization cannot discard the history setup.
+  await expect(page.locator('canvas.course-canvas')).toHaveAttribute('width', /[1-9]\d*/);
   await page.getByRole('textbox', { name: 'Course name', exact: true }).fill('Obsolete drag base');
   await page.getByRole('textbox', { name: 'Course name', exact: true }).press('Tab');
+  await expect(
+    page.getByRole('heading', { name: 'Obsolete drag base', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeEnabled();
   await page.locator('.object-list').getByRole('button', { name: 'ball', exact: true }).click();
   const box = (await page.locator('.canvas-input').boundingBox())!;
   const scale = Math.min(box.width / 15.1, box.height / 8.8);
