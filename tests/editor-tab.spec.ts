@@ -89,12 +89,12 @@ test('Editor fits a phone viewport and preserves modal keyboard behavior', async
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await mkdir('artifacts/editor-tab', { recursive: true });
   await page.screenshot({ path: 'artifacts/editor-tab/editor-mobile.png' });
-  const community = page.getByRole('button', { name: 'Community', exact: true });
-  await community.click();
-  await expect(page.getByRole('dialog', { name: 'Community', exact: true })).toBeVisible();
+  const settings = page.getByRole('button', { name: 'Settings', exact: true });
+  await settings.click();
+  await expect(page.getByRole('dialog', { name: 'Settings', exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
-  await expect(community).toBeFocused();
+  await expect(settings).toBeFocused();
   await expect(editor).toBeVisible();
 });
 
@@ -131,7 +131,7 @@ test('community retries repeat the failed page, including a failed refresh', asy
   });
   await page.goto('http://127.0.0.1:3000/');
   await page.getByRole('button', { name: 'Community', exact: true }).click();
-  const panel = page.getByRole('dialog', { name: 'Community', exact: true });
+  const panel = page.getByRole('main', { name: 'Community', exact: true });
   await expect(panel.getByRole('article')).toHaveCount(20);
   await panel.getByRole('button', { name: 'Load more maps' }).click();
   await panel.getByRole('button', { name: 'Retry community' }).click();

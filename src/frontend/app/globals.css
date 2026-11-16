@@ -149,33 +149,6 @@ button:disabled {
   color: var(--ui-green-strong);
   background: var(--ui-turf-soft);
 }
-.community-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 32px 24px;
-  text-align: center;
-}
-.community-empty-icon {
-  display: grid;
-  place-items: center;
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  background: var(--ui-turf);
-  color: var(--ui-green);
-}
-.community-empty h3 {
-  margin: 0;
-  font-size: 1.125rem;
-}
-.community-empty p {
-  max-width: 36ch;
-  margin: 0;
-  color: var(--ui-muted);
-  font-size: 0.875rem;
-}
 .dashboard {
   max-width: 1440px;
   margin: 0 auto;
@@ -1491,6 +1464,8 @@ button:disabled {
 }
 .panel-actions button,
 .community-map-card > button,
+.community-panel > button,
+.community-panel [role='alert'] button,
 .copy-result > button,
 .modal-body form button,
 .modal-body > button,
@@ -1612,19 +1587,101 @@ button:disabled {
     line-height: 1.5;
   }
 }
-/* Community maps use the existing modal and game layout. */
+/* Community has a full-page gallery within the shared website shell. */
+.dashboard.community-page {
+  padding: clamp(16px, 2.5vw, 36px);
+  overflow-y: auto;
+  scrollbar-color: var(--ui-secondary) transparent;
+}
+.community-panel {
+  display: grid;
+  gap: 24px;
+}
+.community-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--ui-line);
+}
+.community-heading > div:first-child {
+  flex: 1 1 320px;
+}
+.community-heading h1 {
+  margin: 0 0 8px;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+}
+.community-heading h1:focus {
+  outline: none;
+}
+.community-heading p {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--ui-muted);
+}
+.community-heading .panel-actions {
+  margin: 0;
+}
+.panel-actions .community-create {
+  border-color: var(--ui-green);
+  background: var(--ui-green);
+  color: var(--ui-white);
+}
+.community-map-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+  gap: 20px;
+}
+.community-map-grid:empty {
+  display: none;
+}
 .community-map-card {
-  padding: 16px;
-  border: 1px solid var(--border, #d0dccb);
-  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 240px;
   min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-lg);
+  background: var(--ui-white);
+  box-shadow: var(--ui-shadow-frame);
   overflow-wrap: anywhere;
 }
-.community-map-card h3 {
-  margin: 0 0 6px;
+.community-map-card h2 {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  line-height: 1.4;
 }
 .community-map-card a {
   color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+.community-map-card a:hover {
+  color: var(--ui-green-strong);
+}
+.community-map-card p {
+  margin: 0 0 16px;
+}
+.community-map-card .muted {
+  font-size: 0.8125rem;
+}
+.community-map-card > button {
+  margin-top: auto;
+}
+.community-load-more {
+  justify-self: center;
+}
+.community-empty {
+  margin: 0;
+  padding: 48px 24px;
+  border: 1px dashed var(--ui-line);
+  border-radius: var(--ui-r-lg);
+  color: var(--ui-muted);
+  text-align: center;
 }
 .community-description {
   white-space: pre-wrap;

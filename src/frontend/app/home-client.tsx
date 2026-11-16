@@ -1,0 +1,1019 @@
+'use client';
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { starterLevels, levelName } from '../../game';
+import type { Bounds, Level } from '../../game';
+import type { Player, PuzzleResponse, Scope } from '../../shared/puzzle-contracts';
+import { GameplayCanvas, GameplayToolkit, GameplayRunControls } from '../gameplay/gameplay-view';
+import { LevelImport } from '../level-import';
+import { usePuzzle } from '../puzzle';
+import { Icon } from '../icon';
+import { BrandLogo } from '../brand-logo';
+import type { IconName } from '../icon';
+import { Modal, usePreferences } from '../modal';
+import type { Panel } from '../modal';
+import { ApiError, puzzleApi } from '../api';
+import { selectableFields, selectedFieldCount, displayedForceCost } from '../score-display';
+import { bootstrapGuest } from '../guest-session';
+import { localContext, publishedContext, dailyDelay } from '../course-context';
+import type { CourseContext } from '../course-context';
+import { deliveredEngine, ENGINE_UNAVAILABLE } from '../engine-adapter';
+import { CourseSession } from '../course-session';
+import { ProgressStorage } from '../progress-storage';
+import { ownerTokens } from '../run-ownership';
+import { AuthoritativeState } from '../authoritative-state';
+import { validDate } from '../response-validation';
+import { ArchivePanel } from '../panels/archive';
+import { LeaderboardPanel } from '../panels/leaderboard';
+import { ProfilePanel } from '../panels/profile';
+import { ResultPanel } from '../panels/result';
+import { RunsPanel } from '../panels/runs';
+import { CommunityPanel } from '../panels/community';
+import { communityApi } from '../community-api';
+import { communityMapUrl } from '../../shared/community-maps';
+import { usesLegacyBounds } from '../../game/run-evaluation';
+import { shareResult } from '../share-result';
+import { markTutorialSeen, shouldOpenTutorial, Tutorial } from '../tutorial';
+
+const EmbeddedEditor = dynamic(() => import('../embedded-editor'), {
+  ssr: false,
+  loading: () => <p role="status">Loading level editor…</p>,
+});
+
+type View = 'game' | 'editor' | 'community';
+
+export default function Home({ initialView = 'game' }: { initialView?: View }) {
+  const [view, setView] = useState<View>(initialView);
+  const [editorVisited, setEditorVisited] = useState(false);
+  const [context, setContext] = useState<CourseContext | null>(null);
+  const contextRef = useRef(context);
+  contextRef.current = context;
+  const [daily, setDaily] = useState<PuzzleResponse | null>(null);
+  const [notice, setNotice] = useState('');
+  const [communityNotice, setCommunityNotice] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [importBounds, setImportBounds] = useState<Bounds | null>(null);
+  const [panel, setPanel] = useState<Panel>(null);
+  const [sidebarTab, setSidebarTab] = useState<'toolkit' | 'runs'>('toolkit');
+  const [preferences, setPreferences] = usePreferences();
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  useEffect(() => {
+    if (shouldOpenTutorial()) setTutorialOpen(true);
+  }, []);
+  const closeTutorial = useCallback(() => {
+    markTutorialSeen();
+    setTutorialOpen(false);
+  }, []);
+  const [player, setPlayer] = useState<Player | null>(null);
+  const playerRef = useRef(player);
+  playerRef.current = player;
+  const [guestIssue, setGuestIssue] = useState('');
+  const [guestGeneration, retryGuest] = useState(0);
+  const reconcileGuest = useCallback(() => {
+    setPlayer(null);
+    retryGuest((n) => n + 1);
+  }, []);
+  const [memoryOnly, setMemoryOnly] = useState(false);
+  const [storageReady, setStorageReady] = useState(false);
+  const [startingPlay, setStartingPlay] = useState(false);
+  const [, redraw] = useState(0);
+  const sessionRef = useRef<CourseSession | null>(null);
+  const stateRef = useRef(new AuthoritativeState());
+  const activeRequest = useRef<string | null>(null);
+  const selectedGeneration = useRef(0);
+  const selectionAbort = useRef<AbortController | null>(null);
+  const dailyAbort = useRef<AbortController | null>(null);
+  const rollover = useRef<{ puzzle: PuzzleResponse; received: number } | null>(null);
+  const staleBoundary = useRef(false);
+  const level = context?.level ?? starterLevels[0]!;
+  const p = context?.puzzle;
+  const community = context?.community;
+  const courseRules = p?.rules ?? community?.rules;
+  const legacy = context?.source === 'legacy';
+  const puzzle = usePuzzle(level, {
+    ...(!courseRules || deliveredEngine.supports(courseRules) ? { adapter: deliveredEngine } : {}),
+    ...(courseRules ? { rules: courseRules } : {}),
+    ...(context
+      ? {
+          storageKey: `puttential-draft-v1/${p ? (player?.id ?? 'unconfirmed') : 'local'}/${context.key}`,
+        }
+      : {}),
+  });
+  const executorRef = useRef(puzzle);
+  executorRef.current = puzzle;
+
+  useEffect(() => {
+    const storage = new ProgressStorage();
+    let alive = true;
+    const session = new CourseSession(
+      puzzleApi,
+      storage,
+      ownerTokens(),
+      {
+        supports: (course) => !!deliveredEngine?.supports(course.rules),
+        play: (placement, requestId) => {
+          activeRequest.current = requestId;
+          executorRef.current.play(placement);
+        },
+      },
+      () => {
+        if (alive) {
+          setMemoryOnly(storage.mode === 'memory');
+          redraw((n) => n + 1);
+        }
+      },
+      reconcileGuest,
+    );
+    sessionRef.current = session;
+    stateRef.current = session.state;
+    void storage.initialize().then(() => {
+      if (alive) {
+        setMemoryOnly(storage.mode === 'memory');
+        setStorageReady(true);
+        redraw((n) => n + 1);
+      }
+    });
+    return () => {
+      alive = false;
+      session.dispose();
+      storage.close();
+      sessionRef.current = null;
+    };
+  }, [reconcileGuest]);
+  useEffect(() => {
+    const controller = new AbortController();
+    setGuestIssue('Confirming guest session…');
+    void bootstrapGuest(puzzleApi, controller.signal)
+      .then((confirmed) => {
+        if (controller.signal.aborted) return;
+        setPlayer(confirmed);
+        setGuestIssue('');
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) {
+          setPlayer(null);
+          setGuestIssue(e instanceof Error ? e.message : 'Competitive session unavailable.');
+        }
+      });
+    return () => controller.abort();
+  }, [guestGeneration]);
+  useEffect(() => {
+    if (!player || !storageReady) return;
+    void sessionRef.current
+      ?.recover(player.id)
+      .catch(() => setNotice('Pending run recovery unavailable. Keep this page open to retry.'));
+  }, [player?.id, storageReady]);
+
+  const refreshToday = useCallback(async (select = false) => {
+    dailyAbort.current?.abort();
+    const controller = new AbortController();
+    dailyAbort.current = controller;
+    const generation = selectedGeneration.current;
+    if (!contextRef.current) setLoading(true);
+    try {
+      const response = await puzzleApi.today({ signal: controller.signal });
+      if (controller.signal.aborted) return;
+      stateRef.current.applyAvailability(response.availability);
+      setDaily(response);
+      rollover.current = { puzzle: response, received: performance.now() };
+      if (generation === selectedGeneration.current && (select || contextRef.current?.puzzle?.date))
+        setNotice('');
+      if (select && generation === selectedGeneration.current) {
+        const next = publishedContext(response);
+        setContext((current) =>
+          current?.key === next.key ? { ...next, level: current.level } : next,
+        );
+      } else {
+        setContext((current) => {
+          if (!current?.puzzle?.date) return current;
+          // A new server day changes presentation, never the selected immutable content.
+          return {
+            ...current,
+            source: current.puzzle.date === response.todayDate ? 'daily' : 'archive',
+          };
+        });
+      }
+    } catch (e) {
+      if (controller.signal.aborted) return;
+      if (generation !== selectedGeneration.current || contextRef.current?.community) return;
+      setNotice(
+        e instanceof ApiError && e.status === 404
+          ? 'No course is published for today.'
+          : e instanceof ApiError && e.code === 'INVALID_DATA'
+            ? 'The daily service returned incompatible puzzle data.'
+            : 'Today’s puzzle service is unavailable.',
+      );
+    } finally {
+      if (!controller.signal.aborted && generation === selectedGeneration.current)
+        setLoading(false);
+    }
+  }, []);
+  const leaveOwned = useCallback(async () => {
+    const session = sessionRef.current;
+    const record =
+      (activeRequest.current ? session?.records.get(activeRequest.current) : undefined) ??
+      [...(session?.records.values() ?? [])].find(
+        (r) =>
+          r.start.puzzleId === contextRef.current?.puzzle?.id &&
+          !r.intent &&
+          r.phase !== 'terminal' &&
+          session?.blocks(r),
+      );
+    const unresolved = record && !record.intent && record.phase !== 'terminal';
+    if (
+      (executorRef.current.mode === 'running' || unresolved) &&
+      !window.confirm(
+        contextRef.current?.puzzle
+          ? 'Leave this run? It will end; an accepted ranked start still counts.'
+          : 'Leave this run? It will end.',
+      )
+    )
+      return false;
+    if (unresolved) await session?.cancel(record.start.requestId);
+    return true;
+  }, []);
+  const showView = useCallback(
+    async (next: View, history = true) => {
+      const current = contextRef.current;
+      const gameUrl = current?.community
+        ? communityMapUrl(current.community.id)
+        : current?.puzzle
+          ? `/?date=${current.puzzle.date}`
+          : '/';
+      if (next !== 'game') {
+        if (!(await leaveOwned())) {
+          if (!history) window.history.pushState(null, '', gameUrl);
+          return;
+        }
+        ++selectedGeneration.current;
+        selectionAbort.current?.abort();
+        if (executorRef.current.mode === 'running') executorRef.current.rewind();
+        setLoading(false);
+      }
+      setPanel(null);
+      setCommunityNotice('');
+      if (next === 'editor') setEditorVisited(true);
+      setView(next);
+      if (history)
+        window.history.pushState(null, '', next === 'community' ? '/community' : gameUrl);
+    },
+    [leaveOwned],
+  );
+  useEffect(() => {
+    if (view === 'community') document.getElementById('community-title')?.focus();
+  }, [view]);
+  const chooseDate = useCallback(
+    async (date: string, history = true) => {
+      if (!validDate(date)) {
+        setNotice('Use a valid YYYY-MM-DD course date.');
+        setLoading(false);
+        return;
+      }
+      const sameDate = !contextRef.current?.community && contextRef.current?.puzzle?.date === date;
+      if (!sameDate && !(await leaveOwned())) {
+        if (!history)
+          window.history.pushState(
+            null,
+            '',
+            contextRef.current?.community
+              ? communityMapUrl(contextRef.current.community.id)
+              : contextRef.current?.puzzle
+                ? `/?date=${contextRef.current.puzzle.date}`
+                : '/',
+          );
+        return;
+      }
+      const generation = ++selectedGeneration.current;
+      selectionAbort.current?.abort();
+      const controller = new AbortController();
+      selectionAbort.current = controller;
+      setLoading(true);
+      setNotice('Loading selected course…');
+      try {
+        const response = await puzzleApi.byDate(date, { signal: controller.signal });
+        if (generation !== selectedGeneration.current || controller.signal.aborted) return;
+        if (response.date !== date)
+          throw new Error('The service returned a different course date.');
+        stateRef.current.applyAvailability(response.availability);
+        const next = publishedContext(response);
+        if (sameDate && contextRef.current?.key !== next.key)
+          throw new Error(
+            'Published content changed for this date. Your current course is preserved; contact the publishing owner.',
+          );
+        const sameContent = contextRef.current?.key === next.key;
+        setContext((current) =>
+          current?.key === next.key ? { ...next, level: current.level } : next,
+        );
+        setImportBounds(null);
+        setView('game');
+        setNotice('');
+        setPanel(null);
+        if (!sameContent) activeRequest.current = null;
+        if (history) window.history.pushState(null, '', `/?date=${date}`);
+      } catch (e) {
+        if (generation === selectedGeneration.current && !controller.signal.aborted)
+          setNotice(e instanceof Error ? e.message : 'Selected course unavailable.');
+      } finally {
+        if (generation === selectedGeneration.current && !controller.signal.aborted)
+          setLoading(false);
+      }
+    },
+    [leaveOwned],
+  );
+  const chooseCommunity = useCallback(
+    async (id: string, history = true) => {
+      if (contextRef.current?.community?.id !== id && !(await leaveOwned())) {
+        if (!history)
+          window.history.pushState(
+            null,
+            '',
+            contextRef.current?.community
+              ? communityMapUrl(contextRef.current.community.id)
+              : contextRef.current?.puzzle
+                ? `/?date=${contextRef.current.puzzle.date}`
+                : '/',
+          );
+        return;
+      }
+      const generation = ++selectedGeneration.current;
+      selectionAbort.current?.abort();
+      const controller = new AbortController();
+      selectionAbort.current = controller;
+      setLoading(true);
+      setNotice('Loading community map…');
+      setCommunityNotice('Loading community map…');
+      try {
+        const map = await communityApi.read(id, controller.signal);
+        if (controller.signal.aborted || generation !== selectedGeneration.current) return;
+        stateRef.current.applyAvailability(map.competition.availability);
+        const next: CourseContext = {
+          ...publishedContext(map.competition),
+          community: map,
+        };
+        const sameContent = contextRef.current?.key === next.key;
+        setContext((current) =>
+          current?.community?.id === map.id ? { ...next, level: current.level } : next,
+        );
+        setImportBounds(map.rules.placementBounds);
+        setView('game');
+        setPanel(null);
+        setCommunityNotice('');
+        setNotice(deliveredEngine.supports(map.rules) ? '' : ENGINE_UNAVAILABLE);
+        if (!sameContent) activeRequest.current = null;
+        if (history) window.history.pushState(null, '', communityMapUrl(map.id));
+      } catch (cause) {
+        if (!controller.signal.aborted && generation === selectedGeneration.current) {
+          const message = cause instanceof Error ? cause.message : 'Community map unavailable.';
+          setNotice(message);
+          setCommunityNotice(message);
+        }
+      } finally {
+        if (!controller.signal.aborted && generation === selectedGeneration.current)
+          setLoading(false);
+      }
+    },
+    [leaveOwned],
+  );
+  async function chooseLocal(
+    next: Level,
+    bounds?: Bounds,
+    source: 'legacy' | 'practice' | 'local' = 'practice',
+  ) {
+    if (!(await leaveOwned())) return;
+    ++selectedGeneration.current;
+    selectionAbort.current?.abort();
+    setContext(localContext(next, source));
+    setImportBounds(bounds ?? null);
+    setView('game');
+    setPanel(null);
+    setLoading(false);
+    activeRequest.current = null;
+    setNotice('');
+    window.history.pushState(null, '', '/');
+  }
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get('date');
+    const communityId = params.get('community');
+    void refreshToday(!requested && !communityId);
+    if (communityId) void chooseCommunity(communityId, false);
+    else if (requested) void chooseDate(requested, false);
+    const back = () => {
+      if (window.location.pathname === '/community') {
+        void showView('community', false);
+        return;
+      }
+      const params = new URLSearchParams(window.location.search);
+      const date = params.get('date');
+      const communityId = params.get('community');
+      if (communityId) void chooseCommunity(communityId, false);
+      else if (date) void chooseDate(date, false);
+      else
+        void (async () => {
+          if (await leaveOwned()) {
+            ++selectedGeneration.current;
+            selectionAbort.current?.abort();
+            if (executorRef.current.mode === 'running') executorRef.current.rewind();
+            activeRequest.current = null;
+            setView('game');
+            setPanel(null);
+            await refreshToday(true);
+          } else {
+            window.history.pushState(
+              null,
+              '',
+              contextRef.current?.community
+                ? communityMapUrl(contextRef.current.community.id)
+                : contextRef.current?.puzzle
+                  ? `/?date=${contextRef.current.puzzle.date}`
+                  : '/',
+            );
+          }
+        })();
+    };
+    window.addEventListener('popstate', back);
+    return () => {
+      window.removeEventListener('popstate', back);
+      selectionAbort.current?.abort();
+      dailyAbort.current?.abort();
+    };
+  }, [refreshToday, chooseDate, chooseCommunity, showView]);
+  useEffect(() => {
+    const current = rollover.current;
+    if (!current) return;
+    const delay = dailyDelay(
+      current.puzzle.serverNow,
+      current.puzzle.nextDailyAt,
+      current.received,
+      performance.now(),
+    );
+    const wait = delay > 0 ? delay : staleBoundary.current ? 30_000 : 0;
+    staleBoundary.current = delay <= 0;
+    const refresh = () => {
+      if (!document.hidden) void refreshToday();
+    };
+    const timer = setTimeout(refresh, Math.min(wait, 2_147_483_647));
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', refresh);
+    };
+  }, [daily, refreshToday]);
+  useEffect(() => {
+    if (!player || !p) return;
+    const controller = new AbortController();
+    const load = () => {
+      void puzzleApi
+        .progress(p.id, { signal: controller.signal })
+        .then((response) => {
+          if (
+            controller.signal.aborted ||
+            response.progress.guestId !== player.id ||
+            response.progress.puzzleId !== p.id
+          )
+            return;
+          stateRef.current.applyProgress(response.progress);
+          stateRef.current.applyAvailability(response.availability);
+          redraw((n) => n + 1);
+        })
+        .catch(() => {});
+    };
+    load();
+    const channel =
+      typeof BroadcastChannel === 'undefined' ? null : new BroadcastChannel('puttential-progress');
+    if (channel) channel.onmessage = load; // Broadcasts are hints, never authoritative snapshots.
+    window.addEventListener('focus', load);
+    return () => {
+      controller.abort();
+      channel?.close();
+      window.removeEventListener('focus', load);
+    };
+  }, [player?.id, p?.id]);
+  useEffect(() => {
+    if (!puzzle.completedRun) return;
+    if (activeRequest.current)
+      void sessionRef.current?.finish(
+        activeRequest.current,
+        'terminal',
+        puzzle.completedRun.result.tick ?? 0,
+      );
+    setPanel('result');
+  }, [puzzle.completedRun]);
+
+  const session = sessionRef.current;
+  const state = stateRef.current;
+  const progress = p && player ? state.progress.get(`${player.id}/${p.id}`) : undefined;
+  const availability = p ? (state.availability.get(p.id) ?? p.availability) : undefined;
+  const records = [...(session?.records.values() ?? [])].filter(
+    (r) => r.start.expectedGuestId === player?.id,
+  );
+  const record =
+    records.find((r) => r.start.requestId === activeRequest.current) ??
+    records.filter((r) => r.start.puzzleId === p?.id).at(-1);
+  const locked =
+    startingPlay ||
+    (!!record && !!session?.blocks(record) && !record.intent && record.phase !== 'terminal');
+  const compatible = !!p && !!deliveredEngine?.supports(p.rules);
+  const canRank =
+    storageReady && !!player && compatible && availability?.publicationStatus === 'active';
+  async function play() {
+    if (!p) {
+      puzzle.play();
+      return;
+    }
+    if (!canRank || !session) return;
+    try {
+      // Freeze UI synchronously before any asynchronous start work.
+      setNotice('Starting run…');
+      setStartingPlay(true);
+      const starting = session.start(p, player!, puzzle.getPlacement());
+      redraw((n) => n + 1);
+      const started = await starting;
+      activeRequest.current = started.start.requestId;
+      setNotice('');
+      redraw((n) => n + 1);
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : 'Could not start run.');
+    } finally {
+      setStartingPlay(false);
+    }
+  }
+  async function stop() {
+    if (activeRequest.current && puzzle.mode === 'running')
+      await session?.finish(activeRequest.current, 'aborted', puzzle.tick);
+    puzzle.rewind();
+  }
+  async function compose(savedBest = false) {
+    const saved = savedBest
+      ? context?.source === 'daily'
+        ? progress?.bestDaily
+        : progress?.bestArchive
+      : record?.response?.state === 'saved'
+        ? record.response.result
+        : null;
+    if (saved && p && player) {
+      const scope: Scope = context?.source === 'daily' ? 'daily' : 'archive';
+      let currentAvailability =
+          state.availability.get(p.id)?.publicationStatus === 'canceled'
+            ? state.availability.get(p.id)!
+            : null,
+        board = null;
+      try {
+        const response = await puzzleApi.run(saved.runId);
+        if (
+          response.guestId !== player.id ||
+          response.puzzleId !== p.id ||
+          response.state !== 'saved' ||
+          response.result.runId !== saved.runId
+        )
+          throw new Error('Identity mismatch');
+        state.applyRun(response);
+        currentAvailability = state.availability.get(p.id) ?? null;
+        if (currentAvailability?.publicationStatus === 'active') {
+          board = await puzzleApi.board(p.id, scope, 'top');
+          state.applyAvailability(board.availability);
+          currentAvailability = state.availability.get(p.id) ?? null;
+        }
+      } catch {
+        board = null;
+      }
+      if (
+        playerRef.current?.id !== player.id ||
+        contextRef.current?.key !== context?.key ||
+        (contextRef.current?.source === 'daily' ? 'daily' : 'archive') !== scope
+      ) {
+        throw new Error('Guest or course selection changed. Copy again for the selected course.');
+      }
+      return shareResult({
+        date: p.date,
+        ...(community ? { community: { id: community.id, title: community.title } } : {}),
+        puzzleId: p.id,
+        guestId: player.id,
+        scope,
+        result: saved,
+        firstSolveAttempts: progress?.firstSolveAttempts ?? null,
+        availability: currentAvailability,
+        board,
+        origin: window.location.origin,
+      });
+    }
+    return `⛳ Puttential — ${community?.title ?? p?.date ?? (legacy ? levelName(level) : 'Practice')} — ${p ? 'Unverified' : community ? 'Community — unranked' : legacy ? 'Legacy course' : 'Practice — unranked'}\n${puzzle.result?.solved ? 'Solved' : (puzzle.result?.outcome ?? 'Finished')}\nForce ${puzzle.result?.forceCost ?? 0} · Tiles ${puzzle.result?.tiles ?? 0}\nBall time ${(puzzle.result?.seconds ?? 0).toFixed(2)}s${community ? `\n${window.location.origin}${communityMapUrl(community.id)}` : p ? `\n${window.location.origin}/?date=${p.date}` : ''}`;
+  }
+  const nav: {
+    name: Exclude<Panel, 'result' | null> | 'editor' | 'community';
+    label: string;
+    icon: IconName;
+  }[] = [
+    { name: 'archive', label: 'Calendar', icon: 'calendar' },
+    { name: 'leaderboard', label: 'Leaderboard', icon: 'trophy' },
+    { name: 'community', label: 'Community', icon: 'community' },
+    { name: 'editor', label: 'Editor', icon: 'editor' },
+    { name: 'settings', label: 'Settings', icon: 'settings' },
+    { name: 'stats', label: 'Profile', icon: 'profile' },
+    { name: 'help', label: 'Help', icon: 'help' },
+  ];
+  const placed = selectedFieldCount(level, puzzle.draft),
+    inventory = selectableFields(level).length;
+  const cost = displayedForceCost(level, puzzle.draft, p?.rules.tileCosts);
+  const pending = records.filter((r) => r.phase !== 'terminal');
+  const recoveryLimited = memoryOnly || pending.some((r) => r.persistence === 'memory');
+  return (
+    <div className={`site-wrap ${preferences.reducedMotion ? 'reduce-motion' : ''}`}>
+      <header className="site-header">
+        <button
+          className="brand"
+          aria-label="Puttential home"
+          onClick={() => {
+            if (view !== 'game') {
+              void showView('game');
+              return;
+            }
+            if (daily?.date) void chooseDate(daily.date);
+            else void refreshToday(true);
+          }}
+        >
+          <BrandLogo />
+        </button>
+        <nav className="main-nav" aria-label="Main navigation">
+          {nav.map(({ name, label, icon }) =>
+            name === 'editor' || name === 'community' ? (
+              <button
+                key={name}
+                className={`nav-button ${view === name ? 'active' : ''}`}
+                aria-pressed={view === name}
+                aria-current={view === name ? 'page' : undefined}
+                aria-controls={`${name}-view`}
+                aria-label={label}
+                title={label}
+                disabled={startingPlay}
+                onClick={() => {
+                  if (view === name && name === 'community') return;
+                  void showView(view === name ? 'game' : name);
+                }}
+              >
+                <Icon name={icon} size={20} />
+                <span>{label}</span>
+              </button>
+            ) : (
+              <button
+                key={name}
+                className={`nav-button ${panel === name ? 'active' : ''}`}
+                aria-expanded={panel === name}
+                aria-label={label}
+                title={label}
+                disabled={name === 'leaderboard' && (loading || !context)}
+                onClick={() => setPanel(name)}
+              >
+                <Icon name={icon} size={20} />
+                <span>{label}</span>
+              </button>
+            ),
+          )}
+        </nav>
+      </header>
+      <main className="dashboard" hidden={view !== 'game'}>
+        {(notice || !context) && (
+          <div className="api-notice" role="status">
+            {loading && !context ? "Loading today's course…" : notice}
+            <div className="panel-actions">
+              <button onClick={() => void refreshToday(!context)} disabled={loading}>
+                Retry daily course
+              </button>
+              <button onClick={() => void chooseLocal(starterLevels[0]!, undefined, 'legacy')}>
+                Play legacy course
+              </button>
+            </div>
+            {!loading && !context && <p>Legacy courses are still available to play.</p>}
+          </div>
+        )}
+        {context && (
+          <>
+            {daily && p?.date && p.id !== daily.id && (
+              <p className="api-notice">
+                Today’s course is {daily.date}. Your selected course is preserved.{' '}
+                <button onClick={() => daily.date && void chooseDate(daily.date)}>
+                  Open today
+                </button>
+              </p>
+            )}
+            {p && (
+              <div className="api-notice" role="status">
+                {availability?.publicationStatus === 'canceled'
+                  ? `Course canceled. ${availability.cancellationMessage}`
+                  : !compatible
+                    ? ENGINE_UNAVAILABLE
+                    : guestIssue}
+                {!canRank && (
+                  <button onClick={() => void chooseLocal(level)}>Play this course unranked</button>
+                )}
+              </div>
+            )}
+            {recoveryLimited && (
+              <p className="api-notice" role="status">
+                Progress recovery unavailable after refresh. Keep this page open to retry saves.{' '}
+                <button
+                  onClick={async () => {
+                    await session?.storage.initialize();
+                    setMemoryOnly(session?.storage.mode !== 'durable');
+                  }}
+                >
+                  Retry persistence
+                </button>
+              </p>
+            )}
+            <div className="game-layout">
+              <div className="course-meta course-heading">
+                <div className="course-identity">
+                  <h1 id="course-title">{community?.title ?? p?.title ?? levelName(level)}</h1>
+                  <span className="challenge-label">
+                    <Icon name="calendar" size={16} />{' '}
+                    {community
+                      ? `Community map by ${community.creatorName}`
+                      : context.source === 'daily'
+                        ? 'Daily challenge'
+                        : context.source === 'archive'
+                          ? 'Archive challenge'
+                          : context.source === 'local'
+                            ? 'Local course — unranked'
+                            : legacy
+                              ? 'Legacy course'
+                              : 'Practice challenge — unranked'}{' '}
+                    {p?.date && <b>{p.date}</b>}
+                  </span>
+                </div>
+                <span className={`course-status ${puzzle.mode === 'running' ? 'running' : ''}`}>
+                  <i aria-hidden="true" />
+                  {locked && puzzle.mode !== 'running'
+                    ? 'Awaiting start'
+                    : puzzle.mode === 'setup'
+                      ? 'Planning'
+                      : puzzle.mode === 'running'
+                        ? 'In motion'
+                        : puzzle.mode === 'done'
+                          ? 'Finished'
+                          : 'Loading'}
+                </span>
+              </div>
+              <section className="course-stage" aria-labelledby="course-title">
+                <div className="course">
+                  <GameplayCanvas
+                    level={level}
+                    puzzle={puzzle}
+                    showPreview={preferences.showPreview}
+                    locked={locked}
+                    {...(courseRules && usesLegacyBounds(courseRules)
+                      ? { placementBounds: courseRules.placementBounds }
+                      : {})}
+                    {...(importBounds
+                      ? {
+                          camera: {
+                            bounds: importBounds,
+                            zoom: 1,
+                            center: {
+                              x: (importBounds.minX + importBounds.maxX) / 2,
+                              y: (importBounds.minY + importBounds.maxY) / 2,
+                            },
+                          },
+                        }
+                      : {})}
+                  />
+                </div>
+              </section>
+              <aside className="control-column" aria-label="Course controls">
+                <div className="sidebar-tabs" role="tablist" aria-label="Course tools">
+                  {(['toolkit', 'runs'] as const).map((tab, index) => (
+                    <button
+                      key={tab}
+                      id={`${tab}-tab`}
+                      role="tab"
+                      aria-selected={sidebarTab === tab}
+                      aria-controls={`${tab}-panel`}
+                      tabIndex={sidebarTab === tab ? 0 : -1}
+                      onClick={() => setSidebarTab(tab)}
+                      onKeyDown={(event) => {
+                        const next =
+                          event.key === 'Home'
+                            ? 'toolkit'
+                            : event.key === 'End'
+                              ? 'runs'
+                              : event.key === 'ArrowRight' || event.key === 'ArrowLeft'
+                                ? (['toolkit', 'runs'] as const)[1 - index]
+                                : undefined;
+                        if (!next) return;
+                        event.preventDefault();
+                        setSidebarTab(next);
+                        document.getElementById(`${next}-tab`)?.focus();
+                      }}
+                    >
+                      {tab === 'toolkit' ? 'Toolkit' : 'Runs'}
+                      {tab === 'runs' && pending.length > 0 && (
+                        <span className="pending-run-count" aria-hidden="true">
+                          {pending.length}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+                <p className="sr-only" role="status">
+                  {pending.length > 0
+                    ? `${pending.length} pending runs. Open the Runs tab for status and recovery.`
+                    : ''}
+                </p>
+                <div
+                  className="setup-tools"
+                  id="toolkit-panel"
+                  role="tabpanel"
+                  aria-labelledby="toolkit-tab"
+                  hidden={sidebarTab !== 'toolkit'}
+                  tabIndex={0}
+                >
+                  <div className="control-heading">
+                    <span className="section-kicker">YOUR TOOLKIT</span>
+                    <div className="toolkit-title">
+                      <h2 id="toolkit-title">Force blocks</h2>
+                      <span
+                        className="inventory-count"
+                        aria-label={`${inventory} force blocks available`}
+                      >
+                        {inventory}
+                      </span>
+                    </div>
+                    <p>Turn a block ON, then drag its field on the course.</p>
+                  </div>
+                  <GameplayToolkit
+                    level={level}
+                    puzzle={puzzle}
+                    {...(p ? { costs: p.rules.tileCosts } : {})}
+                    locked={locked}
+                  />
+                  <p className="toolkit-note">
+                    Force cost {cost} · {placed} tiles.{' '}
+                    {p
+                      ? 'Use the published tile costs to improve your solution.'
+                      : legacy
+                        ? 'Legacy courses cost 1 point per active block.'
+                        : 'Practice costs 1 point per active block.'}
+                  </p>
+                </div>
+                <section
+                  className="runs-panel"
+                  id="runs-panel"
+                  role="tabpanel"
+                  aria-labelledby="runs-tab"
+                  hidden={sidebarTab !== 'runs'}
+                  tabIndex={0}
+                >
+                  <RunsPanel
+                    legacy={legacy}
+                    puzzleId={p?.id}
+                    progress={progress}
+                    records={records}
+                    localAttempts={puzzle.attempts}
+                    hasSavedBest={
+                      !!(context.source === 'daily' ? progress?.bestDaily : progress?.bestArchive)
+                    }
+                    compose={() => compose(true)}
+                    retry={(requestId) =>
+                      void session?.retry(requestId).catch((e) => setNotice(e.message))
+                    }
+                    cancel={(requestId) =>
+                      void session?.cancel(requestId).catch((e) => setNotice(e.message))
+                    }
+                    interrupt={(requestId) =>
+                      void session?.interrupt(requestId).catch((e) => setNotice(e.message))
+                    }
+                  />
+                </section>
+                <GameplayRunControls
+                  puzzle={puzzle}
+                  locked={locked}
+                  pending={locked && puzzle.mode !== 'running'}
+                  disabled={
+                    puzzle.mode === 'setup' &&
+                    ((!!p && !canRank) ||
+                      (!!community && !deliveredEngine.supports(community.rules)))
+                  }
+                  onPlay={() => void play()}
+                  onStop={() => void stop()}
+                />
+              </aside>
+            </div>
+          </>
+        )}
+      </main>
+      {view === 'community' && (
+        <main
+          id="community-view"
+          className="dashboard community-page"
+          aria-labelledby="community-title"
+        >
+          <CommunityPanel
+            choose={(id) => void chooseCommunity(id)}
+            create={() => void showView('editor')}
+            notice={communityNotice}
+          />
+        </main>
+      )}
+      {editorVisited && (
+        <section
+          id="editor-view"
+          className="dashboard embedded-editor"
+          aria-label="Level editor"
+          hidden={view !== 'editor'}
+        >
+          <EmbeddedEditor active={view === 'editor'} onExit={() => void showView('game')} />
+        </section>
+      )}
+      {panel && (
+        <Modal
+          key={`${panel}/${context?.key ?? 'loading'}/${player?.id ?? 'guest'}`}
+          panel={panel}
+          close={() => setPanel(null)}
+          preferences={preferences}
+          setPreferences={setPreferences}
+          resultSolved={puzzle.result?.solved !== false}
+          showTutorial={() => {
+            setPanel(null);
+            setTutorialOpen(true);
+          }}
+          courseImport={
+            <LevelImport onLoad={(next, bounds) => void chooseLocal(next, bounds, 'local')} />
+          }
+          {...(panel === 'archive'
+            ? {
+                body: (
+                  <>
+                    <ArchivePanel
+                      player={player}
+                      {...(p?.date ? { date: p.date } : {})}
+                      state={state}
+                      choose={(date) => void chooseDate(date)}
+                      reconcileGuest={reconcileGuest}
+                    />
+                    <h3>Legacy courses</h3>
+                    <p>Courses from an earlier version of Puttential.</p>
+                    {starterLevels.map((course) => (
+                      <button
+                        className="modal-row legacy-course"
+                        key={course.id}
+                        onClick={() => void chooseLocal(course, undefined, 'legacy')}
+                      >
+                        {levelName(course)}
+                      </button>
+                    ))}
+                  </>
+                ),
+              }
+            : panel === 'leaderboard'
+              ? {
+                  body: (
+                    <LeaderboardPanel
+                      key={`${p?.id ?? 'none'}/${player?.id ?? 'none'}`}
+                      puzzle={p}
+                      player={player}
+                      state={state}
+                      reconcileGuest={reconcileGuest}
+                      runActive={startingPlay || puzzle.mode === 'running'}
+                    />
+                  ),
+                }
+              : panel === 'stats'
+                ? {
+                    body: (
+                      <ProfilePanel
+                        player={player}
+                        progress={progress}
+                        update={(next) =>
+                          setPlayer((current) => (current?.id === next.id ? next : current))
+                        }
+                        retry={reconcileGuest}
+                        memoryOnly={recoveryLimited}
+                      />
+                    ),
+                  }
+                : panel === 'result'
+                  ? {
+                      body: (
+                        <ResultPanel
+                          legacy={legacy}
+                          community={!!community}
+                          result={puzzle.result}
+                          record={record}
+                          progress={progress}
+                          compose={() => compose()}
+                          retry={() => {
+                            if (record) void session?.retry(record.start.requestId);
+                          }}
+                        />
+                      ),
+                    }
+                  : {})}
+        />
+      )}
+      {tutorialOpen && <Tutorial close={closeTutorial} reducedMotion={preferences.reducedMotion} />}
+    </div>
+  );
+}
