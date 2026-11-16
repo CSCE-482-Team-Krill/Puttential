@@ -9,11 +9,11 @@ export async function GET(request: Request) {
     return new Response('Unauthorized', { status: 401 });
 
   try {
-    const { publishSchedule, recoverRuns, checkSchedule } =
+    const { backfillSchedule, recoverRuns, checkSchedule } =
       await import('../../../../../backend/course-publishing');
-    const published = await publishSchedule();
-    const recovered = await recoverRuns();
+    const published = await backfillSchedule();
     const ready = await checkSchedule();
+    const recovered = await recoverRuns();
     console.log('Daily maintenance finished', { published, recovered });
     return Response.json({ published, recovered, ready });
   } catch (error) {

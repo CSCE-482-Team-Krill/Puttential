@@ -125,13 +125,29 @@ export async function publishCourse(
   return `${date}: published ${title}; two verified solutions (${Math.round(replayMs)}ms total); full-cap replay ${Math.round(fullRunMs)}ms`;
 }
 
-/** Publishes the daily rotation for three past days, today and the next six days. */
-export async function publishSchedule(today = centralDateString()): Promise<string[]> {
+/** Publish today and the next week first, then fill every missing date back to `from`. */
+export async function publishSchedule(
+  today = centralDateString(),
+  from = shiftDate(today, -3),
+): Promise<string[]> {
+  if (!validDate(today) || !validDate(from) || from > today)
+    throw new Error('Use a valid schedule start on or before today.');
   const lines: string[] = [];
   // CI keeps the generated opening set because its tests are written against it.
   const useOpening = process.env.PUTTENTIAL_COURSE_SET === 'opening';
-  for (let offset = -3; offset <= 6; offset++) {
-    const date = shiftDate(today, offset);
+  const dates = Array.from({ length: 7 }, (_, offset) => shiftDate(today, offset));
+  for (let date = from; date < today; date = shiftDate(date, 1)) dates.push(date);
+  for (const date of dates) {
+    const existing = await prisma.puzzle.findUnique({
+      where: { date: new Date(`${date}T00:00:00Z`) },
+      select: { id: true, rules: true },
+    });
+    if (existing) {
+      lines.push(
+        `${date}: preserved existing course ${existing.id}${existing.rules ? '' : ' (legacy: not ranked until explicitly republished)'}`,
+      );
+      continue;
+    }
     if (!useOpening) {
       try {
         const course = authoredCourse(authoredIndexForDate(date));
@@ -151,6 +167,18 @@ export async function publishSchedule(today = centralDateString()): Promise<stri
     );
   }
   return lines;
+}
+
+/** Heal gaps after missed cron runs without replacing any course, progress or standings. */
+export async function backfillSchedule(today = centralDateString()): Promise<string[]> {
+  const first = await prisma.puzzle.findFirst({
+    where: { date: { lte: new Date(`${today}T00:00:00Z`) } },
+    orderBy: { date: 'asc' },
+    select: { date: true },
+  });
+  const initialStart = shiftDate(today, -3);
+  const firstDate = first?.date?.toISOString().slice(0, 10);
+  return publishSchedule(today, firstDate && firstDate < initialStart ? firstDate : initialStart);
 }
 
 /** Throws if today or any of the next six days has no reviewed, active course. */

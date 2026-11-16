@@ -124,7 +124,14 @@ export async function competitiveHandler(request: Request): Promise<Response> {
   } catch (error: any) {
     const known = Number.isInteger(error?.status) && error.status >= 400 && error.status < 500;
     if (!known)
-      console.error('Competitive API unavailable', { type: error?.name ?? 'UnknownError' });
+      console.error('Competitive API unavailable', {
+        type: error?.name ?? 'UnknownError',
+        // Prisma codes distinguish missing migrations from connectivity failures.
+        // Omit messages and query metadata, which can contain private data.
+        ...(typeof error?.code === 'string' && /^P\d{4}$/.test(error.code)
+          ? { code: error.code }
+          : {}),
+      });
     const status = known ? error.status : 503;
     return Response.json(
       {

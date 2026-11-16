@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { shiftDate } from '../src/backend/puzzle-date';
+import { centralDateString, shiftDate } from '../src/backend/puzzle-date';
+import { openingCourse } from '../src/backend/daily-courses';
+import { decodeArchive, decodePuzzle } from '../src/shared/response-validation';
 
 const connection = process.env.TEST_DATABASE_URL;
 if (!connection) throw new Error('Set TEST_DATABASE_URL to a disposable local test database.');
@@ -49,6 +51,107 @@ test('unreviewed authored layouts fall back to two verified daily solutions and 
     if (previousCourseSet === undefined) delete process.env.PUTTENTIAL_COURSE_SET;
     else process.env.PUTTENTIAL_COURSE_SET = previousCourseSet;
     await prisma.puzzle.deleteMany({ where: { id: { in: ids } } });
+    await prisma.$disconnect();
+  }
+});
+
+test('maintenance repairs an archive gap longer than three days and preserves courses and progress', async () => {
+  const { prisma } = await import('../src/backend/prisma');
+  const { backfillSchedule, publishCourse, checkSchedule } =
+    await import('../src/backend/course-publishing');
+  const { competitiveHandler } = await import('../src/backend/competitive-http');
+  const today = shiftDate(centralDateString(), -20);
+  const from = shiftDate(today, -15);
+  const where = {
+    date: { gte: new Date(`${from}T00:00:00Z`), lte: new Date(`${shiftDate(today, 6)}T00:00:00Z`) },
+  };
+  const previousCourseSet = process.env.PUTTENTIAL_COURSE_SET;
+  let guestId: string | undefined;
+  let ownsRange = false;
+  try {
+    assert.equal(await prisma.puzzle.count({ where }), 0, 'Test dates must be unused');
+    ownsRange = true;
+    process.env.PUTTENTIAL_COURSE_SET = 'opening';
+    const course = openingCourse(0);
+    await publishCourse(from, course.level, course.rules, course.title, course.solutions);
+    const original = await prisma.puzzle.findUniqueOrThrow({
+      where: { date: new Date(`${from}T00:00:00Z`) },
+    });
+    const canceledDate = shiftDate(from, 1);
+    await publishCourse(canceledDate, course.level, course.rules, course.title, course.solutions);
+    const canceled = await prisma.puzzle.update({
+      where: { date: new Date(`${canceledDate}T00:00:00Z`) },
+      data: { canceledAt: new Date(), cancellationMessage: 'Retained cancellation' },
+    });
+    const legacy = await prisma.puzzle.create({
+      data: {
+        date: new Date(`${shiftDate(from, 2)}T00:00:00Z`),
+        seed: 'legacy',
+        title: 'Unreviewed legacy course',
+        difficulty: 1,
+        configuration: original.configuration as any,
+      },
+    });
+    const origin = 'http://127.0.0.1:3000';
+    const guest = await competitiveHandler(
+      new Request(`${origin}/api/guest`, {
+        method: 'POST',
+        headers: { Origin: origin, 'Content-Type': 'application/json' },
+        body: '{}',
+      }),
+    );
+    assert.equal(guest.status, 200);
+    guestId = (await guest.json()).player.id;
+    const cookie = guest.headers.get('set-cookie')!.split(';')[0]!;
+    const progress = await prisma.guestProgress.create({
+      data: { guestId: guestId!, puzzleId: original.id, attemptsStarted: 2 },
+    });
+    const lines = await backfillSchedule(today);
+    assert.match(lines[0]!, new RegExp(`^${today}: published`));
+    assert.equal(await prisma.puzzle.count({ where }), 22);
+    assert.deepEqual(await prisma.puzzle.findUnique({ where: { id: original.id } }), original);
+    assert.deepEqual(await prisma.puzzle.findUnique({ where: { id: canceled.id } }), canceled);
+    assert.deepEqual(await prisma.puzzle.findUnique({ where: { id: legacy.id } }), legacy);
+    assert.ok(lines.some((line) => line.includes('legacy: not ranked')));
+    assert.deepEqual(
+      await prisma.guestProgress.findUnique({
+        where: { guestId_puzzleId: { guestId: guestId!, puzzleId: original.id } },
+      }),
+      progress,
+    );
+    assert.equal((await checkSchedule(today)).length, 7);
+    const before = await prisma.puzzle.findMany({ where, orderBy: { date: 'asc' } });
+    await backfillSchedule(today);
+    assert.deepEqual(await prisma.puzzle.findMany({ where, orderBy: { date: 'asc' } }), before);
+
+    const archive = await competitiveHandler(
+      new Request(`${origin}/api/puzzles?limit=50`, {
+        headers: { Cookie: cookie },
+      }),
+    );
+    assert.equal(archive.status, 200);
+    const dates = new Set(decodeArchive(await archive.json()).items.map((item) => item.date));
+    for (const puzzle of before) {
+      const date = puzzle.date!.toISOString().slice(0, 10);
+      if (!puzzle.rules) {
+        assert.ok(!dates.has(date), 'Unreviewed legacy data must remain private');
+        continue;
+      }
+      assert.ok(dates.has(date), `${date} is listed in the archive`);
+      const response = await competitiveHandler(
+        new Request(`${origin}/api/puzzles/by-date/${date}`),
+      );
+      assert.equal(response.status, 200);
+      assert.equal(decodePuzzle(await response.json()).id, puzzle.id);
+    }
+  } finally {
+    if (previousCourseSet === undefined) delete process.env.PUTTENTIAL_COURSE_SET;
+    else process.env.PUTTENTIAL_COURSE_SET = previousCourseSet;
+    if (guestId) {
+      await prisma.guestProgress.deleteMany({ where: { guestId } });
+      await prisma.guest.delete({ where: { id: guestId } });
+    }
+    if (ownsRange) await prisma.puzzle.deleteMany({ where });
     await prisma.$disconnect();
   }
 });
