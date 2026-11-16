@@ -17,6 +17,28 @@ const detail = () => communityDetailFixture(summary);
 const invalidData = (error: unknown) =>
   error instanceof CommunityApiError && error.code === 'INVALID_DATA' && error.retryable;
 
+test('community searches encode filters and retain them when requesting another page', async (t) => {
+  const paths: string[] = [];
+  t.mock.method(globalThis, 'fetch', async (path: string) => {
+    paths.push(path);
+    return Response.json({ items: [], nextCursor: null });
+  });
+  await communityApi.list(summary.id, undefined, {
+    query: '  hills & valleys?  ',
+    creator: '  A+B  ',
+    published: 'week',
+    sort: 'title',
+  });
+  const params = new URL(paths[0]!, 'http://localhost').searchParams;
+  assert.equal(params.get('cursor'), summary.id);
+  assert.equal(params.get('q'), 'hills & valleys?');
+  assert.equal(params.get('creator'), 'A+B');
+  assert.equal(params.get('published'), 'week');
+  assert.equal(params.get('sort'), 'title');
+  await communityApi.list();
+  assert.equal(paths[1], '/api/community');
+});
+
 test('community reads honor both their deadline and caller cancellation', async (t) => {
   let deadline = new AbortController();
   const signals: AbortSignal[] = [];
