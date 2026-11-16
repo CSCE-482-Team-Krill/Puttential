@@ -24,6 +24,21 @@ test('replays unlock at the exact Central midnight, including short and long DST
   }
 });
 
+test('community replays unlock at publication and stay available across daily boundaries', () => {
+  const published = new Date('2026-11-12T16:30:00.000Z');
+  // Publication is already committed; community access does not depend on clock offsets.
+  for (const now of [
+    new Date(+published - 3600_000),
+    published,
+    new Date('2026-11-20T06:00:00.000Z'),
+  ])
+    assert.deepEqual(replayAccess(null, now, false, published), {
+      available: true,
+      unlocksAt: published.toISOString(),
+    });
+  assert.equal(replayAccess(null, published, true, published).available, false);
+});
+
 async function verifiedResult() {
   const course = openingCourse(0);
   const evaluation = await replayRun(course.level, course.solutions[0]!, course.rules);

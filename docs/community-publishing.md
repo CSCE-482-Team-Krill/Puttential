@@ -13,8 +13,9 @@ DigitalOcean deployment prerequisite for community publishing.
 4. The server validates the exact course and placement and replays the solution.
    Only successful replays create a published map. A failed request can be retried.
 5. Open the returned link, or select the map in Community. Links survive refresh
-   and work in other browsers. Community play is unranked and does not submit
-   daily runs or change daily standings.
+   and work in other browsers. Community play submits verified runs to that map's
+   all-time leaderboard using the same scoring and progress tracking as daily
+   play. It does not change daily standings. Replays are available immediately.
 
 Drafts remain on the device. Publication saves a separate immutable snapshot;
 subsequent editor changes do not change published maps. Publishing an edited map
@@ -37,15 +38,19 @@ No new environment variables are needed: retain `DATABASE_URL` and the exact
 `APP_ORIGIN` for each environment. The publishing route has `maxDuration = 60`.
 
 Before releasing the new application, run `npm run db:migrate` against the intended
-database. The additive `20261109000000_community_maps` migration creates one table;
-existing daily courses and results are preserved. Then build/deploy normally.
+database. `20261109000000_community_maps` creates the map table;
+`20261112000000_community_leaderboards` gives existing maps competitive courses and
+allows community courses without daily dates. Existing daily courses and results
+are preserved. Then build/deploy normally.
 Builds do not automatically migrate databases. Generate the client locally with
 `npm run db:generate` after pulling the schema change.
 
 ## API
 
 - `GET /api/community?cursor=<last-map-id>`: public summaries and next cursor.
-- `GET /api/community/<id>`: public map, configuration and immutable rules.
+- `GET /api/community/<id>`: public map, configuration, immutable rules and
+  `competition` course for the shared run, progress, leaderboard and replay APIs.
+  Community boards use `scope=archive` and remain open indefinitely.
 - `POST /api/community`: authenticated guest publication. Send `expectedGuestId`,
   a UUID `requestId`, `title`, `description`, editor `document` and solved `placement`.
   Returns `{ map }` with status 201. Repeating the same request returns the same
@@ -62,7 +67,7 @@ both limits. The API uses the shared strict UTF-8 JSON transport and rejects ext
 placement or command properties before replay.
 Verification uses the same setup/rotation and goal evaluation in editor and server.
 This MVP does not provide the earlier plan's OS isolation, fixed worker capacity,
-moderation dashboard, cloud drafts or community rankings. A platform timeout does
+moderation dashboard or cloud drafts. A platform timeout does
 not publish a map unless verification completed and the database insert committed;
 retrying the same submission retrieves that publication.
 
@@ -87,5 +92,7 @@ npm run test:e2e -- tests/community-publishing.spec.ts
 
 The browser test exercises real guest cookies, editor import, successful playtest,
 publication, another browser opening the share link, refresh, community browsing,
-playback and result sharing. It verifies that community play never starts a daily
-ranked run. Screenshots are written under `artifacts/community-publishing/`.
+ranked playback and result sharing. The leaderboard checks cover verification,
+attempt counts, ties, best results, pagination, per-map isolation and replays.
+Screenshots are written under `artifacts/community-publishing/` and
+`artifacts/leaderboard-community/`.

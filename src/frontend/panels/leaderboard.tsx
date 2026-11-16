@@ -129,17 +129,21 @@ export function LeaderboardPanel({
     );
   return (
     <div className="modal-stack">
-      <label>
-        Board
-        <select
-          aria-label="Leaderboard scope"
-          value={scope}
-          onChange={(e) => setScope(e.target.value as Scope)}
-        >
-          <option value="daily">Original daily leaderboard</option>
-          <option value="archive">All-time archive leaderboard</option>
-        </select>
-      </label>
+      {puzzle.communityMapId ? (
+        <p>Community leaderboard — all-time</p>
+      ) : (
+        <label>
+          Board
+          <select
+            aria-label="Leaderboard scope"
+            value={scope}
+            onChange={(e) => setScope(e.target.value as Scope)}
+          >
+            <option value="daily">Original daily leaderboard</option>
+            <option value="archive">All-time archive leaderboard</option>
+          </select>
+        </label>
+      )}
       <div className="panel-actions">
         {(['top', 'around-me'] as const).map((v) => (
           <button key={v} aria-pressed={view === v} onClick={() => setView(v)}>
@@ -160,16 +164,20 @@ export function LeaderboardPanel({
         board && (
           <>
             <p className="modal-footnote">
-              {scope === 'archive'
-                ? 'Archive — open'
-                : board.final
-                  ? 'Final'
-                  : board.submissionClosed
-                    ? 'Closed — verification pending'
-                    : 'Open — provisional'}
+              {puzzle.communityMapId
+                ? 'Open — provisional'
+                : scope === 'archive'
+                  ? 'Archive — open'
+                  : board.final
+                    ? 'Final'
+                    : board.submissionClosed
+                      ? 'Closed — verification pending'
+                      : 'Open — provisional'}
             </p>
             <p className="modal-footnote">
-              {board.replayAccess.available ? (
+              {puzzle.communityMapId ? (
+                'Verified community solutions are shared automatically. Rankings remain open.'
+              ) : board.replayAccess.available ? (
                 'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.'
               ) : (
                 <>

@@ -174,7 +174,7 @@ export default function Home() {
       stateRef.current.applyAvailability(response.availability);
       setDaily(response);
       rollover.current = { puzzle: response, received: performance.now() };
-      if (generation === selectedGeneration.current && (select || contextRef.current?.puzzle))
+      if (generation === selectedGeneration.current && (select || contextRef.current?.puzzle?.date))
         setNotice('');
       if (select && generation === selectedGeneration.current) {
         const next = publishedContext(response);
@@ -183,7 +183,7 @@ export default function Home() {
         );
       } else {
         setContext((current) => {
-          if (!current?.puzzle) return current;
+          if (!current?.puzzle?.date) return current;
           // A new server day changes presentation, never the selected immutable content.
           return {
             ...current,
@@ -237,7 +237,7 @@ export default function Home() {
         setLoading(false);
         return;
       }
-      const sameDate = contextRef.current?.puzzle?.date === date;
+      const sameDate = !contextRef.current?.community && contextRef.current?.puzzle?.date === date;
       if (!sameDate && !(await leaveOwned())) {
         if (!history)
           window.history.pushState(
@@ -312,11 +312,12 @@ export default function Home() {
       try {
         const map = await communityApi.read(id, controller.signal);
         if (controller.signal.aborted || generation !== selectedGeneration.current) return;
-        const next = {
-          ...localContext(map.configuration, 'community'),
-          key: `community-v1/${map.id}`,
+        stateRef.current.applyAvailability(map.competition.availability);
+        const next: CourseContext = {
+          ...publishedContext(map.competition),
           community: map,
         };
+        const sameContent = contextRef.current?.key === next.key;
         setContext((current) =>
           current?.community?.id === map.id ? { ...next, level: current.level } : next,
         );
@@ -324,7 +325,7 @@ export default function Home() {
         setView('game');
         setPanel(null);
         setNotice(deliveredEngine.supports(map.rules) ? '' : ENGINE_UNAVAILABLE);
-        activeRequest.current = null;
+        if (!sameContent) activeRequest.current = null;
         if (history) window.history.pushState(null, '', communityMapUrl(map.id));
       } catch (cause) {
         if (!controller.signal.aborted && generation === selectedGeneration.current)
@@ -542,6 +543,7 @@ export default function Home() {
       }
       return shareResult({
         date: p.date,
+        ...(community ? { community: { id: community.id, title: community.title } } : {}),
         puzzleId: p.id,
         guestId: player.id,
         scope,
@@ -583,7 +585,7 @@ export default function Home() {
               setView('game');
               return;
             }
-            if (daily) void chooseDate(daily.date);
+            if (daily?.date) void chooseDate(daily.date);
             else void refreshToday(true);
           }}
         >
@@ -649,10 +651,12 @@ export default function Home() {
         )}
         {context && (
           <>
-            {daily && p && p.id !== daily.id && (
+            {daily && p?.date && p.id !== daily.id && (
               <p className="api-notice">
                 Today’s course is {daily.date}. Your selected course is preserved.{' '}
-                <button onClick={() => void chooseDate(daily.date)}>Open today</button>
+                <button onClick={() => daily.date && void chooseDate(daily.date)}>
+                  Open today
+                </button>
               </p>
             )}
             {p && (
@@ -687,7 +691,7 @@ export default function Home() {
                   <span className="challenge-label">
                     <Icon name="calendar" size={16} />{' '}
                     {community
-                      ? `Community map by ${community.creatorName} — unranked`
+                      ? `Community map by ${community.creatorName}`
                       : context.source === 'daily'
                         ? 'Daily challenge'
                         : context.source === 'archive'
@@ -697,7 +701,7 @@ export default function Home() {
                             : legacy
                               ? 'Legacy course'
                               : 'Practice challenge — unranked'}{' '}
-                    {p && <b>{p.date}</b>}
+                    {p?.date && <b>{p.date}</b>}
                   </span>
                 </div>
                 <span className={`course-status ${puzzle.mode === 'running' ? 'running' : ''}`}>
@@ -908,7 +912,7 @@ export default function Home() {
                     <>
                       <ArchivePanel
                         player={player}
-                        {...(p ? { date: p.date } : {})}
+                        {...(p?.date ? { date: p.date } : {})}
                         state={state}
                         choose={(date) => void chooseDate(date)}
                         reconcileGuest={reconcileGuest}

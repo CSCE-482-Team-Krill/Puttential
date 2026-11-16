@@ -42,7 +42,7 @@ export function ResultPanel({
       <p role="status">
         {record?.message ??
           (community
-            ? 'Community — unranked. This result is not submitted.'
+            ? 'Awaiting verified community result.'
             : legacy
               ? 'Legacy course'
               : 'Practice — unranked. This result is not submitted.')}

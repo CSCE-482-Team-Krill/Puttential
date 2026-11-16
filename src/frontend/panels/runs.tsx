@@ -71,7 +71,7 @@ export function RunsPanel({
                   {r.response ? `Run #${r.response.attemptOrdinal}` : 'Pending start'}
                 </strong>
                 <span className="runs-note">
-                  {r.context.date}
+                  {r.context.communityMapId ? r.context.title : r.context.date}
                   {r.start.puzzleId !== puzzleId ? ' · Other course' : ''}
                 </span>
                 <p role="status">{r.message}</p>

@@ -49,8 +49,8 @@ export function CommunityPanel({
   return (
     <section className="community-panel modal-stack" aria-label="Community maps">
       <p>
-        Maps created by players. Every published map has a solution checked by the server. Play is
-        unranked.
+        Maps created by players. Every published map has a solution checked by the server. Solve a
+        map to join its leaderboard.
       </p>
       <div className="panel-actions">
         <button onClick={create}>Create a map</button>

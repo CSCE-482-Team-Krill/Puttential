@@ -37,7 +37,8 @@ export type PuzzleAvailability = {
 };
 export type PuzzleResponse = {
   id: string;
-  date: string;
+  date: string | null;
+  communityMapId?: string;
   title: string;
   seed: string;
   difficulty: number;

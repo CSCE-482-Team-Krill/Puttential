@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { CommunityMap, Guest, Prisma } from '../../generated/prisma/client';
 import { prisma } from './prisma';
-import { CompetitiveError } from './competitive';
+import { CompetitiveError, puzzleResponse } from './competitive';
 import { convertCommunityImport, validateCommunityDocument } from '../shared/community-profile';
 import { canonicalJson } from '../shared/community-canonical-json';
 import { normalizePublicationMetadata } from '../shared/community-candidate';
@@ -56,12 +56,21 @@ export async function listCommunityMaps(params: URLSearchParams): Promise<Commun
 }
 
 export async function readCommunityMap(id: string): Promise<CommunityMapDetail> {
-  const map = UUID.test(id) ? await prisma.communityMap.findUnique({ where: { id } }) : null;
+  const map = UUID.test(id)
+    ? await prisma.communityMap.findUnique({ where: { id }, include: { competition: true } })
+    : null;
   if (!map) throw new CompetitiveError(404, 'NOT_FOUND', 'This community map could not be found.');
+  if (!map.competition)
+    throw new CompetitiveError(
+      503,
+      'SERVICE_UNAVAILABLE',
+      'Community standings are not ready. Please retry.',
+    );
   return {
     ...summary(map),
     configuration: map.configuration as unknown as CommunityMapDetail['configuration'],
     rules: map.rules as unknown as CommunityMapDetail['rules'],
+    competition: puzzleResponse(map.competition),
   };
 }
 
@@ -176,6 +185,18 @@ export async function publishCommunityMap(guest: Guest, input: Record<string, un
         configuration: json(level),
         rules: json(rules),
         authorSolution: json(placement),
+      },
+    });
+    await tx.puzzle.create({
+      data: {
+        id: map.id,
+        communityMapId: map.id,
+        title: map.title,
+        seed: '',
+        difficulty: 0,
+        configuration: json(map.configuration),
+        rules: json(map.rules),
+        authorSolution: json(map.authorSolution),
       },
     });
     return acknowledged(map);

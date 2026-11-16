@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { communityPublishingFixture } from './community-publishing-fixtures';
-import { defaultRules } from '../src/game/run-evaluation';
+import { communityDetailFixture } from './community-publishing-fixtures';
 
 const summary = (index: number) => ({
   id: `00000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
@@ -52,8 +51,10 @@ test('invalid map rules preserve the selected course until a valid response arri
 }) => {
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
-  const { document } = communityPublishingFixture();
-  const map = { ...summary(1), configuration: document.level, rules: defaultRules(document.level) };
+  const map = communityDetailFixture(summary(1));
+  await page.route('**/api/me', (route) =>
+    route.fulfill({ json: { player: { id: 'community-reader', nickname: 'Test reader' } } }),
+  );
   await page.route('**/api/community', (route) =>
     route.fulfill({ json: { items: [summary(1)], nextCursor: null } }),
   );
