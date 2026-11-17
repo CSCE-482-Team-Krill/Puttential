@@ -1,5 +1,8 @@
-import { test } from 'node:test';
+import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
+import { randomUUID } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { Client } from 'pg';
 import { centralDateString, shiftDate } from '../src/backend/puzzle-date';
 import { openingCourse } from '../src/backend/daily-courses';
 import { decodeArchive, decodePuzzle } from '../src/shared/response-validation';
@@ -9,7 +12,43 @@ if (!connection) throw new Error('Set TEST_DATABASE_URL to a disposable local te
 const target = new URL(connection);
 if (!['127.0.0.1', 'localhost'].includes(target.hostname) || !/test/.test(target.pathname))
   throw new Error('Publishing tests require an explicitly named local test database.');
-process.env.DATABASE_URL = connection;
+// Backfill scans the oldest dated course in the entire database. Keep these
+// fixtures separate from concurrently running daily tests and the CI schedule.
+const database = `course_publishing_test_${randomUUID().replaceAll('-', '')}`;
+const isolated = new URL(connection);
+isolated.pathname = `/${database}`;
+process.env.DATABASE_URL = isolated.toString();
+const admin = new Client({ connectionString: connection });
+let databaseCreated = false;
+
+before(async () => {
+  await admin.connect();
+  await admin.query(`CREATE DATABASE ${database}`);
+  databaseCreated = true;
+  execFileSync(
+    process.execPath,
+    [
+      require.resolve('prisma/build/index.js'),
+      'migrate',
+      'deploy',
+      '--config',
+      'prisma7.config.ts',
+    ],
+    { env: process.env, stdio: 'pipe' },
+  );
+});
+
+after(async () => {
+  try {
+    if (databaseCreated) {
+      const { prisma } = await import('../src/backend/prisma');
+      await prisma.$disconnect();
+      await admin.query(`DROP DATABASE ${database}`);
+    }
+  } finally {
+    await admin.end();
+  }
+});
 
 test('unreviewed authored layouts fall back to two verified daily solutions and preserve existing dates', async () => {
   const { prisma } = await import('../src/backend/prisma');
