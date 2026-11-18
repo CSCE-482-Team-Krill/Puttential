@@ -1573,26 +1573,58 @@ button:disabled {
   gap: 10px;
   min-width: 0;
 }
-.replay-timeline progress {
+.replay-progress {
+  appearance: none;
   flex: 1;
   min-width: 0;
-  height: 8px;
-  overflow: hidden;
+  height: 24px;
+  margin: 0;
+  padding: 0;
   border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.replay-progress::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--ui-green) 0 var(--replay-progress),
+    var(--ui-line) var(--replay-progress) 100%
+  );
+}
+.replay-progress::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  margin-top: -5px;
+  appearance: none;
+  border: 2px solid var(--ui-white);
+  border-radius: 999px;
+  background: var(--ui-green);
+  box-shadow: 0 0 0 1px var(--ui-green-strong);
+}
+.replay-progress::-moz-range-track {
+  height: 6px;
   border-radius: 999px;
   background: var(--ui-line);
-  accent-color: var(--ui-green);
 }
-.replay-timeline progress::-webkit-progress-bar {
-  background: var(--ui-line);
-}
-.replay-timeline progress::-webkit-progress-value {
+.replay-progress::-moz-range-progress {
+  height: 6px;
   border-radius: 999px;
   background: var(--ui-green);
 }
-.replay-timeline progress::-moz-progress-bar {
+.replay-progress::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ui-white);
   border-radius: 999px;
   background: var(--ui-green);
+  box-shadow: 0 0 0 1px var(--ui-green-strong);
+}
+.replay-progress:focus-visible {
+  outline: 3px solid var(--ui-green);
+  outline-offset: 2px;
+  border-radius: 999px;
 }
 .replay-time {
   flex-shrink: 0;

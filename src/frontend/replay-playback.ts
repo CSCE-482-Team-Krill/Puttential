@@ -71,6 +71,23 @@ export class ReplayPlayback {
     this.accumulator = 0;
     this.events = [];
   }
+  /** Pauses and deterministically advances to an exact replay tick without emitting seek audio. */
+  seek(requestedTick: number) {
+    if (this.destroyed || !Number.isFinite(requestedTick)) return;
+    const completionTick = this.expected.metrics!.completionTick;
+    const targetTick = Math.min(completionTick, Math.max(0, Math.round(requestedTick)));
+    this.pause();
+    if (targetTick < this.frame.tick || this.status === 'error') this.restart();
+    try {
+      while (this.frame.tick < targetTick && !this.step(false));
+      if (this.status !== 'ended' && this.status !== 'error') this.status = 'paused';
+      this.events = [];
+    } catch (error) {
+      this.error = error instanceof Error ? error.message : 'Replay playback is unavailable.';
+      this.status = 'error';
+      this.events = [];
+    }
+  }
   /** Physics events simulated since the last call, for sound. */
   takeSoundEvents(): readonly SoundEvent[] {
     const events = this.events;
@@ -86,30 +103,35 @@ export class ReplayPlayback {
     );
     try {
       while (this.accumulator + 1e-12 >= FIXED_DT) {
-        this.game.step();
-        this.events.push(...this.game.soundEvents());
-        this.frame = this.game.getRenderState();
-        this.goal = advanceGoal(this.goal, this.frame);
+        const ended = this.step(true);
         this.accumulator -= FIXED_DT;
-        const result = this.evaluator.step(this.game, this.frame);
-        if (!result) continue;
-        const expected = this.expected.metrics!;
-        if (
-          result.outcome !== this.expected.outcome ||
-          result.metrics.forceCost !== expected.forceCost ||
-          result.metrics.tileCount !== expected.tileCount ||
-          result.metrics.completionTick !== expected.completionTick ||
-          result.metrics.pathLengthQ !== expected.pathLengthQ
-        )
-          throw new Error('This replay does not match the saved result in this engine version.');
-        this.status = 'ended';
-        this.accumulator = 0;
-        break;
+        if (ended) break;
       }
     } catch (error) {
       this.error = error instanceof Error ? error.message : 'Replay playback is unavailable.';
       this.status = 'error';
     }
+  }
+  private step(emitSound: boolean) {
+    this.game.step();
+    const events = this.game.soundEvents();
+    if (emitSound) this.events.push(...events);
+    this.frame = this.game.getRenderState();
+    this.goal = advanceGoal(this.goal, this.frame);
+    const result = this.evaluator.step(this.game, this.frame);
+    if (!result) return false;
+    const expected = this.expected.metrics!;
+    if (
+      result.outcome !== this.expected.outcome ||
+      result.metrics.forceCost !== expected.forceCost ||
+      result.metrics.tileCount !== expected.tileCount ||
+      result.metrics.completionTick !== expected.completionTick ||
+      result.metrics.pathLengthQ !== expected.pathLengthQ
+    )
+      throw new Error('This replay does not match the saved result in this engine version.');
+    this.status = 'ended';
+    this.accumulator = 0;
+    return true;
   }
   destroy() {
     if (this.destroyed) return;

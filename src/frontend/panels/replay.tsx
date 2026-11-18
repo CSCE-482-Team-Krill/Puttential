@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { RenderState } from '../../game/types';
 import { FIXED_DT } from '../../game/simulation';
 import { levelBounds } from '../../game/levels/codec';
@@ -16,6 +16,7 @@ import { deliveredEngine } from '../engine-adapter';
 import type { AuthoritativeState } from '../authoritative-state';
 import { CourseCanvas } from '../course-canvas';
 import { Icon } from '../icon';
+import { ColumnLabel, LEADERBOARD_TOOLTIP_TEXT } from '../leaderboard-tooltip';
 import { physicsAudio } from '../physics-audio';
 import { ReplayPlayback } from '../replay-playback';
 import type { ReplaySpeed } from '../replay-playback';
@@ -26,6 +27,9 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
   const [fullscreen, setFullscreen] = useState(false);
   const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
   const [fullscreenError, setFullscreenError] = useState('');
+  const [scrubTick, setScrubTick] = useState<number | null>(null);
+  const scrubTickRef = useRef<number | null>(null);
+  const seekTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playback = useRef<ReplayPlayback | null>(null);
   const frameRef = useRef<RenderState | null>(null);
   const goalRef = useRef(initialGoal(puzzle.configuration.goal));
@@ -95,6 +99,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
       canceled = true;
       cancelAnimationFrame(frame);
       document.removeEventListener('visibilitychange', visibility);
+      if (seekTimer.current) clearTimeout(seekTimer.current);
       playback.current?.destroy();
       playback.current = null;
       physicsAudio.stopAll();
@@ -111,6 +116,27 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
 
   const current = playback.current;
   const completionTick = replay.result.metrics?.completionTick ?? 0;
+  function commitSeek(requestedTick = scrubTickRef.current) {
+    if (!current || requestedTick === null) return;
+    if (seekTimer.current) clearTimeout(seekTimer.current);
+    seekTimer.current = null;
+    current.seek(requestedTick);
+    frameRef.current = current.frame;
+    goalRef.current = current.goal;
+    scrubTickRef.current = null;
+    setScrubTick(null);
+    update((n) => n + 1);
+  }
+  function previewSeek(requestedTick: number) {
+    if (!current) return;
+    const targetTick = Math.min(completionTick, Math.max(0, Math.round(requestedTick)));
+    current.pause();
+    physicsAudio.stopAll();
+    scrubTickRef.current = targetTick;
+    setScrubTick(targetTick);
+    if (seekTimer.current) clearTimeout(seekTimer.current);
+    seekTimer.current = setTimeout(() => commitSeek(targetTick), 80);
+  }
   if (error) return <p role="alert">{error}</p>;
   return (
     <div className="modal-stack replay-player" ref={containerRef}>
@@ -147,6 +173,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
                 aria-label={current.status === 'playing' ? 'Pause replay' : 'Play replay'}
                 disabled={current.status === 'ended' || current.status === 'error'}
                 onClick={() => {
+                  if (scrubTickRef.current !== null) commitSeek();
                   if (current.status === 'playing') current.pause();
                   else current.play();
                   update((n) => n + 1);
@@ -158,6 +185,10 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
                 className="replay-control-button"
                 aria-label="Restart replay"
                 onClick={() => {
+                  if (seekTimer.current) clearTimeout(seekTimer.current);
+                  seekTimer.current = null;
+                  scrubTickRef.current = null;
+                  setScrubTick(null);
                   current.restart();
                   physicsAudio.stopAll();
                   frameRef.current = current.frame;
@@ -196,13 +227,28 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
       ) : (
         <>
           <div className="replay-timeline">
-            <progress
-              aria-label="Replay progress"
+            <input
+              className="replay-progress"
+              type="range"
+              aria-label="Replay timeline"
+              aria-valuetext={`${((scrubTick ?? current.frame.tick) * FIXED_DT).toFixed(2)} seconds of ${(completionTick * FIXED_DT).toFixed(2)} seconds`}
+              min={0}
               max={Math.max(1, completionTick)}
-              value={Math.min(current.frame.tick, completionTick)}
+              step={1}
+              value={Math.min(scrubTick ?? current.frame.tick, completionTick)}
+              style={
+                {
+                  '--replay-progress': `${completionTick ? ((scrubTick ?? current.frame.tick) / completionTick) * 100 : 0}%`,
+                } as CSSProperties
+              }
+              onChange={(event) => previewSeek(Number(event.currentTarget.value))}
+              onPointerUp={(event) => commitSeek(Number(event.currentTarget.value))}
+              onPointerCancel={() => commitSeek()}
+              onKeyUp={() => commitSeek()}
+              onBlur={() => commitSeek()}
             />
             <span className="replay-time" aria-label="Replay elapsed time">
-              {(current.frame.tick * FIXED_DT).toFixed(2)}s /{' '}
+              {((scrubTick ?? current.frame.tick) * FIXED_DT).toFixed(2)}s /{' '}
               {(completionTick * FIXED_DT).toFixed(2)}s
             </span>
           </div>
@@ -322,13 +368,30 @@ export function ReplayPanel({
               <caption>{replay.player.nickname}’s verified leaderboard result</caption>
               <thead>
                 <tr>
-                  <th scope="col">Rank</th>
-                  <th scope="col">Name</th>
-                  <th scope="col">Cost</th>
-                  <th scope="col">Tiles</th>
-                  <th scope="col">Attempts</th>
-                  <th scope="col">Time</th>
-                  <th scope="col">Path</th>
+                  <th scope="col">
+                    <ColumnLabel label="Rank" help={LEADERBOARD_TOOLTIP_TEXT.columns.rank} />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel label="Name" help={LEADERBOARD_TOOLTIP_TEXT.columns.name} />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel label="Cost" help={LEADERBOARD_TOOLTIP_TEXT.columns.cost} />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel label="Tiles" help={LEADERBOARD_TOOLTIP_TEXT.columns.tiles} />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel
+                      label="Attempts"
+                      help={LEADERBOARD_TOOLTIP_TEXT.columns.attempts}
+                    />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel label="Time" help={LEADERBOARD_TOOLTIP_TEXT.columns.time} />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel label="Path" help={LEADERBOARD_TOOLTIP_TEXT.columns.path} />
+                  </th>
                 </tr>
               </thead>
               <tbody>

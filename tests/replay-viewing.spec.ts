@@ -83,7 +83,7 @@ for (const width of [1500, 320]) {
   test(`spectator controls preserve the viewer's draft and standings at ${width}px`, async ({
     page,
   }) => {
-    await fixtures(page);
+    const { replay } = await fixtures(page);
     await page.setViewportSize({ width, height: width === 320 ? 820 : 1050 });
     const writes: string[] = [];
     const errors: string[] = [];
@@ -144,6 +144,14 @@ for (const width of [1500, 320]) {
     await expect(replayDialog.getByRole('button', { name: 'Back to standings' })).toHaveCount(0);
     await expect(replayDialog).not.toContainText('Archive best');
     await expect(replayDialog).not.toContainText('Read-only replay');
+    if (width === 1500) {
+      const costHelp = page.getByRole('tooltip').filter({
+        hasText: 'Total force cost. Lower values rank better.',
+      });
+      await expect(costHelp).toBeHidden();
+      await replayDialog.getByLabel('Cost', { exact: true }).hover();
+      await expect(costHelp).toBeVisible();
+    }
     const course = page.locator('.replay-course');
     const controls = page.locator('.replay-controls');
     const fullscreenButton = page.getByRole('button', { name: 'Fullscreen replay', exact: true });
@@ -165,13 +173,13 @@ for (const width of [1500, 320]) {
     const play = page.getByRole('button', { name: 'Play replay', exact: true });
     await expect(play).toBeEnabled();
     const elapsed = page.getByLabel('Replay elapsed time');
-    const progress = page.getByRole('progressbar', { name: 'Replay progress' });
+    const timeline = page.getByRole('slider', { name: 'Replay timeline' });
     await expect(elapsed).toContainText('0.00s /');
-    await expect(progress).toHaveAttribute('value', '0');
+    await expect(timeline).toHaveValue('0');
     await page.getByRole('radio', { name: '0.5×', exact: true }).check();
     await play.click();
     await expect.poll(() => elapsed.textContent()).not.toMatch(/^0\.00s/);
-    await expect.poll(async () => Number(await progress.getAttribute('value'))).toBeGreaterThan(0);
+    await expect.poll(async () => Number(await timeline.inputValue())).toBeGreaterThan(0);
     await page.getByRole('button', { name: 'Pause replay' }).click();
     const paused = await elapsed.textContent();
     await page.waitForTimeout(150);
@@ -216,6 +224,16 @@ for (const width of [1500, 320]) {
     await expect(
       page.getByRole('button', { name: 'Fullscreen replay', exact: true }),
     ).toBeVisible();
+    const midpoint = Math.floor(replay.result.metrics!.completionTick / 2);
+    await timeline.fill(String(midpoint));
+    await expect(timeline).toHaveValue(String(midpoint));
+    await expect(elapsed).toContainText(`${(midpoint * (1 / 120)).toFixed(2)}s /`);
+    await expect(timeline).toHaveAttribute(
+      'aria-valuetext',
+      `${(midpoint * (1 / 120)).toFixed(2)} seconds of ${(replay.result.metrics!.completionTick * (1 / 120)).toFixed(2)} seconds`,
+    );
+    await timeline.fill('0');
+    await expect(elapsed).toContainText('0.00s /');
     await page.getByRole('button', { name: 'Restart replay' }).click();
     await expect(elapsed).toContainText('0.00s /');
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();

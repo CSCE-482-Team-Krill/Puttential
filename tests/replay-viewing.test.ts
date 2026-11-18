@@ -105,6 +105,46 @@ test('spectator playback matches verification at each speed, pauses and restarts
   assert.deepEqual(placement, before);
 });
 
+test('spectator playback seeks forward and backward to exact ticks without retaining audio', async () => {
+  const { course, result } = await verifiedResult();
+  const replay = await ReplayPlayback.create(
+    course.level,
+    course.rules,
+    course.solutions[0]!,
+    result,
+  );
+  try {
+    const midpoint = Math.floor(result.metrics!.completionTick / 2);
+    replay.seek(midpoint);
+    assert.equal(replay.status, 'paused');
+    assert.equal(replay.frame.tick, midpoint);
+    assert.deepEqual(replay.takeSoundEvents(), []);
+    const midpointFrame = structuredClone(replay.frame);
+    const midpointGoal = structuredClone(replay.goal);
+
+    replay.seek(midpoint + 20);
+    assert.equal(replay.frame.tick, midpoint + 20);
+    replay.seek(midpoint);
+    assert.equal(replay.status, 'paused');
+    assert.deepEqual(replay.frame, midpointFrame);
+    assert.deepEqual(replay.goal, midpointGoal);
+
+    replay.seek(Number.POSITIVE_INFINITY);
+    assert.equal(replay.frame.tick, midpoint);
+    replay.seek(result.metrics!.completionTick + 1000);
+    assert.equal(replay.status, 'ended');
+    assert.equal(replay.frame.tick, result.metrics!.completionTick);
+    assert.deepEqual(replay.takeSoundEvents(), []);
+
+    replay.seek(-100);
+    assert.equal(replay.status, 'paused');
+    assert.equal(replay.frame.tick, 0);
+    assert.equal(replay.goal.completedTick, null);
+  } finally {
+    replay.destroy();
+  }
+});
+
 test('spectator playback rejects unsupported setup and detects a changed saved result', async () => {
   const { course, result } = await verifiedResult();
   await assert.rejects(
