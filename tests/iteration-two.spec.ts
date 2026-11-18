@@ -80,9 +80,20 @@ test('published costs, unsupported engine, truthful guest profile and responsive
     route.fulfill({ json: { progress: saved.progress, availability: p.availability } }),
   );
   await page.getByRole('button', { name: 'Profile', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('session cookie');
-  await expect(page.getByRole('dialog').getByLabel('Nickname')).toHaveValue(playerFixture.nickname);
-  await page.keyboard.press('Escape');
+  const profile = page.getByRole('dialog');
+  await expect(profile.getByLabel('Nickname', { exact: true })).toHaveValue(playerFixture.nickname);
+  await expect(profile).toContainText('3–24 visible characters');
+  await expect(profile.getByRole('button', { name: 'Save', exact: true })).toBeVisible();
+  const nicknameHelp = profile.getByRole('button', { name: 'About guest nickname storage' });
+  expect(
+    await nicknameHelp.evaluate((button) => {
+      const style = getComputedStyle(button);
+      return [style.width, style.height, style.borderRadius];
+    }),
+  ).toEqual(['28px', '28px', '50%']);
+  await nicknameHelp.hover();
+  await expect(page.getByRole('tooltip')).toContainText('session cookie');
+  await page.mouse.move(0, 0);
   for (const width of [1440, 320]) {
     await page.setViewportSize({ width, height: 1000 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
@@ -93,6 +104,7 @@ test('published costs, unsupported engine, truthful guest profile and responsive
       fullPage: true,
     });
   }
+  await page.keyboard.press('Escape');
   expect(starts).toBe(0);
 });
 test('archive reads summaries, paginates, opens date links and retains canvas on same-content refresh', async ({

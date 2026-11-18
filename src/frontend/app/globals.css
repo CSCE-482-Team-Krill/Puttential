@@ -2438,6 +2438,70 @@ button:disabled {
   border-radius: 6px;
   font: inherit;
 }
+.profile-nickname-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.profile-nickname-label,
+.profile-nickname-edit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.profile-nickname-label {
+  justify-content: space-between;
+  font-weight: 600;
+}
+.modal-body form .profile-help > button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  border: 1px solid var(--ui-line);
+  border-radius: 50%;
+  background: var(--ui-white);
+  color: var(--ui-green-strong);
+  font-weight: 800;
+}
+.modal-body form .profile-help > button:hover {
+  background: var(--ui-turf-soft);
+}
+.profile-nickname-edit input {
+  flex: 1;
+  min-width: 0;
+}
+.profile-nickname-edit button {
+  flex: 0 0 auto;
+}
+.profile-nickname-requirements {
+  margin: 0;
+  color: var(--ui-muted);
+  font-size: 0.78125rem;
+  line-height: 1.4;
+}
+.profile-course {
+  margin-top: 2px;
+}
+.profile-course > h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+.profile-course > p,
+.profile-course-stats {
+  margin: 0;
+}
+.profile-course-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.profile-course-stats p {
+  margin: 0;
+}
 .modal-body textarea {
   min-height: 180px;
   resize: vertical;

@@ -23,7 +23,7 @@ test('real daily browser flow persists a verified result and shares it across tw
       await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
       await page.getByRole('button', { name: 'Profile', exact: true }).click();
       await page.getByLabel('Nickname', { exact: true }).fill(nickname);
-      await page.getByRole('button', { name: 'Save nickname', exact: true }).click();
+      await page.getByRole('button', { name: 'Save', exact: true }).click();
       await expect(page.getByRole('dialog')).toContainText('Nickname saved.');
       await page.keyboard.press('Escape');
       await page.locator('.tile-option').filter({ hasText: 'Gentle' }).click();
