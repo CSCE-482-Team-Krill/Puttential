@@ -21,6 +21,7 @@
     "db:generate": "prisma generate --config prisma7.config.ts",
     "db:migrate": "prisma migrate deploy --config prisma7.config.ts",
     "db:seed": "tsx src/backend/publish.ts",
+    "leaderboard:seed": "tsx scripts/seed-leaderboard.ts",
     "courses:publish": "tsx src/backend/publish.ts",
     "test:integration": "tsx --test tests/*.integration.ts"
   },

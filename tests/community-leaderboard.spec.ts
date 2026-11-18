@@ -50,11 +50,11 @@ test('community play saves a rank, persists after refresh and exposes a working 
   await page.reload();
   await expect(page.locator('#course-title')).toHaveText(map.title);
   await page.getByRole('button', { name: 'Leaderboard', exact: true }).click();
-  await expect(leaderboard.getByText('Your rank: #1')).toBeVisible();
-  await expect(leaderboard.getByText('1 ranked players')).toBeVisible();
+  await expect(leaderboard.getByText('Your rank: 1')).toBeVisible();
+  await expect(leaderboard).not.toContainText('ranked players');
   await expect(leaderboard.getByRole('button', { name: /Watch .* replay/ })).toBeEnabled();
   await leaderboard.getByRole('button', { name: 'Around me', exact: true }).click();
-  await expect(leaderboard.getByRole('listitem')).toHaveCount(1);
+  await expect(leaderboard.locator('tbody tr')).toHaveCount(1);
   await mkdir('artifacts/leaderboard-community', { recursive: true });
   await page.screenshot({
     path: 'artifacts/leaderboard-community/standings-desktop.png',
@@ -69,14 +69,18 @@ test('community play saves a rank, persists after refresh and exposes a working 
   const replayResponse = page.waitForResponse((response) => response.url().includes('/replays/'));
   await leaderboard.getByRole('button', { name: /Watch .* replay/ }).click();
   expect((await replayResponse).status()).toBe(200);
-  await expect(leaderboard.getByText(/Community best/)).toBeVisible();
-  await expect(leaderboard.getByRole('alert')).toHaveCount(0);
-  await expect(leaderboard.getByRole('button', { name: 'Play replay', exact: true })).toBeEnabled();
-  await leaderboard.getByRole('button', { name: 'Play replay', exact: true }).click();
-  await expect(
-    leaderboard.getByText('Replay complete — verified solution.', { exact: true }),
-  ).toBeVisible();
-  await leaderboard.getByRole('button', { name: 'Back to standings', exact: true }).click();
-  await expect(leaderboard.getByText('Your rank: #1')).toBeVisible();
+  const replay = page.getByRole('dialog', { name: 'Replay', exact: true });
+  await expect(replay).toBeVisible();
+  await expect(page.locator('.modal')).toHaveCount(2);
+  await expect(page.locator('.modal-leaderboard')).toHaveAttribute('inert', '');
+  await expect(replay.getByRole('table')).toContainText(player.nickname);
+  await expect(replay.getByRole('alert')).toHaveCount(0);
+  await expect(replay.getByRole('button', { name: 'Play replay', exact: true })).toBeEnabled();
+  await replay.getByRole('button', { name: 'Play replay', exact: true }).click();
+  await expect(replay.getByRole('button', { name: 'Play replay', exact: true })).toBeDisabled();
+  await replay.getByRole('button', { name: 'Close replay', exact: true }).click();
+  await expect(replay).toHaveCount(0);
+  await expect(leaderboard).toBeVisible();
+  await expect(leaderboard.getByText('Your rank: 1')).toBeVisible();
   expect(errors).toEqual([]);
 });

@@ -604,12 +604,24 @@ export async function leaderboard(
   const requestedScope = params.get('scope'),
     view = params.get('view') ?? 'top',
     limit = pageSize(params),
-    cursor = decodeCursor(params.get('cursor'), secret);
+    cursorParam = params.get('cursor'),
+    pageParam = params.get('page'),
+    cursor = decodeCursor(cursorParam, secret),
+    requestedPage = pageParam === null ? null : Number(pageParam);
   if (
     (requestedScope !== null && !['daily', 'archive'].includes(requestedScope)) ||
     !['top', 'around-me'].includes(view)
   )
     return fail(400, 'INVALID_BOARD', 'Invalid leaderboard view.');
+  if (cursorParam !== null && pageParam !== null)
+    return fail(400, 'INVALID_PAGE', 'Use either a page or a cursor, not both.');
+  if (
+    requestedPage !== null &&
+    (!Number.isSafeInteger(requestedPage) ||
+      requestedPage < 1 ||
+      requestedPage > Math.floor(Number.MAX_SAFE_INTEGER / limit))
+  )
+    return fail(400, 'INVALID_PAGE', 'Use a positive leaderboard page number.');
   return prisma.$transaction(
     async (tx) => {
       const p = await published(tx, puzzleId),
@@ -673,9 +685,13 @@ export async function leaderboard(
       }
       const meIndex = ranked.findIndex((r) => r.player.id === guest.id),
         me = ranked[meIndex] ?? null;
-      const offset =
-        cursor?.offset ??
-        (view === 'around-me' && meIndex >= 0 ? Math.max(0, meIndex - Math.floor(limit / 2)) : 0);
+      const totalPages = Math.max(1, Math.ceil(ranked.length / limit));
+      const defaultPage =
+        view === 'around-me' && meIndex >= 0 ? Math.floor(meIndex / limit) + 1 : 1;
+      const page = cursor
+        ? Math.min(totalPages, Math.floor(cursor.offset / limit) + 1)
+        : Math.min(requestedPage ?? defaultPage, totalPages);
+      const offset = cursor?.offset ?? (page - 1) * limit;
       const now = await databaseNow(tx),
         closed =
           !!p.date && now >= centralMidnight(shiftDate(p.date.toISOString().slice(0, 10), 1));
@@ -695,6 +711,9 @@ export async function leaderboard(
         rows: ranked.slice(offset, offset + limit).map(({ bestRunId, ...row }) => row),
         me,
         totalPlayers: ranked.length,
+        page,
+        pageSize: limit,
+        totalPages,
         nextCursor:
           offset + limit < ranked.length
             ? encodeCursor(

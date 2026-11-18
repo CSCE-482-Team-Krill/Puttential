@@ -2,7 +2,11 @@
 import { useState } from 'react';
 import type { Player, PuzzleProgress } from '../../shared/puzzle-contracts';
 import { puzzleApi } from '../api';
+import { LeaderboardTooltip } from '../leaderboard-tooltip';
 import { validNickname } from '../response-validation';
+
+const NICKNAME_STORAGE_HELP =
+  'Your guest nickname is saved with this browser’s session cookie. Clearing cookies loses access; cross-device recovery is unavailable.';
 
 export function ProfilePanel({
   player,
@@ -29,16 +33,13 @@ export function ProfilePanel({
     );
   return (
     <div className="modal-stack">
-      <p>
-        Your guest nickname is saved with this browser’s session cookie. Clearing cookies loses
-        access; cross-device recovery is unavailable.
-      </p>
       {memoryOnly && (
         <p role="status">
           Progress recovery unavailable after refresh. Keep this page open to retry pending saves.
         </p>
       )}
       <form
+        className="profile-nickname-form"
         onSubmit={async (e) => {
           e.preventDefault();
           if (!validNickname(name)) {
@@ -66,41 +67,58 @@ export function ProfilePanel({
           }
         }}
       >
-        <label>
-          Nickname
+        <div className="profile-nickname-label">
+          <label htmlFor="profile-nickname">Nickname</label>
+          <LeaderboardTooltip content={NICKNAME_STORAGE_HELP} className="profile-help">
+            {(tooltipProps) => (
+              <button type="button" aria-label="About guest nickname storage" {...tooltipProps}>
+                ?
+              </button>
+            )}
+          </LeaderboardTooltip>
+        </div>
+        <div className="profile-nickname-edit">
           <input
+            id="profile-nickname"
             name="nickname"
             autoComplete="nickname"
+            aria-describedby="nickname-requirements"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
-        </label>
-        <button disabled={busy} type="submit">
-          Save nickname
-        </button>
+          <button disabled={busy} type="submit">
+            Save
+          </button>
+        </div>
+        <p className="profile-nickname-requirements" id="nickname-requirements">
+          3–24 visible characters after trimming. Spaces and emoji are allowed; control and
+          invisible formatting characters are not.
+        </p>
       </form>
-      <p role="status">{message}</p>
-      <h3>Current course</h3>
-      {progress ? (
-        <>
-          <p>Total accepted starts: {progress.attemptsStarted}</p>
-          <p>
-            {progress.firstSolveAttempts === null
-              ? 'No verified solve yet.'
-              : `First verified solve: run #${progress.firstSolveAttempts}`}
-          </p>
-          {progress.bestArchive?.metrics && (
+      {message && <p role="status">{message}</p>}
+      <section className="profile-course" aria-labelledby="current-course-heading">
+        <h3 id="current-course-heading">Current course</h3>
+        {progress ? (
+          <div className="profile-course-stats">
+            <p>Total accepted starts: {progress.attemptsStarted}</p>
             <p>
-              Best archive: Force {progress.bestArchive.metrics.forceCost} ·{' '}
-              {progress.bestArchive.metrics.tileCount} tiles ·{' '}
-              {(progress.bestArchive.metrics.completionTick / 120).toFixed(2)}s · Path{' '}
-              {(progress.bestArchive.metrics.pathLengthQ / 1024).toFixed(2)}
+              {progress.firstSolveAttempts === null
+                ? 'No verified solve yet.'
+                : `First verified solve: run #${progress.firstSolveAttempts}`}
             </p>
-          )}
-        </>
-      ) : (
-        <p>Server progress unavailable for this course.</p>
-      )}
+            {progress.bestArchive?.metrics && (
+              <p>
+                Best archive: Force {progress.bestArchive.metrics.forceCost} ·{' '}
+                {progress.bestArchive.metrics.tileCount} tiles ·{' '}
+                {(progress.bestArchive.metrics.completionTick / 120).toFixed(2)}s · Path{' '}
+                {(progress.bestArchive.metrics.pathLengthQ / 1024).toFixed(2)}
+              </p>
+            )}
+          </div>
+        ) : (
+          <p>Server progress unavailable for this course.</p>
+        )}
+      </section>
     </div>
   );
 }

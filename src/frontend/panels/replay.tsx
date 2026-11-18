@@ -1,15 +1,22 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { RenderState } from '../../game/types';
 import { FIXED_DT } from '../../game/simulation';
 import { levelBounds } from '../../game/levels/codec';
 import { initialGoal } from '../goal-progress';
-import type { Player, PuzzleResponse, ReplayResponse, Scope } from '../../shared/puzzle-contracts';
+import type {
+  LeaderboardRow,
+  PuzzleResponse,
+  ReplayResponse,
+  Scope,
+} from '../../shared/puzzle-contracts';
 import { ApiError, puzzleApi } from '../api';
 import { deliveredEngine } from '../engine-adapter';
 import type { AuthoritativeState } from '../authoritative-state';
 import { CourseCanvas } from '../course-canvas';
+import { Icon } from '../icon';
+import { ColumnLabel, LEADERBOARD_TOOLTIP_TEXT } from '../leaderboard-tooltip';
 import { physicsAudio } from '../physics-audio';
 import { ReplayPlayback } from '../replay-playback';
 import type { ReplaySpeed } from '../replay-playback';
@@ -20,6 +27,10 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
   const [fullscreen, setFullscreen] = useState(false);
   const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
   const [fullscreenError, setFullscreenError] = useState('');
+  const [scrubTick, setScrubTick] = useState<number | null>(null);
+  const timelineHelpId = useId();
+  const scrubTickRef = useRef<number | null>(null);
+  const seekTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playback = useRef<ReplayPlayback | null>(null);
   const frameRef = useRef<RenderState | null>(null);
   const goalRef = useRef(initialGoal(puzzle.configuration.goal));
@@ -89,6 +100,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
       canceled = true;
       cancelAnimationFrame(frame);
       document.removeEventListener('visibilitychange', visibility);
+      if (seekTimer.current) clearTimeout(seekTimer.current);
       playback.current?.destroy();
       playback.current = null;
       physicsAudio.stopAll();
@@ -104,90 +116,166 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
   ]);
 
   const current = playback.current;
+  const completionTick = replay.result.metrics?.completionTick ?? 0;
+  const displayTick = scrubTick ?? current?.frame.tick ?? 0;
+  function commitSeek(requestedTick = scrubTickRef.current) {
+    if (!current || requestedTick === null) return;
+    if (seekTimer.current) clearTimeout(seekTimer.current);
+    seekTimer.current = null;
+    current.seek(requestedTick);
+    frameRef.current = current.frame;
+    goalRef.current = current.goal;
+    scrubTickRef.current = null;
+    setScrubTick(null);
+    update((n) => n + 1);
+  }
+  function previewSeek(requestedTick: number) {
+    if (!current) return;
+    const targetTick = Math.min(completionTick, Math.max(0, Math.round(requestedTick)));
+    current.pause();
+    physicsAudio.stopAll();
+    scrubTickRef.current = targetTick;
+    setScrubTick(targetTick);
+    if (seekTimer.current) clearTimeout(seekTimer.current);
+    seekTimer.current = setTimeout(() => commitSeek(targetTick), 80);
+  }
   if (error) return <p role="alert">{error}</p>;
   return (
     <div className="modal-stack replay-player" ref={containerRef}>
-      <div className="course replay-course">
-        <CourseCanvas
-          level={puzzle.configuration}
-          frameRef={frameRef}
-          goalRef={goalRef}
-          draft={{}}
-          mode="running"
-          trail={[]}
-          editingLocked
-          onMoveField={() => {}}
-          ariaLabel={`Read-only replay of ${replay.player.nickname}’s solution`}
-        />
+      <div className="replay-playback-layout">
+        <div className="course replay-course">
+          <CourseCanvas
+            level={puzzle.configuration}
+            frameRef={frameRef}
+            goalRef={goalRef}
+            draft={{}}
+            mode="running"
+            trail={[]}
+            editingLocked
+            onMoveField={() => {}}
+            ariaLabel={`Read-only replay of ${replay.player.nickname}’s solution`}
+          />
+          <button
+            className="replay-fullscreen"
+            ref={fullscreenButtonRef}
+            disabled={!fullscreenAvailable}
+            title={fullscreenAvailable ? undefined : 'Fullscreen is unavailable in this browser.'}
+            aria-label={fullscreen ? 'Exit fullscreen' : 'Fullscreen replay'}
+            aria-pressed={fullscreen}
+            onClick={() => void toggleFullscreen()}
+          >
+            <Icon name={fullscreen ? 'fullscreen-exit' : 'fullscreen'} size={20} />
+          </button>
+        </div>
+        {current && (
+          <div className="replay-controls">
+            <div className="replay-control-buttons">
+              <button
+                className="replay-control-button"
+                aria-label={current.status === 'playing' ? 'Pause replay' : 'Play replay'}
+                disabled={current.status === 'ended' || current.status === 'error'}
+                onClick={() => {
+                  if (scrubTickRef.current !== null) commitSeek();
+                  if (current.status === 'playing') current.pause();
+                  else current.play();
+                  update((n) => n + 1);
+                }}
+              >
+                <Icon name={current.status === 'playing' ? 'pause' : 'play'} size={20} />
+              </button>
+              <button
+                className="replay-control-button"
+                aria-label="Restart replay"
+                onClick={() => {
+                  if (seekTimer.current) clearTimeout(seekTimer.current);
+                  seekTimer.current = null;
+                  scrubTickRef.current = null;
+                  setScrubTick(null);
+                  current.restart();
+                  physicsAudio.stopAll();
+                  frameRef.current = current.frame;
+                  goalRef.current = current.goal;
+                  update((n) => n + 1);
+                }}
+              >
+                <Icon name="reset" size={20} />
+              </button>
+            </div>
+            <fieldset className="replay-speed" aria-label="Replay speed">
+              <legend>Speed</legend>
+              <div>
+                {([0.5, 1, 2, 4] as const).map((speed) => (
+                  <label key={speed}>
+                    <input
+                      type="radio"
+                      name="replay-speed"
+                      value={speed}
+                      checked={current.speed === speed}
+                      onChange={() => {
+                        current.speed = speed as ReplaySpeed;
+                        update((n) => n + 1);
+                      }}
+                    />
+                    <span>{speed}×</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          </div>
+        )}
       </div>
       {!current ? (
         <p role="status">Preparing replay…</p>
       ) : (
         <>
-          <div className="panel-actions replay-controls">
-            <button
-              disabled={current.status === 'ended' || current.status === 'error'}
-              onClick={() => {
-                if (current.status === 'playing') current.pause();
-                else current.play();
-                update((n) => n + 1);
-              }}
-            >
-              {current.status === 'playing' ? 'Pause replay' : 'Play replay'}
-            </button>
-            <button
-              onClick={() => {
-                current.restart();
-                physicsAudio.stopAll();
-                frameRef.current = current.frame;
-                goalRef.current = current.goal;
-                update((n) => n + 1);
-              }}
-            >
-              Restart replay
-            </button>
-            <label>
-              Speed
-              <select
-                aria-label="Replay speed"
-                value={current.speed}
-                onChange={(e) => {
-                  current.speed = Number(e.target.value) as ReplaySpeed;
-                  update((n) => n + 1);
-                }}
-              >
-                <option value="0.5">0.5×</option>
-                <option value="1">1×</option>
-                <option value="2">2×</option>
-                <option value="4">4×</option>
-              </select>
-            </label>
-            <button
-              ref={fullscreenButtonRef}
-              disabled={!fullscreenAvailable}
-              title={fullscreenAvailable ? undefined : 'Fullscreen is unavailable in this browser.'}
-              aria-pressed={fullscreen}
-              onClick={() => void toggleFullscreen()}
-            >
-              {fullscreen ? 'Exit fullscreen' : 'Fullscreen replay'}
-            </button>
+          <div className="replay-timeline">
+            <div className="replay-scrubber">
+              <div className="replay-timeline-track" aria-hidden="true">
+                <span
+                  className="replay-timeline-played"
+                  style={{ width: `${completionTick ? (displayTick / completionTick) * 100 : 0}%` }}
+                />
+                {current.goalIntervals.map((interval, index) => {
+                  const start = completionTick ? (interval.startTick / completionTick) * 100 : 0;
+                  const end = completionTick
+                    ? (Math.min(interval.endTick, completionTick) / completionTick) * 100
+                    : 0;
+                  const width = Math.max(0.5, end - start);
+                  return (
+                    <span
+                      className="replay-goal-interval"
+                      key={`${interval.startTick}-${interval.endTick}-${index}`}
+                      style={{ left: `${Math.min(start, 100 - width)}%`, width: `${width}%` }}
+                    />
+                  );
+                })}
+              </div>
+              <input
+                className="replay-progress"
+                type="range"
+                aria-label="Replay timeline"
+                aria-describedby={timelineHelpId}
+                aria-valuetext={`${(displayTick * FIXED_DT).toFixed(2)} seconds of ${(completionTick * FIXED_DT).toFixed(2)} seconds`}
+                min={0}
+                max={Math.max(1, completionTick)}
+                step={1}
+                value={Math.min(displayTick, completionTick)}
+                onChange={(event) => previewSeek(Number(event.currentTarget.value))}
+                onPointerUp={(event) => commitSeek(Number(event.currentTarget.value))}
+                onPointerCancel={() => commitSeek()}
+                onKeyUp={() => commitSeek()}
+                onBlur={() => commitSeek()}
+              />
+              <span className="sr-only" id={timelineHelpId}>
+                Gold segments show when the ball is inside the flag area.
+              </span>
+            </div>
+            <span className="replay-time" aria-label="Replay elapsed time">
+              {(displayTick * FIXED_DT).toFixed(2)}s / {(completionTick * FIXED_DT).toFixed(2)}s
+            </span>
           </div>
           {fullscreenError && <p role="alert">{fullscreenError}</p>}
-          <p className="replay-time" aria-label="Replay elapsed time">
-            {(current.frame.tick * FIXED_DT).toFixed(2)}s /{' '}
-            {((replay.result.metrics?.completionTick ?? 0) * FIXED_DT).toFixed(2)}s
-          </p>
-          {current.error ? (
-            <p role="alert">{current.error}</p>
-          ) : (
-            <p role="status">
-              {current.status === 'ended'
-                ? 'Replay complete — verified solution.'
-                : current.status === 'playing'
-                  ? 'Playing replay.'
-                  : 'Replay paused.'}
-            </p>
-          )}
+          {current.error && <p role="alert">{current.error}</p>}
         </>
       )}
     </div>
@@ -196,23 +284,22 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
 
 export function ReplayPanel({
   puzzle,
-  target,
+  row,
   scope,
   viewerId,
   state,
-  back,
   reconcileGuest,
   refresh,
 }: {
   puzzle: PuzzleResponse;
-  target: Player;
+  row: LeaderboardRow;
   scope: Scope;
   viewerId: string;
   state: AuthoritativeState;
-  back: () => void;
   reconcileGuest: () => void;
   refresh: () => void;
 }) {
+  const target = row.player;
   const [replay, setReplay] = useState<ReplayResponse | null>(null);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -269,23 +356,26 @@ export function ReplayPanel({
     retry,
   ]);
   const metrics = replay?.result.metrics;
+  const replayDate = puzzle.date
+    ? new Date(`${puzzle.date}T00:00:00Z`).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'UTC',
+      })
+    : puzzle.title;
   return (
     <div className="modal-stack replay-viewer">
-      <button className="replay-back" onClick={back}>
-        Back to standings
-      </button>
-      <h3 ref={heading} tabIndex={-1}>
+      <h3 className="sr-only" ref={heading} tabIndex={-1}>
         {replay?.player.nickname ?? target.nickname}’s solution
       </h3>
-      <p className="modal-footnote">
-        {puzzle.communityMapId ? puzzle.title : puzzle.date} ·{' '}
-        {puzzle.communityMapId
-          ? 'Community best'
-          : scope === 'daily'
-            ? 'Daily best'
-            : 'Archive best'}{' '}
-        · Read-only replay
-      </p>
+      {puzzle.date ? (
+        <time className="replay-date" dateTime={puzzle.date}>
+          {replayDate}
+        </time>
+      ) : (
+        <p className="replay-date">{replayDate}</p>
+      )}
       {error ? (
         <>
           <p role="alert">{error}</p>
@@ -295,10 +385,50 @@ export function ReplayPanel({
         <p role="status">Loading replay…</p>
       ) : (
         <>
-          <p>
-            {metrics?.forceCost} pt · {metrics?.tileCount} tiles ·{' '}
-            {((metrics?.completionTick ?? 0) * FIXED_DT).toFixed(2)}s · Saved and verified
-          </p>
+          <div className="replay-summary-wrap">
+            <table className="replay-summary">
+              <caption>{replay.player.nickname}’s verified leaderboard result</caption>
+              <thead>
+                <tr>
+                  <th scope="col">
+                    <ColumnLabel label="Rank" help={LEADERBOARD_TOOLTIP_TEXT.columns.rank} />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel label="Name" help={LEADERBOARD_TOOLTIP_TEXT.columns.name} />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel label="Cost" help={LEADERBOARD_TOOLTIP_TEXT.columns.cost} />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel label="Tiles" help={LEADERBOARD_TOOLTIP_TEXT.columns.tiles} />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel
+                      label="Attempts"
+                      help={LEADERBOARD_TOOLTIP_TEXT.columns.attempts}
+                    />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel label="Time" help={LEADERBOARD_TOOLTIP_TEXT.columns.time} />
+                  </th>
+                  <th scope="col">
+                    <ColumnLabel label="Path" help={LEADERBOARD_TOOLTIP_TEXT.columns.path} />
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{row.rank}</td>
+                  <th scope="row">{replay.player.nickname}</th>
+                  <td>{metrics?.forceCost}</td>
+                  <td>{metrics?.tileCount}</td>
+                  <td>{row.firstSolveAttempts}</td>
+                  <td>{((metrics?.completionTick ?? 0) * FIXED_DT).toFixed(2)}s</td>
+                  <td>{((metrics?.pathLengthQ ?? 0) / 1024).toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <ReplayPlayer puzzle={puzzle} replay={replay} />
         </>
       )}

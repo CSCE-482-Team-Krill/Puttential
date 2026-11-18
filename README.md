@@ -42,6 +42,15 @@ Use **Node 22.12+** and **PostgreSQL 17** (or Docker Desktop). Run commands from
 
    Open **http://127.0.0.1:3000**. There is no separate backend process: Next.js route handlers call `src/backend` services on the same origin. Check **http://127.0.0.1:3000/api/puzzles/today** for the published dated course and rules. Guest sessions, server-replayed results, progress, archive, leaderboard and sharing use the same-origin API.
 
+   To populate a published daily leaderboard with replayable local test entries, run:
+
+   ```sh
+   npm run leaderboard:seed -- 2026-11-16 12
+   ```
+
+   The command only accepts a local PostgreSQL hostname, is disabled in production, and replaces
+   only its own fixtures when re-run for the same date. Real leaderboard entries are preserved.
+
 5. Optionally start the editor in a second terminal:
 
    ```sh
@@ -112,7 +121,7 @@ The browser, editor and server use one Rapier engine. The daily API persists opa
 
 The shared engine supports absolute tile rotation at 0.1-degree increments, complete canonical setup at tick zero, finite runs, shared goal/failure evaluation and path length excluding teleport jumps. The frontend retains drafts and pending submissions, retries the same request IDs, and keeps practice unranked.
 
-Daily/archive standings use competition ties, strictly-worse percentiles, Top and Around me, and signed viewer-bound pagination. A committed eligible receipt keeps a closed daily board provisional until verification finishes. Expiring worker leases and the publisher recovery command handle interrupted verification.
+Daily/archive standings use competition ties, strictly-worse percentiles, Top and Around me, and direct numbered pages with signed cursor compatibility. A committed eligible receipt keeps a closed daily board provisional until verification finishes. Expiring worker leases and the publisher recovery command handle interrupted verification.
 
 The older attempt/solution prototype endpoints remain unranked and isolated from competitive tables. The development modal preview still uses labeled examples and returns 404 in production.
 

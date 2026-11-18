@@ -127,18 +127,27 @@ function SoundSetting() {
   );
 }
 
+const dialogStack: HTMLElement[] = [];
+let bodyOverflowBeforeDialogs: string | null = null;
+
 /** Focus, Escape and Tab containment shared by every modal dialog. */
 export function useDialog(dialogRef: RefObject<HTMLElement | null>, close: () => void) {
   const closeRef = useRef(close);
   closeRef.current = close;
   useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (!dialogStack.length) {
+      bodyOverflowBeforeDialogs = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    }
+    dialogStack.push(dialog);
     const previousFocus =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     dialogRef.current?.focus();
 
     const onKey = (event: KeyboardEvent) => {
+      if (dialogStack.at(-1) !== dialog) return;
       const focusRoot =
         document.fullscreenElement && dialogRef.current?.contains(document.fullscreenElement)
           ? document.fullscreenElement
@@ -175,7 +184,12 @@ export function useDialog(dialogRef: RefObject<HTMLElement | null>, close: () =>
     window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previousOverflow;
+      const index = dialogStack.lastIndexOf(dialog);
+      if (index >= 0) dialogStack.splice(index, 1);
+      if (!dialogStack.length) {
+        document.body.style.overflow = bodyOverflowBeforeDialogs ?? '';
+        bodyOverflowBeforeDialogs = null;
+      }
       previousFocus?.focus();
     };
   }, [dialogRef]);

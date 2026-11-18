@@ -12,8 +12,15 @@ export type IconName =
   | 'help'
   | 'close'
   | 'arrow'
+  | 'up'
+  | 'refresh'
+  | 'eye'
+  | 'eye-off'
   | 'reset'
   | 'play'
+  | 'pause'
+  | 'fullscreen'
+  | 'fullscreen-exit'
   | 'fire';
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
@@ -83,12 +90,41 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     ),
     close: <path d="M5 5 19 19M19 5 5 19" />,
     arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
+    up: <path d="M12 19V5m-6 6 6-6 6 6" />,
+    refresh: <path d="M20 4v7h-7M20 11a8 8 0 1 0-2.34 5.66" />,
+    eye: (
+      <>
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+        <circle cx="12" cy="12" r="2.5" />
+      </>
+    ),
+    'eye-off': (
+      <>
+        <path d="M3 3 21 21" />
+        <path d="M10.6 5.2A11.4 11.4 0 0 1 12 5c6.5 0 10 7 10 7a16 16 0 0 1-2.1 3.1M6.6 6.6C3.6 8.5 2 12 2 12s3.5 7 10 7a10.8 10.8 0 0 0 4.1-.8M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+      </>
+    ),
     reset: (
       <>
         <path d="M3 11a9 9 0 1 1 2.6 6.4M3 4v7h7" />
       </>
     ),
     play: <path d="m8 5 11 7-11 7z" fill="currentColor" stroke="none" />,
+    pause: (
+      <>
+        <path d="M8 5v14M16 5v14" />
+      </>
+    ),
+    fullscreen: (
+      <>
+        <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
+      </>
+    ),
+    'fullscreen-exit': (
+      <>
+        <path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5" />
+      </>
+    ),
     fire: (
       <path d="M12 22c4.5 0 7-3 7-7 0-2.5-1.2-4.7-3-6-.2 2.5-1.7 3.7-2.6 4C14 8.5 11.4 5.2 9 3c.4 4-3 6.2-4 9.4C3.3 17.7 6.4 22 12 22z" />
     ),

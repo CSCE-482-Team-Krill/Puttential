@@ -14,7 +14,6 @@ import type { IconName } from '../icon';
 import { Modal, usePreferences } from '../modal';
 import type { Panel } from '../modal';
 import { ApiError, puzzleApi } from '../api';
-import { selectableFields, selectedFieldCount, displayedForceCost } from '../score-display';
 import { bootstrapGuest } from '../guest-session';
 import { localContext, publishedContext, dailyDelay } from '../course-context';
 import type { CourseContext } from '../course-context';
@@ -35,6 +34,8 @@ import { communityMapUrl } from '../../shared/community-maps';
 import { usesLegacyBounds } from '../../game/run-evaluation';
 import { shareResult } from '../share-result';
 import { markTutorialSeen, shouldOpenTutorial, Tutorial } from '../tutorial';
+import { NoticeToast } from '../notice-toast';
+import { LeaderboardTooltip } from '../leaderboard-tooltip';
 
 const EmbeddedEditor = dynamic(() => import('../embedded-editor'), {
   ssr: false,
@@ -51,6 +52,7 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
   contextRef.current = context;
   const [daily, setDaily] = useState<PuzzleResponse | null>(null);
   const [notice, setNotice] = useState('');
+  const [dismissedDailyNotice, setDismissedDailyNotice] = useState<string | null>(null);
   const [communityNotice, setCommunityNotice] = useState('');
   const [loading, setLoading] = useState(true);
   const [importBounds, setImportBounds] = useState<Bounds | null>(null);
@@ -77,6 +79,8 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
   const [memoryOnly, setMemoryOnly] = useState(false);
   const [storageReady, setStorageReady] = useState(false);
   const [startingPlay, setStartingPlay] = useState(false);
+  const [stoppingPlay, setStoppingPlay] = useState(false);
+  const runAction = useRef<'starting' | 'stopping' | null>(null);
   const [, redraw] = useState(0);
   const sessionRef = useRef<CourseSession | null>(null);
   const stateRef = useRef(new AuthoritativeState());
@@ -143,7 +147,7 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
   }, [reconcileGuest]);
   useEffect(() => {
     const controller = new AbortController();
-    setGuestIssue('Confirming guest session…');
+    setGuestIssue('');
     void bootstrapGuest(puzzleApi, controller.signal)
       .then((confirmed) => {
         if (controller.signal.aborted) return;
@@ -289,7 +293,7 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
       const controller = new AbortController();
       selectionAbort.current = controller;
       setLoading(true);
-      setNotice('Loading selected course…');
+      setNotice('');
       try {
         const response = await puzzleApi.byDate(date, { signal: controller.signal });
         if (generation !== selectedGeneration.current || controller.signal.aborted) return;
@@ -341,7 +345,7 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
       const controller = new AbortController();
       selectionAbort.current = controller;
       setLoading(true);
-      setNotice('Loading community map…');
+      setNotice('');
       setCommunityNotice('Loading community map…');
       try {
         const map = await communityApi.read(id, controller.signal);
@@ -520,14 +524,16 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
   const canRank =
     storageReady && !!player && compatible && availability?.publicationStatus === 'active';
   async function play() {
+    if (runAction.current) return;
     if (!p) {
       puzzle.play();
       return;
     }
     if (!canRank || !session) return;
+    runAction.current = 'starting';
     try {
       // Freeze UI synchronously before any asynchronous start work.
-      setNotice('Starting run…');
+      setNotice('');
       setStartingPlay(true);
       const starting = session.start(p, player!, puzzle.getPlacement());
       redraw((n) => n + 1);
@@ -538,13 +544,25 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
     } catch (e) {
       setNotice(e instanceof Error ? e.message : 'Could not start run.');
     } finally {
+      runAction.current = null;
       setStartingPlay(false);
     }
   }
   async function stop() {
-    if (activeRequest.current && puzzle.mode === 'running')
-      await session?.finish(activeRequest.current, 'aborted', puzzle.tick);
-    puzzle.rewind();
+    if (runAction.current) return;
+    runAction.current = 'stopping';
+    setStoppingPlay(true);
+    try {
+      const requestId = activeRequest.current;
+      if (requestId && puzzle.mode === 'running')
+        await session?.finish(requestId, 'aborted', puzzle.tick);
+      puzzle.rewind();
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : 'Could not stop run.');
+    } finally {
+      runAction.current = null;
+      setStoppingPlay(false);
+    }
   }
   async function compose(savedBest = false) {
     const saved = savedBest
@@ -609,17 +627,19 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
   }[] = [
     { name: 'archive', label: 'Calendar', icon: 'calendar' },
     { name: 'leaderboard', label: 'Leaderboard', icon: 'trophy' },
-    { name: 'community', label: 'Community', icon: 'community' },
-    { name: 'editor', label: 'Editor', icon: 'editor' },
     { name: 'settings', label: 'Settings', icon: 'settings' },
     { name: 'stats', label: 'Profile', icon: 'profile' },
     { name: 'help', label: 'Help', icon: 'help' },
+    { name: 'community', label: 'Community', icon: 'community' },
+    { name: 'editor', label: 'Editor', icon: 'editor' },
   ];
-  const placed = selectedFieldCount(level, puzzle.draft),
-    inventory = selectableFields(level).length;
-  const cost = displayedForceCost(level, puzzle.draft, p?.rules.tileCosts);
   const pending = records.filter((r) => r.phase !== 'terminal');
   const recoveryLimited = memoryOnly || pending.some((r) => r.persistence === 'memory');
+  const todayDate = daily?.date;
+  const dailyNotice =
+    daily && todayDate && p?.date && p.id !== daily.id
+      ? { key: `${daily.id}/${p.id}`, date: todayDate }
+      : null;
   return (
     <div className={`site-wrap ${preferences.reducedMotion ? 'reduce-motion' : ''}`}>
       <header className="site-header">
@@ -638,44 +658,56 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
           <BrandLogo />
         </button>
         <nav className="main-nav" aria-label="Main navigation">
-          {nav.map(({ name, label, icon }) =>
-            name === 'editor' || name === 'community' ? (
-              <button
-                key={name}
-                className={`nav-button ${view === name ? 'active' : ''}`}
-                aria-pressed={view === name}
-                aria-current={view === name ? 'page' : undefined}
-                aria-controls={`${name}-view`}
-                aria-label={label}
-                title={label}
-                disabled={startingPlay}
-                onClick={() => {
-                  if (view === name && name === 'community') return;
-                  void showView(view === name ? 'game' : name);
-                }}
-              >
-                <Icon name={icon} size={20} />
-                <span>{label}</span>
-              </button>
-            ) : (
-              <button
-                key={name}
-                className={`nav-button ${panel === name ? 'active' : ''}`}
-                aria-expanded={panel === name}
-                aria-label={label}
-                title={label}
-                disabled={name === 'leaderboard' && (loading || !context)}
-                onClick={() => setPanel(name)}
-              >
-                <Icon name={icon} size={20} />
-                <span>{label}</span>
-              </button>
-            ),
-          )}
+          {[
+            { label: 'Panels', items: nav.slice(0, -2), className: 'nav-panel-group' },
+            { label: 'Destinations', items: nav.slice(-2), className: 'nav-view-group' },
+          ].map((group) => (
+            <div
+              className={`nav-group ${group.className}`}
+              role="group"
+              aria-label={group.label}
+              key={group.label}
+            >
+              {group.items.map(({ name, label, icon }) => (
+                <LeaderboardTooltip content={label} className="nav-tooltip" key={name}>
+                  {(tooltipProps) =>
+                    name === 'editor' || name === 'community' ? (
+                      <button
+                        className={`nav-button ${view === name ? 'active' : ''}`}
+                        aria-pressed={view === name}
+                        aria-current={view === name ? 'page' : undefined}
+                        aria-controls={`${name}-view`}
+                        aria-label={label}
+                        disabled={startingPlay}
+                        onClick={() => {
+                          if (view === name && name === 'community') return;
+                          void showView(view === name ? 'game' : name);
+                        }}
+                        {...tooltipProps}
+                      >
+                        <Icon name={icon} size={20} />
+                      </button>
+                    ) : (
+                      <button
+                        className={`nav-button ${panel === name ? 'active' : ''}`}
+                        aria-expanded={panel === name}
+                        aria-label={label}
+                        disabled={name === 'leaderboard' && (loading || !context)}
+                        onClick={() => setPanel(name)}
+                        {...tooltipProps}
+                      >
+                        <Icon name={icon} size={20} />
+                      </button>
+                    )
+                  }
+                </LeaderboardTooltip>
+              ))}
+            </div>
+          ))}
         </nav>
       </header>
       <main className="dashboard" hidden={view !== 'game'}>
-        {(notice || !context) && (
+        {!context && (
           <div className="api-notice" role="status">
             {loading && !context ? "Loading today's course…" : notice}
             <div className="panel-actions">
@@ -691,15 +723,7 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
         )}
         {context && (
           <>
-            {daily && p?.date && p.id !== daily.id && (
-              <p className="api-notice">
-                Today’s course is {daily.date}. Your selected course is preserved.{' '}
-                <button onClick={() => daily.date && void chooseDate(daily.date)}>
-                  Open today
-                </button>
-              </p>
-            )}
-            {p && (
+            {p && (availability?.publicationStatus === 'canceled' || !compatible || guestIssue) && (
               <div className="api-notice" role="status">
                 {availability?.publicationStatus === 'canceled'
                   ? `Course canceled. ${availability.cancellationMessage}`
@@ -834,12 +858,6 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
                     <span className="section-kicker">YOUR TOOLKIT</span>
                     <div className="toolkit-title">
                       <h2 id="toolkit-title">Force blocks</h2>
-                      <span
-                        className="inventory-count"
-                        aria-label={`${inventory} force blocks available`}
-                      >
-                        {inventory}
-                      </span>
                     </div>
                     <p>Turn a block ON, then drag its field on the course.</p>
                   </div>
@@ -849,14 +867,6 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
                     {...(p ? { costs: p.rules.tileCosts } : {})}
                     locked={locked}
                   />
-                  <p className="toolkit-note">
-                    Force cost {cost} · {placed} tiles.{' '}
-                    {p
-                      ? 'Use the published tile costs to improve your solution.'
-                      : legacy
-                        ? 'Legacy courses cost 1 point per active block.'
-                        : 'Practice costs 1 point per active block.'}
-                  </p>
                 </div>
                 <section
                   className="runs-panel"
@@ -892,9 +902,10 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
                   locked={locked}
                   pending={locked && puzzle.mode !== 'running'}
                   disabled={
-                    puzzle.mode === 'setup' &&
-                    ((!!p && !canRank) ||
-                      (!!community && !deliveredEngine.supports(community.rules)))
+                    stoppingPlay ||
+                    (puzzle.mode === 'setup' &&
+                      ((!!p && !canRank) ||
+                        (!!community && !deliveredEngine.supports(community.rules))))
                   }
                   onPlay={() => void play()}
                   onStop={() => void stop()}
@@ -904,6 +915,11 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
           </>
         )}
       </main>
+      {view === 'game' && context && notice && (
+        <NoticeToast dismissLabel="Dismiss course notice" onDismiss={() => setNotice('')}>
+          {notice}
+        </NoticeToast>
+      )}
       {view === 'community' && (
         <main
           id="community-view"
@@ -949,21 +965,28 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
                     <ArchivePanel
                       player={player}
                       {...(p?.date ? { date: p.date } : {})}
+                      {...(daily?.todayDate ? { today: daily.todayDate } : {})}
                       state={state}
                       choose={(date) => void chooseDate(date)}
                       reconcileGuest={reconcileGuest}
                     />
-                    <h3>Legacy courses</h3>
-                    <p>Courses from an earlier version of Puttential.</p>
-                    {starterLevels.map((course) => (
-                      <button
-                        className="modal-row legacy-course"
-                        key={course.id}
-                        onClick={() => void chooseLocal(course, undefined, 'legacy')}
-                      >
-                        {levelName(course)}
-                      </button>
-                    ))}
+                    <details className="legacy-courses">
+                      <summary>
+                        Legacy courses <span className="help-expand" aria-hidden="true" />
+                      </summary>
+                      <div className="legacy-courses-content">
+                        <p>Courses from an earlier version of Puttential.</p>
+                        {starterLevels.map((course) => (
+                          <button
+                            className="modal-row legacy-course"
+                            key={course.id}
+                            onClick={() => void chooseLocal(course, undefined, 'legacy')}
+                          >
+                            {levelName(course)}
+                          </button>
+                        ))}
+                      </div>
+                    </details>
                   </>
                 ),
               }
@@ -1012,6 +1035,16 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
                     }
                   : {})}
         />
+      )}
+      {view === 'game' && !notice && dailyNotice && dismissedDailyNotice !== dailyNotice.key && (
+        <NoticeToast
+          action={() => void chooseDate(dailyNotice.date)}
+          actionLabel="Open today"
+          dismissLabel="Dismiss today’s course notice"
+          onDismiss={() => setDismissedDailyNotice(dailyNotice.key)}
+        >
+          Today’s course is {dailyNotice.date}. Your selected course is preserved.
+        </NoticeToast>
       )}
       {tutorialOpen && <Tutorial close={closeTutorial} reducedMotion={preferences.reducedMotion} />}
     </div>

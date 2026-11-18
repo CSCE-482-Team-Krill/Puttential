@@ -109,6 +109,8 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
   const [editError, setEditError] = useState<string | null>(null);
   const [selectedField, selectField] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  const [runGeneration, setRunGeneration] = useState(0);
+  const runGenerationRef = useRef(0);
   const [hydratedKey, setHydratedKey] = useState<string | null>(null);
   const optionsRef = useRef(options);
   optionsRef.current = options;
@@ -315,15 +317,18 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
   useEffect(() => {
     const game = gameRef.current;
     if (mode !== 'running' || !game) return;
+    const generation = runGeneration;
     let accumulator = 0,
       previous = performance.now();
     const sound = { bounds: levelBounds(level) };
     let frame = requestAnimationFrame(function loop(now) {
+      if (generation !== runGenerationRef.current || modeRef.current !== 'running') return;
       const events: SoundEvent[] = [];
       const elapsed = Math.max(0, now - previous) / 1000;
       accumulator = Math.min(accumulator + elapsed, MAX_STEPS_PER_FRAME * FIXED_DT);
       previous = now;
       while (accumulator >= FIXED_DT) {
+        if (generation !== runGenerationRef.current || modeRef.current !== 'running') return;
         game.step();
         events.push(...game.soundEvents());
         const state = game.getRenderState();
@@ -377,7 +382,7 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
       frame = requestAnimationFrame(loop);
     });
     return () => cancelAnimationFrame(frame);
-  }, [mode, level, maxTicks]);
+  }, [mode, level, maxTicks, runGeneration]);
   const getPlacement = useCallback((): Placement => {
     const adapter = optionsRef.current.adapter,
       r = rulesRef.current;
@@ -389,6 +394,8 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
       const game = gameRef.current,
         setup = setupRef.current;
       if (!game || !setup || modeRef.current !== 'setup') return;
+      const generation = ++runGenerationRef.current;
+      setRunGeneration(generation);
       game.restore(setup);
       goalRef.current = initialGoal(level.goal);
       const adapter = optionsRef.current.adapter,
@@ -417,6 +424,8 @@ export function usePuzzle(level: Level, options: ExecutionOptions = {}) {
     const game = gameRef.current,
       setup = setupRef.current;
     if (!game || !setup) return;
+    const generation = ++runGenerationRef.current;
+    setRunGeneration(generation);
     game.restore(setup);
     physicsAudio.stopAll();
     goalRef.current = initialGoal(level.goal);

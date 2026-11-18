@@ -155,7 +155,44 @@ test('real PostgreSQL daily flow: ownership, replay, idempotency, ties, optimiza
   );
   assert.equal(board.me?.rank, 1);
   assert.ok(board.totalPlayers >= 2);
+  assert.equal(board.page, 1);
+  assert.equal(board.pageSize, 1);
+  assert.equal(board.totalPages, board.totalPlayers);
   assert.ok(board.nextCursor);
+  const directPageTwo = decodeBoard(
+    await (
+      await call(
+        `puzzles/${p.id}/leaderboard?scope=daily&view=top&limit=1&page=2`,
+        'GET',
+        undefined,
+        a.cookie,
+      )
+    ).json(),
+  );
+  assert.equal(directPageTwo.page, 2);
+  assert.notEqual(directPageTwo.rows[0]?.player.id, board.rows[0]?.player.id);
+  assert.equal(
+    (
+      await call(
+        `puzzles/${p.id}/leaderboard?scope=daily&view=top&limit=1&page=2&cursor=${board.nextCursor}`,
+        'GET',
+        undefined,
+        a.cookie,
+      )
+    ).status,
+    400,
+  );
+  assert.equal(
+    (
+      await call(
+        `puzzles/${p.id}/leaderboard?scope=daily&view=top&page=0`,
+        'GET',
+        undefined,
+        a.cookie,
+      )
+    ).status,
+    400,
+  );
   const fullBoard = decodeBoard(
     await (
       await call(

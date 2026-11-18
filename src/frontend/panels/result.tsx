@@ -86,7 +86,8 @@ export function ResultPanel({
       {record && record.phase !== 'terminal' && <button onClick={retry}>Retry save</button>}
       <CopyResult compose={compose} />
       <p className="modal-footnote">
-        Close this panel, then choose Try again to adjust your fields.
+        Close this panel, then click the course, choose a force block, or choose Try again to adjust
+        your fields.
       </p>
     </div>
   );

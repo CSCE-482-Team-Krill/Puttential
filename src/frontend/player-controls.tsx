@@ -6,6 +6,7 @@ import type { usePuzzle } from './puzzle';
 import { selectableFields, TILE_COST } from './score-display';
 
 type Puzzle = ReturnType<typeof usePuzzle>;
+const formatCoordinate = (value: number) => Number(value.toFixed(3)).toString();
 export function ForceToolkit({
   level,
   puzzle,
@@ -28,8 +29,11 @@ export function ForceToolkit({
           <button
             className={`tile-option ${enabled ? 'selected' : ''}`}
             key={field.id}
-            disabled={locked || puzzle.mode !== 'setup'}
-            onClick={() => puzzle.toggleField(field.id)}
+            disabled={locked || (puzzle.mode !== 'setup' && puzzle.mode !== 'done')}
+            onClick={() => {
+              if (puzzle.mode === 'done') puzzle.rewind();
+              puzzle.toggleField(field.id);
+            }}
             aria-pressed={enabled}
           >
             <span className="tile-arrows" aria-hidden="true">
@@ -108,7 +112,7 @@ export function SelectedFieldControls({
               aria-label={`Selected tile ${axis.toUpperCase()}`}
               type="number"
               step="0.125"
-              value={draft.position[axis]}
+              value={formatCoordinate(draft.position[axis])}
               onChange={(event) => {
                 if (event.target.value !== '')
                   puzzle.moveField(id, { ...draft.position, [axis]: event.target.valueAsNumber });

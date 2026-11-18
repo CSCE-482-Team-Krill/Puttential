@@ -252,6 +252,9 @@ export function decodeBoard(x: unknown): LeaderboardResponse {
       x.rows.every(row) &&
       nullable(x.me, (v) => row(v) && text(v.bestRunId) && v.player.id === x.viewerGuestId) &&
       integer(x.totalPlayers) &&
+      integer(x.page, 1) &&
+      integer(x.pageSize, 1, LIMITS.pageSize) &&
+      integer(x.totalPages, 1) &&
       nullable(x.nextCursor, text) &&
       instant(x.asOf) &&
       obj(x.replayAccess) &&
@@ -261,6 +264,8 @@ export function decodeBoard(x: unknown): LeaderboardResponse {
       integer(x.pendingEligibleCount) &&
       typeof x.final === 'boolean',
   );
+  check(x.totalPages === Math.max(1, Math.ceil(x.totalPlayers / x.pageSize)));
+  check(x.page <= x.totalPages && x.rows.length <= x.pageSize);
   check(!x.final || (x.scope === 'daily' && x.submissionClosed && x.pendingEligibleCount === 0));
   check(
     !x.replayAccess.available ||
