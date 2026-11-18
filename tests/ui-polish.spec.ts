@@ -580,10 +580,13 @@ test('production data stays unavailable; development preview has six labeled exa
       await expect(dialog.locator('.ranking-row')).toHaveCount(0);
     }
     if (name === 'Calendar') {
+      const legacy = dialog.locator('details.legacy-courses');
+      await expect(legacy).not.toHaveAttribute('open', '');
+      await expect(dialog.locator('.legacy-course').first()).not.toBeVisible();
+      await legacy.locator('summary').click();
       await expect(dialog.locator('.legacy-course')).toHaveCount(2);
-      await expect(
-        dialog.getByRole('heading', { name: 'Legacy courses', exact: true }),
-      ).toBeVisible();
+      await expect(dialog.locator('.legacy-course').first()).toBeVisible();
+      await expect(dialog).toContainText('Courses from an earlier version of Puttential.');
       await expect(dialog).toContainText('Archive unavailable');
     }
     await screenshot(page, `modals-${file}`);

@@ -11,8 +11,7 @@ import {
 } from './iteration-two-fixtures';
 const BASE_URL = 'http://127.0.0.1:3000';
 const artifacts = 'artifacts/iteration-two';
-async function fixtures(page: Page) {
-  const p = puzzleFixture();
+async function fixtures(page: Page, p = puzzleFixture()) {
   await page.route('**/api/**', (route) =>
     route.fulfill({
       status: 404,
@@ -26,6 +25,35 @@ async function fixtures(page: Page) {
   );
   return p;
 }
+test('calendar year controls cross partial boundary years', async ({ page }) => {
+  const december = {
+    ...puzzleFixture('2026-12-31'),
+    todayDate: '2026-12-31',
+    serverNow: '2026-12-31T17:00:00Z',
+    nextDailyAt: '2027-01-01T06:00:00Z',
+  };
+  await fixtures(page, december);
+  await page.route('**/api/puzzles?*', (route) =>
+    route.fulfill({
+      json: { guestId: playerFixture.id, items: [], nextCursor: null },
+    }),
+  );
+  await page.goto(BASE_URL);
+  await page.getByRole('button', { name: 'Calendar', exact: true }).click();
+  const calendar = page.getByRole('dialog');
+  await expect(calendar.getByLabel('Calendar month')).toHaveValue('11');
+  await expect(calendar.getByLabel('Calendar year')).toHaveValue('2026');
+  await expect(calendar.getByRole('button', { name: 'Next year' })).toBeEnabled();
+  await calendar.getByRole('button', { name: 'Next year' }).click();
+  await expect(calendar.getByLabel('Calendar month')).toHaveValue('1');
+  await expect(calendar.getByLabel('Calendar year')).toHaveValue('2027');
+  await expect(calendar.getByRole('button', { name: 'Next month' })).toBeDisabled();
+  await expect(calendar.getByRole('button', { name: 'Next year' })).toBeDisabled();
+  await calendar.getByRole('button', { name: 'Previous year' }).click();
+  await expect(calendar.getByLabel('Calendar month')).toHaveValue('9');
+  await expect(calendar.getByLabel('Calendar year')).toHaveValue('2026');
+  await expect(calendar.getByRole('button', { name: 'Previous year' })).toBeDisabled();
+});
 test('published costs, unsupported engine, truthful guest profile and responsive panel evidence', async ({
   page,
 }) => {
@@ -73,10 +101,13 @@ test('archive reads summaries, paginates, opens date links and retains canvas on
   const p = await fixtures(page);
   const dates = ['2026-10-25', '2026-10-24', '2026-10-23'];
   const puzzles = dates.map((date) => puzzleFixture(date));
-  await page.route('**/api/puzzles?*', (route) => {
-    const cursor = new URL(route.request().url()).searchParams.get('cursor');
+  let calendarGate: Promise<void> | null = null;
+  await page.route('**/api/puzzles?*', async (route) => {
+    const params = new URL(route.request().url()).searchParams;
+    const cursor = params.get('cursor');
+    if (params.get('month') === '2026-12' && calendarGate) await calendarGate;
     const courses = cursor ? puzzles.slice(2) : puzzles.slice(0, 2);
-    return route.fulfill({
+    await route.fulfill({
       json: {
         guestId: playerFixture.id,
         items: courses.map((v, i) => ({
@@ -105,10 +136,75 @@ test('archive reads summaries, paginates, opens date links and retains canvas on
   });
   await page.goto(BASE_URL);
   await page.getByRole('button', { name: 'Calendar', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('Historical 2026-10-25');
-  await page.getByRole('button', { name: 'Load more courses' }).click();
-  await expect(page.getByRole('dialog')).toContainText('Historical 2026-10-23');
-  await page.getByRole('button', { name: /Historical 2026-10-24/ }).click();
+  const calendar = page.getByRole('dialog');
+  await expect(calendar).not.toContainText('Daily archive');
+  await expect(calendar.locator('.calendar-day')).toHaveCount(42);
+  const weekdayCenters = await calendar.locator('.calendar-weekday').evaluateAll((elements) =>
+    elements.map((element) => {
+      const bounds = element.getBoundingClientRect();
+      return bounds.x + bounds.width / 2;
+    }),
+  );
+  const firstWeekCenters = await calendar.locator('.calendar-day').evaluateAll((elements) =>
+    elements.slice(0, 7).map((element) => {
+      const bounds = element.getBoundingClientRect();
+      return bounds.x + bounds.width / 2;
+    }),
+  );
+  expect(firstWeekCenters).toHaveLength(weekdayCenters.length);
+  weekdayCenters.forEach((center, index) =>
+    expect(Math.abs(center - firstWeekCenters[index]!)).toBeLessThan(0.5),
+  );
+  await expect(calendar.locator('[data-date="2026-10-25"]')).toHaveClass(/solved/);
+  await expect(calendar.locator('[data-date="2026-10-24"]')).toHaveClass(/calendar-day-puzzle/);
+  await expect(calendar.locator('[data-date="2026-10-24"]')).not.toHaveClass(/solved/);
+  await expect(calendar.locator('[data-date="2026-10-23"]')).toBeVisible();
+  await calendar.locator('[data-date="2026-10-24"]').hover();
+  await expect(calendar.locator('[data-date="2026-10-24"] [role="tooltip"]')).toHaveText(
+    'Historical 2026-10-24',
+  );
+  await mkdir(artifacts, { recursive: true });
+  await page.screenshot({ path: `${artifacts}/calendar-desktop.png`, fullPage: true });
+  await page.setViewportSize({ width: 320, height: 568 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  expect((await calendar.locator('.calendar-grid').boundingBox())!.width).toBeGreaterThan(240);
+  await page.screenshot({ path: `${artifacts}/calendar-mobile.png`, fullPage: true });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await expect(calendar.getByLabel('Calendar month')).toHaveValue('9');
+  await expect(calendar.getByLabel('Calendar year')).toHaveValue('2026');
+  await expect(calendar.getByRole('button', { name: 'Previous year' })).toBeDisabled();
+  await expect(calendar.getByRole('button', { name: 'Previous month' })).toBeDisabled();
+  await expect(calendar.getByRole('button', { name: 'Next year' })).toBeDisabled();
+  await expect(calendar.getByLabel('Calendar year').locator('option').first()).toHaveText('2026');
+  await expect(calendar.getByLabel('Calendar year').locator('option')).toHaveCount(1);
+  await expect(calendar.getByLabel('Calendar month').locator('option[value="8"]')).toBeDisabled();
+  await expect(calendar.getByLabel('Calendar month').locator('option[value="9"]')).toBeEnabled();
+  await expect(calendar.getByLabel('Calendar month').locator('option[value="10"]')).toBeEnabled();
+  await expect(calendar.getByLabel('Calendar month').locator('option[value="11"]')).toBeEnabled();
+  const modalBeforeLoading = await calendar.boundingBox();
+  const navigationBeforeLoading = await calendar.locator('.calendar-navigation').boundingBox();
+  const gridBeforeLoading = await calendar.locator('.calendar-grid').boundingBox();
+  let releaseCalendar!: () => void;
+  calendarGate = new Promise<void>((resolve) => {
+    releaseCalendar = resolve;
+  });
+  await calendar.getByLabel('Calendar month').selectOption('11');
+  await expect(calendar.getByLabel('Calendar month')).toHaveValue('11');
+  await expect(calendar.getByRole('status')).toContainText('Loading Dec courses…');
+  expect(await calendar.boundingBox()).toEqual(modalBeforeLoading);
+  expect(await calendar.locator('.calendar-navigation').boundingBox()).toEqual(
+    navigationBeforeLoading,
+  );
+  expect(await calendar.locator('.calendar-grid').boundingBox()).toEqual(gridBeforeLoading);
+  await expect(calendar.locator('.calendar-day')).toHaveCount(42);
+  releaseCalendar();
+  calendarGate = null;
+  await expect(calendar.getByRole('status')).toHaveCount(0);
+  await expect(calendar.getByRole('button', { name: 'Next month' })).toBeDisabled();
+  await expect(calendar).not.toContainText('No published courses');
+  await calendar.getByLabel('Calendar month').selectOption('9');
+  await expect(calendar.locator('[data-date="2026-10-24"]')).toBeVisible();
+  await calendar.locator('[data-date="2026-10-24"]').click();
   await expect(page).toHaveURL(/date=2026-10-24/);
   await expect(page.locator('.challenge-label')).toContainText('Archive challenge');
   await page.reload();
@@ -120,7 +216,7 @@ test('archive reads summaries, paginates, opens date links and retains canvas on
   const refreshed = page.waitForResponse((response) =>
     response.url().endsWith('/api/puzzles/by-date/2026-10-24'),
   );
-  await page.getByRole('button', { name: /Historical 2026-10-24/ }).click();
+  await page.locator('[data-date="2026-10-24"]').click();
   expect((await refreshed).ok()).toBe(true);
   // The date is already visible while this same-course refresh is still pending.
   // Wait for selection to finish (including its history entry) before going Back.
@@ -295,7 +391,13 @@ test('rollover preserves the canvas and draft while an old-scope copy in flight 
   page,
 }) => {
   const p = await fixtures(page),
-    saved = savedFixture();
+    saved = savedFixture(),
+    nextPuzzle = {
+      ...puzzleFixture('2026-10-27'),
+      todayDate: '2026-10-27',
+      serverNow: '2026-10-27T05:00:00Z',
+      nextDailyAt: '2026-10-28T05:00:00Z',
+    };
   let nextDay = false,
     release!: () => void;
   const gate = new Promise<void>((resolve) => {
@@ -313,14 +415,7 @@ test('rollover preserves the canvas and draft while an old-scope copy in flight 
   });
   await page.route('**/api/puzzles/today', (route) =>
     route.fulfill({
-      json: nextDay
-        ? {
-            ...p,
-            todayDate: '2026-10-27',
-            serverNow: '2026-10-27T05:00:00Z',
-            nextDailyAt: '2026-10-28T05:00:00Z',
-          }
-        : p,
+      json: nextDay ? nextPuzzle : p,
     }),
   );
   await page.route('**/api/me/progress?*', (route) =>
@@ -336,6 +431,7 @@ test('rollover preserves the canvas and draft while an old-scope copy in flight 
   await page.goto(BASE_URL);
   await page.locator('.tile-option').first().click();
   await page.getByLabel('Selected tile X', { exact: true }).fill('1.125');
+  const stageBeforeRollover = await page.locator('.course-stage').boundingBox();
   await page.evaluate(() =>
     Object.assign(window, { beforeRolloverCanvas: document.querySelector('canvas') }),
   );
@@ -344,6 +440,13 @@ test('rollover preserves the canvas and draft while an old-scope copy in flight 
   nextDay = true;
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
   await expect(page.locator('.challenge-label')).toContainText('Archive challenge');
+  const dailyNotice = page.locator('.notice-toast');
+  await expect(dailyNotice).toContainText(
+    'Today’s course is 2026-10-27. Your selected course is preserved.',
+  );
+  expect(await dailyNotice.evaluate((element) => getComputedStyle(element).position)).toBe('fixed');
+  const stageAfterRollover = await page.locator('.course-stage').boundingBox();
+  expect(stageAfterRollover).toEqual(stageBeforeRollover);
   await expect(page.getByLabel('Selected tile X', { exact: true })).toHaveValue('1.125');
   expect(
     await page.evaluate(
@@ -352,6 +455,8 @@ test('rollover preserves the canvas and draft while an old-scope copy in flight 
         document.querySelector('canvas'),
     ),
   ).toBe(true);
+  await page.getByRole('button', { name: 'Dismiss today’s course notice' }).click();
+  await expect(dailyNotice).toHaveCount(0);
   release();
   await expect(
     page.getByText('Result unavailable. Retry to refresh its status.', { exact: true }),

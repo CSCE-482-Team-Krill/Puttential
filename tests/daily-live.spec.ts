@@ -65,9 +65,7 @@ test('real daily browser flow persists a verified result and shares it across tw
     await page.getByRole('button', { name: 'Calendar', exact: true }).click();
     await expect(page.getByRole('dialog')).toContainText('2026');
     await page.setViewportSize({ width: 390, height: 844 });
-    expect((await page.locator('.archive-course').first().boundingBox())!.width).toBeGreaterThan(
-      150,
-    );
+    expect((await page.locator('.calendar-grid').boundingBox())!.width).toBeGreaterThan(250);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
       true,
     );
@@ -82,7 +80,9 @@ test('real daily browser flow persists a verified result and shares it across tw
       const date = new Date(Date.parse(`${today}T12:00:00Z`) - days * 86400000)
         .toISOString()
         .slice(0, 10);
-      await page.locator('.archive-row').filter({ hasText: date }).click();
+      await page.getByLabel('Calendar year').selectOption(date.slice(0, 4));
+      await page.getByLabel('Calendar month').selectOption(String(Number(date.slice(5, 7)) - 1));
+      await page.locator(`[data-date="${date}"]`).click();
       await expect(page).toHaveURL(new RegExp(`date=${date}`));
       await page.reload();
       await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();

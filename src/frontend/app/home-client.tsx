@@ -35,6 +35,7 @@ import { communityMapUrl } from '../../shared/community-maps';
 import { usesLegacyBounds } from '../../game/run-evaluation';
 import { shareResult } from '../share-result';
 import { markTutorialSeen, shouldOpenTutorial, Tutorial } from '../tutorial';
+import { NoticeToast } from '../notice-toast';
 
 const EmbeddedEditor = dynamic(() => import('../embedded-editor'), {
   ssr: false,
@@ -51,6 +52,7 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
   contextRef.current = context;
   const [daily, setDaily] = useState<PuzzleResponse | null>(null);
   const [notice, setNotice] = useState('');
+  const [dismissedDailyNotice, setDismissedDailyNotice] = useState<string | null>(null);
   const [communityNotice, setCommunityNotice] = useState('');
   const [loading, setLoading] = useState(true);
   const [importBounds, setImportBounds] = useState<Bounds | null>(null);
@@ -620,6 +622,11 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
   const cost = displayedForceCost(level, puzzle.draft, p?.rules.tileCosts);
   const pending = records.filter((r) => r.phase !== 'terminal');
   const recoveryLimited = memoryOnly || pending.some((r) => r.persistence === 'memory');
+  const todayDate = daily?.date;
+  const dailyNotice =
+    daily && todayDate && p?.date && p.id !== daily.id
+      ? { key: `${daily.id}/${p.id}`, date: todayDate }
+      : null;
   return (
     <div className={`site-wrap ${preferences.reducedMotion ? 'reduce-motion' : ''}`}>
       <header className="site-header">
@@ -691,14 +698,6 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
         )}
         {context && (
           <>
-            {daily && p?.date && p.id !== daily.id && (
-              <p className="api-notice">
-                Today’s course is {daily.date}. Your selected course is preserved.{' '}
-                <button onClick={() => daily.date && void chooseDate(daily.date)}>
-                  Open today
-                </button>
-              </p>
-            )}
             {p && (
               <div className="api-notice" role="status">
                 {availability?.publicationStatus === 'canceled'
@@ -949,21 +948,28 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
                     <ArchivePanel
                       player={player}
                       {...(p?.date ? { date: p.date } : {})}
+                      {...(daily?.todayDate ? { today: daily.todayDate } : {})}
                       state={state}
                       choose={(date) => void chooseDate(date)}
                       reconcileGuest={reconcileGuest}
                     />
-                    <h3>Legacy courses</h3>
-                    <p>Courses from an earlier version of Puttential.</p>
-                    {starterLevels.map((course) => (
-                      <button
-                        className="modal-row legacy-course"
-                        key={course.id}
-                        onClick={() => void chooseLocal(course, undefined, 'legacy')}
-                      >
-                        {levelName(course)}
-                      </button>
-                    ))}
+                    <details className="legacy-courses">
+                      <summary>
+                        Legacy courses <span className="help-expand" aria-hidden="true" />
+                      </summary>
+                      <div className="legacy-courses-content">
+                        <p>Courses from an earlier version of Puttential.</p>
+                        {starterLevels.map((course) => (
+                          <button
+                            className="modal-row legacy-course"
+                            key={course.id}
+                            onClick={() => void chooseLocal(course, undefined, 'legacy')}
+                          >
+                            {levelName(course)}
+                          </button>
+                        ))}
+                      </div>
+                    </details>
                   </>
                 ),
               }
@@ -1012,6 +1018,16 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
                     }
                   : {})}
         />
+      )}
+      {view === 'game' && dailyNotice && dismissedDailyNotice !== dailyNotice.key && (
+        <NoticeToast
+          action={() => void chooseDate(dailyNotice.date)}
+          actionLabel="Open today"
+          dismissLabel="Dismiss today’s course notice"
+          onDismiss={() => setDismissedDailyNotice(dailyNotice.key)}
+        >
+          Today’s course is {dailyNotice.date}. Your selected course is preserved.
+        </NoticeToast>
       )}
       {tutorialOpen && <Tutorial close={closeTutorial} reducedMotion={preferences.reducedMotion} />}
     </div>

@@ -111,7 +111,7 @@ test('legacy daily data is rejected and legacy courses never use legacy writes',
   await expect(page.locator('.runs-content')).toContainText('Legacy course');
   await expect(page.locator('.runs-content')).not.toContainText(/unranked|not submitted/i);
   await page.getByRole('button', { name: 'Calendar', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Legacy courses', exact: true })).toBeVisible();
+  await page.locator('details.legacy-courses summary').click();
   await expect(page.locator('.legacy-course')).toHaveCount(2);
   await page.getByRole('button', { name: 'Radial Relay', exact: true }).click();
   await expect(page.locator('h1')).toHaveText('Radial Relay');
