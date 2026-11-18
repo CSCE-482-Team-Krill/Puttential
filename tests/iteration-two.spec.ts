@@ -289,7 +289,7 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   await expect(page.getByRole('dialog')).not.toContainText('Board');
   const [dailyBox, allTimeBox] = await Promise.all([daily.boundingBox(), allTime.boundingBox()]);
   expect(dailyBox?.y).toBe(allTimeBox?.y);
-  await expect(page.getByRole('dialog')).toContainText('Open — provisional');
+  await expect(page.getByRole('dialog')).not.toContainText('Open — provisional');
   await expect(page.locator('.ranking-number')).toHaveText(['1', '1']);
   await expect(page.getByRole('dialog')).not.toContainText('ranked players');
   await expect(page.getByRole('dialog')).not.toContainText('Puzzle date');
@@ -305,6 +305,23 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   await costHeader.hover();
   await expect(costHelp).toBeVisible();
   await expect(costHelp).toHaveText('Total force cost. Lower values rank better.');
+  const pathHelp = page.getByRole('tooltip').filter({
+    hasText: 'Distance traveled by the goal ball. Shorter paths rank better.',
+  });
+  await page.getByLabel('Path', { exact: true }).hover();
+  await expect(pathHelp).toBeVisible();
+  expect(
+    await pathHelp.evaluate((element) => ({
+      portaled: element.parentElement === document.body,
+      left: element.getBoundingClientRect().left,
+      right: element.getBoundingClientRect().right,
+      viewport: innerWidth,
+    })),
+  ).toMatchObject({ portaled: true, left: expect.any(Number), right: expect.any(Number) });
+  const pathHelpBox = await pathHelp.boundingBox();
+  expect(pathHelpBox!.x).toBeGreaterThanOrEqual(0);
+  expect(pathHelpBox!.x + pathHelpBox!.width).toBeLessThanOrEqual(320);
+  await expect(page.locator('.leaderboard-grid-wrap')).toHaveCSS('overflow-y', 'hidden');
   const sharingHelp = page.getByRole('tooltip').filter({
     hasText:
       'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.',
@@ -315,6 +332,14 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   await expect(sharingHelp).toHaveText(
     'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.',
   );
+  for (const [buttonName, help] of [
+    ['Top', 'Top rankings'],
+    ['Around me', 'Rankings around me'],
+    ['Refresh standings', 'Refresh standings'],
+  ] as const) {
+    await page.getByRole('button', { name: buttonName, exact: true }).hover();
+    await expect(page.getByRole('tooltip').filter({ hasText: help })).toBeVisible();
+  }
   const dialog = page.getByRole('dialog');
   const heightBeforeRefresh = await dialog.evaluate(
     (element) => element.getBoundingClientRect().height,
@@ -335,6 +360,13 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   expect(requestedPageSizes[0]).toBe('10');
   await expect(page.getByRole('button', { name: 'First page', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Previous page', exact: true })).toBeDisabled();
+  const [previousBox, pageControlBox, nextBox] = await Promise.all([
+    page.getByRole('button', { name: 'Previous page', exact: true }).boundingBox(),
+    page.locator('.leaderboard-page-input').boundingBox(),
+    page.getByRole('button', { name: 'Next page', exact: true }).boundingBox(),
+  ]);
+  expect(pageControlBox!.x - (previousBox!.x + previousBox!.width)).toBeLessThanOrEqual(5);
+  expect(nextBox!.x - (pageControlBox!.x + pageControlBox!.width)).toBeLessThanOrEqual(5);
   await pageInput.scrollIntoViewIfNeeded();
   const pageInputTop = (await pageInput.boundingBox())!.y;
   await pageInput.fill('2');

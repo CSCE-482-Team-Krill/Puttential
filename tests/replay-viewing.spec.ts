@@ -108,6 +108,26 @@ for (const width of [1500, 320]) {
     await page.getByRole('button', { name: 'Leaderboard', exact: true }).click();
     const watch = page.getByRole('button', { name: 'Watch Replay player’s replay' });
     await expect(watch).toBeEnabled();
+    if (width === 1500) {
+      const [paginationBox, controlsBox, pageSizeBox] = await Promise.all([
+        page.getByRole('navigation', { name: 'Leaderboard pages' }).boundingBox(),
+        page.locator('.leaderboard-page-controls').boundingBox(),
+        page.getByLabel('Rows per leaderboard page').locator('..').boundingBox(),
+      ]);
+      expect(
+        Math.abs(
+          controlsBox!.x + controlsBox!.width / 2 - (paginationBox!.x + paginationBox!.width / 2),
+        ),
+      ).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(
+          pageSizeBox!.y + pageSizeBox!.height / 2 - (controlsBox!.y + controlsBox!.height / 2),
+        ),
+      ).toBeLessThanOrEqual(1);
+      expect(
+        Math.abs(pageSizeBox!.x + pageSizeBox!.width - (paginationBox!.x + paginationBox!.width)),
+      ).toBeLessThanOrEqual(1);
+    }
     await mkdir(artifacts, { recursive: true });
     await page.screenshot({ path: `${artifacts}/standings-${width}.png`, fullPage: true });
     await watch.click();

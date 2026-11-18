@@ -1032,15 +1032,6 @@ button:disabled {
 .leaderboard-scope input:disabled + span {
   cursor: default;
 }
-.leaderboard-status {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 28px;
-}
-.leaderboard-status .modal-footnote {
-  margin: 0;
-}
 .leaderboard-loading {
   position: absolute;
   width: 1px;
@@ -1053,7 +1044,6 @@ button:disabled {
   border: 0;
 }
 .leaderboard-help {
-  position: relative;
   display: inline-flex;
   flex: 0 0 auto;
 }
@@ -1072,12 +1062,14 @@ button:disabled {
 .leaderboard-help > button:hover {
   background: var(--ui-turf-soft);
 }
-.leaderboard-help [role='tooltip'] {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
-  z-index: 3;
-  width: min(280px, calc(100vw - 64px));
+.leaderboard-tooltip-anchor {
+  display: inline-flex;
+}
+.leaderboard-floating-tooltip {
+  position: fixed;
+  z-index: 1000;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 24px));
   padding: 8px 10px;
   border-radius: var(--ui-r-sm);
   background: var(--ui-ink);
@@ -1086,19 +1078,15 @@ button:disabled {
   font-size: 0.75rem;
   font-weight: 500;
   line-height: 1.4;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-2px);
-  transition:
-    opacity 120ms ease-out,
-    transform 120ms ease-out;
-  visibility: hidden;
-}
-.leaderboard-help:hover [role='tooltip'],
-.leaderboard-help:focus-within [role='tooltip'] {
   opacity: 1;
-  transform: translateY(0);
-  visibility: visible;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  text-align: left;
+  transform: translateX(-50%);
+  white-space: normal;
+}
+.leaderboard-floating-tooltip[data-placement='above'] {
+  transform: translate(-50%, -100%);
 }
 .leaderboard-personal {
   min-height: 24px;
@@ -1124,7 +1112,10 @@ button:disabled {
   gap: 4px;
   margin-left: auto;
 }
-.leaderboard-view-actions > button {
+.leaderboard-action-tooltip {
+  display: inline-flex;
+}
+.leaderboard-view-actions button {
   display: grid;
   place-items: center;
   width: 36px;
@@ -1135,16 +1126,17 @@ button:disabled {
   background: var(--ui-white);
   color: var(--ui-green-strong);
 }
-.leaderboard-view-actions > button:hover:enabled {
+.leaderboard-view-actions button:hover:enabled {
   background: var(--ui-turf-soft);
 }
-.leaderboard-view-actions > button[aria-pressed='true'] {
+.leaderboard-view-actions button[aria-pressed='true'] {
   border-color: var(--ui-green);
   background: var(--ui-turf);
 }
 .leaderboard-grid-wrap {
   max-width: 100%;
   overflow-x: auto;
+  overflow-y: hidden;
   border: 1px solid var(--ui-line);
   border-radius: var(--ui-r-sm);
   background: var(--ui-white);
@@ -1220,61 +1212,10 @@ button:disabled {
   width: 48px;
 }
 .leaderboard-column-label {
-  position: relative;
   display: inline-flex;
   align-items: center;
   cursor: help;
   outline-offset: 3px;
-}
-.leaderboard-column-label [role='tooltip'] {
-  position: absolute;
-  top: calc(100% + 7px);
-  left: 50%;
-  z-index: 4;
-  width: max-content;
-  max-width: 210px;
-  padding: 8px 10px;
-  border-radius: var(--ui-r-sm);
-  background: var(--ui-ink);
-  box-shadow: var(--ui-shadow-modal);
-  color: var(--ui-white);
-  font-size: 0.75rem;
-  font-weight: 500;
-  line-height: 1.4;
-  opacity: 0;
-  overflow-wrap: anywhere;
-  pointer-events: none;
-  text-align: left;
-  transform: translateX(-50%) translateY(-2px);
-  transition:
-    opacity 120ms ease-out,
-    transform 120ms ease-out;
-  visibility: hidden;
-  white-space: normal;
-}
-.leaderboard-column-label:hover [role='tooltip'],
-.leaderboard-column-label:focus-visible [role='tooltip'] {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-  visibility: visible;
-}
-.leaderboard-grid thead th:first-child .leaderboard-column-label [role='tooltip'] {
-  right: auto;
-  left: -4px;
-  transform: translateY(-2px);
-}
-.leaderboard-grid thead th:first-child .leaderboard-column-label:hover [role='tooltip'],
-.leaderboard-grid thead th:first-child .leaderboard-column-label:focus-visible [role='tooltip'] {
-  transform: translateY(0);
-}
-.leaderboard-grid thead th:last-child .leaderboard-column-label [role='tooltip'] {
-  right: -4px;
-  left: auto;
-  transform: translateY(-2px);
-}
-.leaderboard-grid thead th:last-child .leaderboard-column-label:hover [role='tooltip'],
-.leaderboard-grid thead th:last-child .leaderboard-column-label:focus-visible [role='tooltip'] {
-  transform: translateY(0);
 }
 .leaderboard-grid thead th:last-child,
 .leaderboard-grid tbody td:last-child {
@@ -1302,9 +1243,41 @@ button:disabled {
   background: var(--ui-turf-soft);
 }
 .leaderboard-pagination {
-  grid-template-columns: 36px 36px max-content 36px 36px;
+  position: relative;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  min-height: 36px;
   margin-top: 8px;
+}
+.leaderboard-page-controls {
+  display: grid;
+  grid-template-columns: 36px 36px max-content 36px 36px;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+}
+.leaderboard-page-controls > button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-white);
+  color: var(--ui-green-strong);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+.leaderboard-page-controls > button:hover {
+  background: var(--ui-turf-soft);
+}
+.leaderboard-page-controls > button:disabled,
+.leaderboard-page-controls > button:disabled:hover {
+  border-color: var(--ui-line);
+  background: var(--ui-disabled);
+  color: #96a09d;
 }
 .modal-body .leaderboard-page-input label {
   display: flex;
@@ -1326,14 +1299,19 @@ button:disabled {
   color: var(--ui-muted);
 }
 .leaderboard-page-size {
+  position: absolute;
+  top: 50%;
+  right: 0;
   display: flex;
-  grid-column: 1 / -1;
   align-items: center;
-  justify-self: center;
   gap: 6px;
   color: var(--ui-muted);
   font-size: 0.8125rem;
   white-space: nowrap;
+  transform: translateY(-50%);
+}
+.modal-body .leaderboard-page-size {
+  flex-direction: row;
 }
 .modal-body .leaderboard-page-size select {
   width: auto;
@@ -1341,6 +1319,16 @@ button:disabled {
   min-height: 36px;
   padding: 4px 24px 4px 8px;
   font-weight: 700;
+}
+@media (max-width: 600px) {
+  .leaderboard-pagination {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .leaderboard-page-size {
+    position: static;
+    transform: none;
+  }
 }
 .ranking-row {
   display: grid;
@@ -2070,33 +2058,14 @@ button:disabled {
     width: 60px;
   }
   .leaderboard-pagination {
+    gap: 8px;
+  }
+  .leaderboard-page-controls {
     grid-template-columns: 32px 32px max-content 32px 32px;
   }
-  .leaderboard-pagination > button:nth-child(1),
-  .leaderboard-pagination > button:nth-child(2),
-  .leaderboard-pagination > button:nth-child(4),
-  .leaderboard-pagination > button:nth-child(5),
-  .leaderboard-pagination .leaderboard-page-input {
-    grid-row: 1;
-  }
-  .leaderboard-pagination > button:nth-child(1) {
-    grid-column: 1;
-  }
-  .leaderboard-pagination > button:nth-child(2) {
-    grid-column: 2;
-  }
-  .leaderboard-pagination .leaderboard-page-input {
-    grid-column: 3;
-    width: auto;
-  }
-  .leaderboard-pagination > button:nth-child(4) {
-    grid-column: 4;
-  }
-  .leaderboard-pagination > button:nth-child(5) {
-    grid-column: 5;
-  }
-  .leaderboard-page-size {
-    grid-row: 2;
+  .leaderboard-page-controls > button {
+    width: 32px;
+    height: 32px;
   }
   .calendar-grid {
     gap: 2px;

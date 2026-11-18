@@ -1,6 +1,16 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import dynamic from 'next/dynamic';
+import { createPortal } from 'react-dom';
 import type {
   BoardView,
   LeaderboardResponse,
@@ -45,19 +55,101 @@ const COLUMN_HELP = {
   replay: "Watch this player's best verified solution.",
 } as const;
 
-function ColumnLabel({ id, label, help }: { id: string; label: string; help: string }) {
+type TooltipTriggerProps = { 'aria-describedby': string };
+
+function LeaderboardTooltip({
+  content,
+  className = '',
+  children,
+}: {
+  content: string;
+  className?: string;
+  children: (props: TooltipTriggerProps) => ReactNode;
+}) {
+  const id = useId();
+  const anchor = useRef<HTMLSpanElement>(null);
+  const tooltip = useRef<HTMLSpanElement>(null);
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState({ left: -9999, top: -9999, above: false });
+  const place = useCallback(() => {
+    if (!anchor.current) return;
+    const rect = anchor.current.getBoundingClientRect();
+    const width = tooltip.current?.offsetWidth ?? 240;
+    const height = tooltip.current?.offsetHeight ?? 40;
+    const above = rect.bottom + height + 8 > globalThis.innerHeight && rect.top > height + 8;
+    setPosition({
+      left: Math.min(
+        globalThis.innerWidth - width / 2 - 8,
+        Math.max(width / 2 + 8, rect.left + rect.width / 2),
+      ),
+      top: above ? rect.top - 7 : rect.bottom + 7,
+      above,
+    });
+  }, []);
+  useLayoutEffect(() => {
+    if (open) place();
+  }, [open, place, content]);
+  useEffect(() => {
+    if (!open) return;
+    globalThis.addEventListener('resize', place);
+    globalThis.addEventListener('scroll', place, true);
+    return () => {
+      globalThis.removeEventListener('resize', place);
+      globalThis.removeEventListener('scroll', place, true);
+    };
+  }, [open, place]);
   return (
     <span
-      className="leaderboard-column-label"
-      tabIndex={0}
-      aria-label={label}
-      aria-describedby={id}
+      className={`leaderboard-tooltip-anchor ${className}`.trim()}
+      ref={anchor}
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+      onFocus={() => setOpen(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setOpen(false);
+      }}
     >
-      {label}
-      <span id={id} role="tooltip">
-        {help}
-      </span>
+      {children({ 'aria-describedby': id })}
+      {open &&
+        createPortal(
+          <span
+            className="leaderboard-floating-tooltip"
+            id={id}
+            role="tooltip"
+            ref={tooltip}
+            data-placement={position.above ? 'above' : 'below'}
+            style={{ left: position.left, top: position.top }}
+          >
+            {content}
+          </span>,
+          document.body,
+        )}
     </span>
+  );
+}
+
+function ColumnLabel({
+  label,
+  help,
+  children = label,
+}: {
+  label: string;
+  help: string;
+  children?: ReactNode;
+}) {
+  return (
+    <LeaderboardTooltip content={help}>
+      {(tooltipProps) => (
+        <span
+          className="leaderboard-column-label"
+          tabIndex={0}
+          aria-label={label}
+          {...tooltipProps}
+        >
+          {children}
+        </span>
+      )}
+    </LeaderboardTooltip>
   );
 }
 
@@ -249,20 +341,20 @@ export function LeaderboardPanel({
             </div>
           </fieldset>
         )}
-        <span className="leaderboard-help">
-          <button
-            type="button"
-            aria-label="About leaderboard sharing"
-            aria-describedby="leaderboard-sharing-help"
-          >
-            ?
-          </button>
-          <span id="leaderboard-sharing-help" role="tooltip">
-            {puzzle.communityMapId
+        <LeaderboardTooltip
+          className="leaderboard-help"
+          content={
+            puzzle.communityMapId
               ? 'Verified community solutions are shared automatically. Rankings remain open.'
-              : 'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.'}
-          </span>
-        </span>
+              : 'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.'
+          }
+        >
+          {(tooltipProps) => (
+            <button type="button" aria-label="About leaderboard sharing" {...tooltipProps}>
+              ?
+            </button>
+          )}
+        </LeaderboardTooltip>
       </div>
       {busy && (
         <span className="leaderboard-loading" role="status">
@@ -277,17 +369,6 @@ export function LeaderboardPanel({
       ) : (
         board && (
           <>
-            {(puzzle.communityMapId || (board.scope === 'daily' && !board.final)) && (
-              <div className="leaderboard-status">
-                <p className="modal-footnote">
-                  {puzzle.communityMapId
-                    ? 'Open — provisional'
-                    : board.submissionClosed
-                      ? 'Closed — verification pending'
-                      : 'Open — provisional'}
-                </p>
-              </div>
-            )}
             {runActive && <p role="status">Finish or stop your current run to watch a replay.</p>}
             <div className="leaderboard-personal">
               {board.me ? (
@@ -305,35 +386,53 @@ export function LeaderboardPanel({
                 <time dateTime={puzzle.date}>{formatCompactPuzzleDate(puzzle.date)}</time>
               )}
               <div className="leaderboard-view-actions">
-                <button
-                  type="button"
-                  aria-label="Top"
-                  title="Top rankings"
-                  aria-pressed={view === 'top'}
-                  disabled={busy}
-                  onClick={() => setView('top')}
+                <LeaderboardTooltip className="leaderboard-action-tooltip" content="Top rankings">
+                  {(tooltipProps) => (
+                    <button
+                      type="button"
+                      aria-label="Top"
+                      aria-pressed={view === 'top'}
+                      disabled={busy}
+                      onClick={() => setView('top')}
+                      {...tooltipProps}
+                    >
+                      <Icon name="up" size={18} />
+                    </button>
+                  )}
+                </LeaderboardTooltip>
+                <LeaderboardTooltip
+                  className="leaderboard-action-tooltip"
+                  content="Rankings around me"
                 >
-                  <Icon name="up" size={18} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Around me"
-                  title="Rankings around me"
-                  aria-pressed={view === 'around-me'}
-                  disabled={busy}
-                  onClick={() => setView('around-me')}
+                  {(tooltipProps) => (
+                    <button
+                      type="button"
+                      aria-label="Around me"
+                      aria-pressed={view === 'around-me'}
+                      disabled={busy}
+                      onClick={() => setView('around-me')}
+                      {...tooltipProps}
+                    >
+                      <Icon name="profile" size={18} />
+                    </button>
+                  )}
+                </LeaderboardTooltip>
+                <LeaderboardTooltip
+                  className="leaderboard-action-tooltip"
+                  content="Refresh standings"
                 >
-                  <Icon name="profile" size={18} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="Refresh standings"
-                  title="Refresh standings"
-                  disabled={busy}
-                  onClick={() => void load()}
-                >
-                  <Icon name="refresh" size={18} />
-                </button>
+                  {(tooltipProps) => (
+                    <button
+                      type="button"
+                      aria-label="Refresh standings"
+                      disabled={busy}
+                      onClick={() => void load()}
+                      {...tooltipProps}
+                    >
+                      <Icon name="refresh" size={19} />
+                    </button>
+                  )}
+                </LeaderboardTooltip>
               </div>
             </div>
             {!board.rows.length && <p>No verified results yet.</p>}
@@ -354,66 +453,30 @@ export function LeaderboardPanel({
                   <thead>
                     <tr>
                       <th scope="col">
-                        <ColumnLabel
-                          id="leaderboard-rank-help"
-                          label="Rank"
-                          help={COLUMN_HELP.rank}
-                        />
+                        <ColumnLabel label="Rank" help={COLUMN_HELP.rank} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel
-                          id="leaderboard-name-help"
-                          label="Name"
-                          help={COLUMN_HELP.name}
-                        />
+                        <ColumnLabel label="Name" help={COLUMN_HELP.name} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel
-                          id="leaderboard-cost-help"
-                          label="Cost"
-                          help={COLUMN_HELP.cost}
-                        />
+                        <ColumnLabel label="Cost" help={COLUMN_HELP.cost} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel
-                          id="leaderboard-tiles-help"
-                          label="Tiles"
-                          help={COLUMN_HELP.tiles}
-                        />
+                        <ColumnLabel label="Tiles" help={COLUMN_HELP.tiles} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel
-                          id="leaderboard-attempts-help"
-                          label="Attempts"
-                          help={COLUMN_HELP.attempts}
-                        />
+                        <ColumnLabel label="Attempts" help={COLUMN_HELP.attempts} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel
-                          id="leaderboard-time-help"
-                          label="Time"
-                          help={COLUMN_HELP.time}
-                        />
+                        <ColumnLabel label="Time" help={COLUMN_HELP.time} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel
-                          id="leaderboard-path-help"
-                          label="Path"
-                          help={COLUMN_HELP.path}
-                        />
+                        <ColumnLabel label="Path" help={COLUMN_HELP.path} />
                       </th>
                       <th scope="col">
-                        <span
-                          className="leaderboard-column-label"
-                          tabIndex={0}
-                          aria-label="Replay"
-                          aria-describedby="leaderboard-replay-help"
-                        >
+                        <ColumnLabel label="Replay" help={COLUMN_HELP.replay}>
                           <Icon name="eye" size={16} />
-                          <span id="leaderboard-replay-help" role="tooltip">
-                            {COLUMN_HELP.replay}
-                          </span>
-                        </span>
+                        </ColumnLabel>
                       </th>
                     </tr>
                   </thead>
@@ -467,71 +530,73 @@ export function LeaderboardPanel({
             )}
             {board.totalPlayers > 0 && (
               <nav
-                className="calendar-navigation leaderboard-pagination"
+                className="leaderboard-pagination"
                 aria-label="Leaderboard pages"
                 ref={pagination}
               >
-                <button
-                  type="button"
-                  aria-label="First page"
-                  title="First page"
-                  disabled={busy || board.page === 1}
-                  onClick={() => void load(1, true)}
-                >
-                  «
-                </button>
-                <button
-                  type="button"
-                  aria-label="Previous page"
-                  title="Previous page"
-                  disabled={busy || board.page === 1}
-                  onClick={() => void load(board.page - 1, true)}
-                >
-                  ‹
-                </button>
-                <form
-                  className="calendar-period leaderboard-page-input"
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    submitPage();
-                  }}
-                >
-                  <label>
-                    <span>Page</span>
-                    <input
-                      type="text"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      aria-label="Leaderboard page"
-                      value={pageInput}
-                      readOnly={busy}
-                      aria-busy={busy}
-                      onChange={(event) => {
-                        if (/^\d*$/.test(event.target.value)) setPageInput(event.target.value);
-                      }}
-                      onBlur={submitPage}
-                    />
-                    <span>of {board.totalPages}</span>
-                  </label>
-                </form>
-                <button
-                  type="button"
-                  aria-label="Next page"
-                  title="Next page"
-                  disabled={busy || board.page === board.totalPages}
-                  onClick={() => void load(board.page + 1, true)}
-                >
-                  ›
-                </button>
-                <button
-                  type="button"
-                  aria-label="Last page"
-                  title="Last page"
-                  disabled={busy || board.page === board.totalPages}
-                  onClick={() => void load(board.totalPages, true)}
-                >
-                  »
-                </button>
+                <div className="leaderboard-page-controls">
+                  <button
+                    type="button"
+                    aria-label="First page"
+                    title="First page"
+                    disabled={busy || board.page === 1}
+                    onClick={() => void load(1, true)}
+                  >
+                    «
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Previous page"
+                    title="Previous page"
+                    disabled={busy || board.page === 1}
+                    onClick={() => void load(board.page - 1, true)}
+                  >
+                    ‹
+                  </button>
+                  <form
+                    className="leaderboard-page-input"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      submitPage();
+                    }}
+                  >
+                    <label>
+                      <span>Page</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        aria-label="Leaderboard page"
+                        value={pageInput}
+                        readOnly={busy}
+                        aria-busy={busy}
+                        onChange={(event) => {
+                          if (/^\d*$/.test(event.target.value)) setPageInput(event.target.value);
+                        }}
+                        onBlur={submitPage}
+                      />
+                      <span>of {board.totalPages}</span>
+                    </label>
+                  </form>
+                  <button
+                    type="button"
+                    aria-label="Next page"
+                    title="Next page"
+                    disabled={busy || board.page === board.totalPages}
+                    onClick={() => void load(board.page + 1, true)}
+                  >
+                    ›
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Last page"
+                    title="Last page"
+                    disabled={busy || board.page === board.totalPages}
+                    onClick={() => void load(board.totalPages, true)}
+                  >
+                    »
+                  </button>
+                </div>
                 <label className="leaderboard-page-size">
                   <span>Rows per page</span>
                   <select
