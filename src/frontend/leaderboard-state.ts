@@ -15,6 +15,7 @@ export class LeaderboardWindow {
     readonly scope: Scope,
     readonly view: BoardView,
     private viewerChanged: () => void,
+    readonly pageSize = 10,
   ) {}
   cancel() {
     ++this.generation;
@@ -45,6 +46,7 @@ export class LeaderboardWindow {
         this.scope,
         this.view,
         page ?? null,
+        this.pageSize,
         options,
       );
       if (generation !== this.generation) return;

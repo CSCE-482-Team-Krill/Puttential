@@ -467,9 +467,12 @@ test('obsolete board generations cannot overwrite latest even if transport retur
 });
 test('leaderboard page loads replace rows and request the selected page directly', async () => {
   const pages: string[] = [];
+  const limits: string[] = [];
   const api = apiFixture((url) => {
-    const page = new URL(url, 'https://example.test').searchParams.get('page') ?? '';
+    const params = new URL(url, 'https://example.test').searchParams;
+    const page = params.get('page') ?? '';
     pages.push(page);
+    limits.push(params.get('limit') ?? '');
     const fixture = boardFixture();
     return json({
       ...fixture,
@@ -493,6 +496,7 @@ test('leaderboard page loads replace rows and request the selected page directly
   await window.load();
   await window.load(2);
   assert.deepEqual(pages, ['', '2']);
+  assert.deepEqual(limits, ['10', '10']);
   assert.equal(window.board?.page, 2);
   assert.deepEqual(
     window.board?.rows.map((row) => row.player.id),

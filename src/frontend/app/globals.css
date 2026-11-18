@@ -970,16 +970,20 @@ button:disabled {
 .modal-leaderboard {
   width: min(100%, 860px);
 }
+.leaderboard-scope-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.leaderboard-scope-row > p {
+  margin: 0;
+}
 .leaderboard-scope {
+  flex: 1;
   min-width: 0;
   margin: 0;
   padding: 0;
   border: 0;
-}
-.leaderboard-scope legend {
-  margin-bottom: 6px;
-  font-size: 0.875rem;
-  font-weight: 600;
 }
 .leaderboard-scope > div {
   display: grid;
@@ -1051,7 +1055,7 @@ button:disabled {
 .leaderboard-help {
   position: relative;
   display: inline-flex;
-  margin-left: auto;
+  flex: 0 0 auto;
 }
 .leaderboard-help > button {
   display: grid;
@@ -1171,20 +1175,17 @@ button:disabled {
 }
 .leaderboard-grid th,
 .leaderboard-grid td {
-  height: 48px;
-  padding: 6px 8px;
+  height: 36px;
+  padding: 3px 8px;
   border-right: 1px solid var(--ui-line);
-  border-bottom: 1px solid var(--ui-line);
   text-align: right;
 }
 .leaderboard-grid tr > :last-child {
   border-right: 0;
 }
-.leaderboard-grid tbody tr:last-child > * {
-  border-bottom: 0;
-}
 .leaderboard-grid thead th {
   height: 40px;
+  border-bottom: 1px solid var(--ui-line);
   background: var(--ui-turf-soft);
   color: var(--ui-muted);
   font-size: 0.75rem;
@@ -1219,13 +1220,68 @@ button:disabled {
   width: 48px;
 }
 .leaderboard-column-label {
+  position: relative;
   display: inline-flex;
   align-items: center;
   cursor: help;
+  outline-offset: 3px;
+}
+.leaderboard-column-label [role='tooltip'] {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  z-index: 4;
+  width: max-content;
+  max-width: 210px;
+  padding: 8px 10px;
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-ink);
+  box-shadow: var(--ui-shadow-modal);
+  color: var(--ui-white);
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.4;
+  opacity: 0;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  text-align: left;
+  transform: translateX(-50%) translateY(-2px);
+  transition:
+    opacity 120ms ease-out,
+    transform 120ms ease-out;
+  visibility: hidden;
+  white-space: normal;
+}
+.leaderboard-column-label:hover [role='tooltip'],
+.leaderboard-column-label:focus-visible [role='tooltip'] {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  visibility: visible;
+}
+.leaderboard-grid thead th:first-child .leaderboard-column-label [role='tooltip'] {
+  right: auto;
+  left: -4px;
+  transform: translateY(-2px);
+}
+.leaderboard-grid thead th:first-child .leaderboard-column-label:hover [role='tooltip'],
+.leaderboard-grid thead th:first-child .leaderboard-column-label:focus-visible [role='tooltip'] {
+  transform: translateY(0);
+}
+.leaderboard-grid thead th:last-child .leaderboard-column-label [role='tooltip'] {
+  right: -4px;
+  left: auto;
+  transform: translateY(-2px);
+}
+.leaderboard-grid thead th:last-child .leaderboard-column-label:hover [role='tooltip'],
+.leaderboard-grid thead th:last-child .leaderboard-column-label:focus-visible [role='tooltip'] {
+  transform: translateY(0);
 }
 .leaderboard-grid thead th:last-child,
 .leaderboard-grid tbody td:last-child {
   text-align: center;
+}
+.leaderboard-grid tbody tr:nth-child(even) > * {
+  background: #f3f7f0;
 }
 .leaderboard-grid tbody tr.your-row > * {
   background: var(--ui-turf);
@@ -1246,6 +1302,8 @@ button:disabled {
   background: var(--ui-turf-soft);
 }
 .leaderboard-pagination {
+  grid-template-columns: 36px 36px max-content 36px 36px;
+  justify-content: center;
   margin-top: 8px;
 }
 .modal-body .leaderboard-page-input label {
@@ -1263,6 +1321,26 @@ button:disabled {
   padding: 4px 6px;
   font-weight: 700;
   text-align: center;
+}
+.modal-body .leaderboard-page-input input[readonly] {
+  color: var(--ui-muted);
+}
+.leaderboard-page-size {
+  display: flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-self: center;
+  gap: 6px;
+  color: var(--ui-muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+.modal-body .leaderboard-page-size select {
+  width: auto;
+  min-width: 58px;
+  min-height: 36px;
+  padding: 4px 24px 4px 8px;
+  font-weight: 700;
 }
 .ranking-row {
   display: grid;
@@ -1990,6 +2068,35 @@ button:disabled {
   }
   .calendar-period select:last-child {
     width: 60px;
+  }
+  .leaderboard-pagination {
+    grid-template-columns: 32px 32px max-content 32px 32px;
+  }
+  .leaderboard-pagination > button:nth-child(1),
+  .leaderboard-pagination > button:nth-child(2),
+  .leaderboard-pagination > button:nth-child(4),
+  .leaderboard-pagination > button:nth-child(5),
+  .leaderboard-pagination .leaderboard-page-input {
+    grid-row: 1;
+  }
+  .leaderboard-pagination > button:nth-child(1) {
+    grid-column: 1;
+  }
+  .leaderboard-pagination > button:nth-child(2) {
+    grid-column: 2;
+  }
+  .leaderboard-pagination .leaderboard-page-input {
+    grid-column: 3;
+    width: auto;
+  }
+  .leaderboard-pagination > button:nth-child(4) {
+    grid-column: 4;
+  }
+  .leaderboard-pagination > button:nth-child(5) {
+    grid-column: 5;
+  }
+  .leaderboard-page-size {
+    grid-row: 2;
   }
   .calendar-grid {
     gap: 2px;

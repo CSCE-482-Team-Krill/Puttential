@@ -45,10 +45,18 @@ const COLUMN_HELP = {
   replay: "Watch this player's best verified solution.",
 } as const;
 
-function ColumnLabel({ label, help }: { label: string; help: string }) {
+function ColumnLabel({ id, label, help }: { id: string; label: string; help: string }) {
   return (
-    <span className="leaderboard-column-label" title={help} aria-label={`${label}. ${help}`}>
+    <span
+      className="leaderboard-column-label"
+      tabIndex={0}
+      aria-label={label}
+      aria-describedby={id}
+    >
       {label}
+      <span id={id} role="tooltip">
+        {help}
+      </span>
     </span>
   );
 }
@@ -72,7 +80,9 @@ export function LeaderboardPanel({
   const [view, setView] = useState<BoardView>('top');
   const [busy, setBusy] = useState(false);
   const [displayBoard, setDisplayBoard] = useState<LeaderboardResponse | null>(null);
+  const displayBoardRef = useRef<LeaderboardResponse | null>(null);
   const [pageInput, setPageInput] = useState('1');
+  const [pageSize, setPageSize] = useState(10);
   const [, update] = useState(0);
   const [selection, setSelection] = useState<{
     target: Player;
@@ -82,16 +92,28 @@ export function LeaderboardPanel({
   } | null>(null);
   const trigger = useRef<string | null>(null);
   const watchButtons = useRef(new Map<string, HTMLButtonElement>());
+  const pagination = useRef<HTMLElement>(null);
   const latestLoad = useRef(() => {});
   const window = useMemo(
     () =>
       puzzle && player
-        ? new LeaderboardWindow(puzzleApi, player.id, puzzle.id, scope, view, reconcileGuest)
+        ? new LeaderboardWindow(
+            puzzleApi,
+            player.id,
+            puzzle.id,
+            scope,
+            view,
+            reconcileGuest,
+            pageSize,
+          )
         : null,
-    [puzzle?.id, player?.id, scope, view, reconcileGuest],
+    [puzzle?.id, player?.id, scope, view, reconcileGuest, pageSize],
   );
-  async function load(page = window?.board?.page) {
+  async function load(page = window?.board?.page, preservePagination = false) {
     if (!window) return;
+    const anchor = preservePagination ? pagination.current : null;
+    const scrollContainer = anchor?.closest<HTMLElement>('.modal-body') ?? null;
+    const anchorTop = anchor?.getBoundingClientRect().top;
     setBusy(true);
     await window.load(page);
     if (window.board) {
@@ -102,10 +124,23 @@ export function LeaderboardPanel({
         window.board = null;
       }
     }
-    if (window.board) setDisplayBoard(window.board);
-    else if (window.message) setDisplayBoard(null);
+    if (window.board) {
+      displayBoardRef.current = window.board;
+      setDisplayBoard(window.board);
+    } else if (window.message) {
+      displayBoardRef.current = null;
+      setDisplayBoard(null);
+    }
     setBusy(false);
     update((n) => n + 1);
+    if (scrollContainer && anchorTop !== undefined)
+      requestAnimationFrame(() => {
+        if (!pagination.current) return;
+        scrollContainer.scrollTop += pagination.current.getBoundingClientRect().top - anchorTop;
+        pagination.current
+          .querySelector<HTMLInputElement>('input[aria-label="Leaderboard page"]')
+          ?.focus({ preventScroll: true });
+      });
   }
   latestLoad.current = () => {
     void load();
@@ -144,18 +179,20 @@ export function LeaderboardPanel({
   const availability = state.availability.get(puzzle.id) ?? puzzle.availability;
   const canceled = availability.publicationStatus === 'canceled';
   function submitPage() {
-    if (!board || !/^\d+$/.test(pageInput)) {
-      if (board) setPageInput(String(board.page));
+    const currentBoard = displayBoardRef.current;
+    if (busy) return;
+    if (!currentBoard || !/^\d+$/.test(pageInput)) {
+      if (currentBoard) setPageInput(String(currentBoard.page));
       return;
     }
     const requested = Number(pageInput);
     if (!Number.isSafeInteger(requested)) {
-      setPageInput(String(board.page));
+      setPageInput(String(currentBoard.page));
       return;
     }
-    const page = Math.min(board.totalPages, Math.max(1, requested));
+    const page = Math.min(currentBoard.totalPages, Math.max(1, requested));
     setPageInput(String(page));
-    if (page !== board.page) void load(page);
+    if (page !== currentBoard.page) void load(page, true);
   }
   if (
     selection &&
@@ -185,33 +222,48 @@ export function LeaderboardPanel({
     );
   return (
     <div className="modal-stack">
-      {puzzle.communityMapId ? (
-        <p>Community leaderboard — all-time</p>
-      ) : (
-        <fieldset className="leaderboard-scope">
-          <legend>Board</legend>
-          <div>
-            {(
-              [
-                ['daily', 'Original daily'],
-                ['archive', 'All-time'],
-              ] as const
-            ).map(([value, label]) => (
-              <label key={value}>
-                <input
-                  type="radio"
-                  name="leaderboard-scope"
-                  value={value}
-                  checked={scope === value}
-                  disabled={busy}
-                  onChange={() => setScope(value)}
-                />
-                <span>{label}</span>
-              </label>
-            ))}
-          </div>
-        </fieldset>
-      )}
+      <div className="leaderboard-scope-row">
+        {puzzle.communityMapId ? (
+          <p>Community leaderboard — all-time</p>
+        ) : (
+          <fieldset className="leaderboard-scope" aria-label="Leaderboard scope">
+            <div>
+              {(
+                [
+                  ['daily', 'Original daily'],
+                  ['archive', 'All-time'],
+                ] as const
+              ).map(([value, label]) => (
+                <label key={value}>
+                  <input
+                    type="radio"
+                    name="leaderboard-scope"
+                    value={value}
+                    checked={scope === value}
+                    disabled={busy}
+                    onChange={() => setScope(value)}
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
+        <span className="leaderboard-help">
+          <button
+            type="button"
+            aria-label="About leaderboard sharing"
+            aria-describedby="leaderboard-sharing-help"
+          >
+            ?
+          </button>
+          <span id="leaderboard-sharing-help" role="tooltip">
+            {puzzle.communityMapId
+              ? 'Verified community solutions are shared automatically. Rankings remain open.'
+              : 'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.'}
+          </span>
+        </span>
+      </div>
       {busy && (
         <span className="leaderboard-loading" role="status">
           Loading standings…
@@ -225,44 +277,16 @@ export function LeaderboardPanel({
       ) : (
         board && (
           <>
-            <div className="leaderboard-status">
-              {(puzzle.communityMapId || board.scope === 'daily') && (
+            {(puzzle.communityMapId || (board.scope === 'daily' && !board.final)) && (
+              <div className="leaderboard-status">
                 <p className="modal-footnote">
                   {puzzle.communityMapId
                     ? 'Open — provisional'
-                    : board.final
-                      ? 'Final'
-                      : board.submissionClosed
-                        ? 'Closed — verification pending'
-                        : 'Open — provisional'}
+                    : board.submissionClosed
+                      ? 'Closed — verification pending'
+                      : 'Open — provisional'}
                 </p>
-              )}
-              <span className="leaderboard-help">
-                <button
-                  type="button"
-                  aria-label="About leaderboard sharing"
-                  aria-describedby="leaderboard-sharing-help"
-                >
-                  ?
-                </button>
-                <span id="leaderboard-sharing-help" role="tooltip">
-                  {puzzle.communityMapId
-                    ? 'Verified community solutions are shared automatically. Rankings remain open.'
-                    : 'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.'}
-                </span>
-              </span>
-            </div>
-            {!puzzle.communityMapId && !board.replayAccess.available && (
-              <p className="modal-footnote">
-                Replays unlock after daily close at Central midnight:{' '}
-                <time dateTime={board.replayAccess.unlocksAt}>
-                  {new Date(board.replayAccess.unlocksAt).toLocaleString('en-US', {
-                    timeZone: 'America/Chicago',
-                    timeZoneName: 'short',
-                  })}
-                </time>
-                .
-              </p>
+              </div>
             )}
             {runActive && <p role="status">Finish or stop your current run to watch a replay.</p>}
             <div className="leaderboard-personal">
@@ -330,33 +354,65 @@ export function LeaderboardPanel({
                   <thead>
                     <tr>
                       <th scope="col">
-                        <ColumnLabel label="Rank" help={COLUMN_HELP.rank} />
+                        <ColumnLabel
+                          id="leaderboard-rank-help"
+                          label="Rank"
+                          help={COLUMN_HELP.rank}
+                        />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Name" help={COLUMN_HELP.name} />
+                        <ColumnLabel
+                          id="leaderboard-name-help"
+                          label="Name"
+                          help={COLUMN_HELP.name}
+                        />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Cost" help={COLUMN_HELP.cost} />
+                        <ColumnLabel
+                          id="leaderboard-cost-help"
+                          label="Cost"
+                          help={COLUMN_HELP.cost}
+                        />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Tiles" help={COLUMN_HELP.tiles} />
+                        <ColumnLabel
+                          id="leaderboard-tiles-help"
+                          label="Tiles"
+                          help={COLUMN_HELP.tiles}
+                        />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Attempts" help={COLUMN_HELP.attempts} />
+                        <ColumnLabel
+                          id="leaderboard-attempts-help"
+                          label="Attempts"
+                          help={COLUMN_HELP.attempts}
+                        />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Time" help={COLUMN_HELP.time} />
+                        <ColumnLabel
+                          id="leaderboard-time-help"
+                          label="Time"
+                          help={COLUMN_HELP.time}
+                        />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Path" help={COLUMN_HELP.path} />
+                        <ColumnLabel
+                          id="leaderboard-path-help"
+                          label="Path"
+                          help={COLUMN_HELP.path}
+                        />
                       </th>
                       <th scope="col">
                         <span
                           className="leaderboard-column-label"
-                          title={COLUMN_HELP.replay}
-                          aria-label={`Replay. ${COLUMN_HELP.replay}`}
+                          tabIndex={0}
+                          aria-label="Replay"
+                          aria-describedby="leaderboard-replay-help"
                         >
                           <Icon name="eye" size={16} />
+                          <span id="leaderboard-replay-help" role="tooltip">
+                            {COLUMN_HELP.replay}
+                          </span>
                         </span>
                       </th>
                     </tr>
@@ -377,7 +433,11 @@ export function LeaderboardPanel({
                         <td>
                           <button
                             className="watch-replay"
-                            aria-label={`Watch ${row.player.nickname}’s replay`}
+                            aria-label={
+                              board.replayAccess.available
+                                ? `Watch ${row.player.nickname}’s replay`
+                                : `${row.player.nickname}’s replay is unavailable`
+                            }
                             ref={(button) => {
                               if (button) watchButtons.current.set(row.player.id, button);
                               else watchButtons.current.delete(row.player.id);
@@ -393,7 +453,10 @@ export function LeaderboardPanel({
                               });
                             }}
                           >
-                            <Icon name="eye" size={18} />
+                            <Icon
+                              name={board.replayAccess.available ? 'eye' : 'eye-off'}
+                              size={18}
+                            />
                           </button>
                         </td>
                       </tr>
@@ -402,17 +465,18 @@ export function LeaderboardPanel({
                 </table>
               </div>
             )}
-            {board.totalPages > 1 && (
+            {board.totalPlayers > 0 && (
               <nav
                 className="calendar-navigation leaderboard-pagination"
                 aria-label="Leaderboard pages"
+                ref={pagination}
               >
                 <button
                   type="button"
                   aria-label="First page"
                   title="First page"
                   disabled={busy || board.page === 1}
-                  onClick={() => void load(1)}
+                  onClick={() => void load(1, true)}
                 >
                   «
                 </button>
@@ -421,7 +485,7 @@ export function LeaderboardPanel({
                   aria-label="Previous page"
                   title="Previous page"
                   disabled={busy || board.page === 1}
-                  onClick={() => void load(board.page - 1)}
+                  onClick={() => void load(board.page - 1, true)}
                 >
                   ‹
                 </button>
@@ -440,7 +504,8 @@ export function LeaderboardPanel({
                       pattern="[0-9]*"
                       aria-label="Leaderboard page"
                       value={pageInput}
-                      disabled={busy}
+                      readOnly={busy}
+                      aria-busy={busy}
                       onChange={(event) => {
                         if (/^\d*$/.test(event.target.value)) setPageInput(event.target.value);
                       }}
@@ -454,7 +519,7 @@ export function LeaderboardPanel({
                   aria-label="Next page"
                   title="Next page"
                   disabled={busy || board.page === board.totalPages}
-                  onClick={() => void load(board.page + 1)}
+                  onClick={() => void load(board.page + 1, true)}
                 >
                   ›
                 </button>
@@ -463,10 +528,28 @@ export function LeaderboardPanel({
                   aria-label="Last page"
                   title="Last page"
                   disabled={busy || board.page === board.totalPages}
-                  onClick={() => void load(board.totalPages)}
+                  onClick={() => void load(board.totalPages, true)}
                 >
                   »
                 </button>
+                <label className="leaderboard-page-size">
+                  <span>Rows per page</span>
+                  <select
+                    aria-label="Rows per leaderboard page"
+                    value={pageSize}
+                    disabled={busy}
+                    onChange={(event) => {
+                      setPageInput('1');
+                      setPageSize(Number(event.target.value));
+                    }}
+                  >
+                    {[10, 20, 50].map((size) => (
+                      <option value={size} key={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </nav>
             )}
           </>

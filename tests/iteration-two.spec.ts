@@ -244,8 +244,13 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
     releaseScope = resolve;
   });
   let archiveTopLoads = 0;
+  let dailyFinal = false;
+  const requestedPageSizes: string[] = [];
+  const requestedPages: string[] = [];
   await page.route('**/api/puzzles/*/leaderboard?*', async (route) => {
     const params = new URL(route.request().url()).searchParams;
+    requestedPageSizes.push(params.get('limit') ?? '');
+    requestedPages.push(params.get('page') ?? '1');
     if (params.get('scope') === 'daily' && params.get('view') === 'top' && ++dailyTopLoads === 2)
       await refreshGate;
     if (
@@ -261,8 +266,11 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
         view: params.get('view'),
         scope: params.get('scope'),
         page: Number(params.get('page') ?? 1),
+        pageSize: Number(params.get('limit') ?? 10),
         totalPlayers: 45,
-        totalPages: 3,
+        totalPages: Math.ceil(45 / Number(params.get('limit') ?? 10)),
+        submissionClosed: params.get('scope') === 'daily' && dailyFinal,
+        final: params.get('scope') === 'daily' && dailyFinal,
         rows: [
           boardFixture(p).rows[0],
           { ...boardFixture(p).rows[0], player: { id: 'other', nickname: 'Tied guest' } },
@@ -277,6 +285,8 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   const daily = page.getByRole('radio', { name: 'Original daily', exact: true });
   const allTime = page.getByRole('radio', { name: 'All-time', exact: true });
   await expect(daily).toBeChecked();
+  await expect(page.getByLabel('Leaderboard scope')).toBeVisible();
+  await expect(page.getByRole('dialog')).not.toContainText('Board');
   const [dailyBox, allTimeBox] = await Promise.all([daily.boundingBox(), allTime.boundingBox()]);
   expect(dailyBox?.y).toBe(allTimeBox?.y);
   await expect(page.getByRole('dialog')).toContainText('Open — provisional');
@@ -285,21 +295,20 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   await expect(page.getByRole('dialog')).not.toContainText('Puzzle date');
   await expect(page.getByRole('dialog').getByText('Oct 26, 2026')).toBeVisible();
   await expect(page.getByRole('dialog')).not.toContainText('November 17th, 2026');
-  await expect(page.getByRole('columnheader')).toHaveText([
-    'Rank',
-    'Name',
-    'Cost',
-    'Tiles',
-    'Attempts',
-    'Time',
-    'Path',
-    '',
-  ]);
-  await expect(page.getByText('Cost', { exact: true })).toHaveAttribute(
-    'title',
-    'Total force cost. Lower values rank better.',
-  );
-  const sharingHelp = page.getByRole('tooltip');
+  for (const label of ['Rank', 'Name', 'Cost', 'Tiles', 'Attempts', 'Time', 'Path', 'Replay'])
+    await expect(page.getByRole('columnheader', { name: label, exact: true })).toBeVisible();
+  const costHeader = page.getByLabel('Cost', { exact: true });
+  const costHelp = page.getByRole('tooltip').filter({
+    hasText: 'Total force cost. Lower values rank better.',
+  });
+  await expect(costHelp).toBeHidden();
+  await costHeader.hover();
+  await expect(costHelp).toBeVisible();
+  await expect(costHelp).toHaveText('Total force cost. Lower values rank better.');
+  const sharingHelp = page.getByRole('tooltip').filter({
+    hasText:
+      'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.',
+  });
   await expect(sharingHelp).toBeHidden();
   await page.getByRole('button', { name: 'About leaderboard sharing' }).focus();
   await expect(sharingHelp).toBeVisible();
@@ -311,6 +320,7 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
     (element) => element.getBoundingClientRect().height,
   );
   const refresh = page.getByRole('button', { name: 'Refresh standings', exact: true });
+  dailyFinal = true;
   await refresh.click();
   await expect(dialog.getByRole('status')).toHaveText('Loading standings…');
   expect(await dialog.evaluate((element) => element.getBoundingClientRect().height)).toBe(
@@ -318,17 +328,34 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   );
   releaseRefresh();
   await expect(refresh).toBeEnabled();
+  await expect(dialog).not.toContainText('Final');
   const pageInput = page.getByLabel('Leaderboard page', { exact: true });
   await expect(pageInput).toHaveValue('1');
+  await expect(page.getByLabel('Rows per leaderboard page')).toHaveValue('10');
+  expect(requestedPageSizes[0]).toBe('10');
   await expect(page.getByRole('button', { name: 'First page', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Previous page', exact: true })).toBeDisabled();
+  await pageInput.scrollIntoViewIfNeeded();
+  const pageInputTop = (await pageInput.boundingBox())!.y;
   await pageInput.fill('2');
+  const pageTwoResponse = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.pathname.endsWith('/leaderboard') && url.searchParams.get('page') === '2';
+  });
   await pageInput.press('Enter');
+  await pageTwoResponse;
   await expect(pageInput).toHaveValue('2');
-  await page.getByRole('button', { name: 'Last page', exact: true }).click();
-  await expect(pageInput).toHaveValue('3');
+  await expect(page.getByRole('button', { name: 'Previous page', exact: true })).toBeEnabled();
+  await expect.poll(async () => (await pageInput.boundingBox())!.y).toBeCloseTo(pageInputTop, 0);
+  const lastPage = page.getByRole('button', { name: 'Last page', exact: true });
+  await expect(lastPage).toBeEnabled();
+  await lastPage.click();
+  await expect.poll(() => requestedPages.at(-1)).toBe('5');
+  await expect(pageInput).toHaveValue('5');
   await expect(page.getByRole('button', { name: 'Next page', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: 'Last page', exact: true })).toBeDisabled();
+  await page.getByLabel('Rows per leaderboard page').selectOption('20');
+  await expect.poll(() => requestedPageSizes.at(-1)).toBe('20');
   const heightBeforeScopeChange = await dialog.evaluate(
     (element) => element.getBoundingClientRect().height,
   );

@@ -175,10 +175,11 @@ export class PuzzleApi {
     scope: Scope,
     view: BoardView,
     page: number | null = null,
+    limit = 10,
     o?: RequestOptions,
   ) =>
     this.request(
-      `/api/puzzles/${encodeURIComponent(id)}/leaderboard?${new URLSearchParams({ scope, view, limit: '20', ...(page === null ? {} : { page: String(page) }) })}`,
+      `/api/puzzles/${encodeURIComponent(id)}/leaderboard?${new URLSearchParams({ scope, view, limit: String(limit), ...(page === null ? {} : { page: String(page) }) })}`,
       decodeBoard,
       o,
     );

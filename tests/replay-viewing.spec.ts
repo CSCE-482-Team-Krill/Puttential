@@ -194,21 +194,22 @@ for (const width of [1500, 320]) {
   });
 }
 
-test('locked entries explain midnight and a foreground refresh unlocks replays', async ({
+test('locked entries use a closed eye and a foreground refresh unlocks replays', async ({
   page,
 }) => {
   const { board } = await fixtures(page, { locked: true });
   await page.goto(origin);
   await page.getByRole('button', { name: 'Leaderboard', exact: true }).click();
-  const watch = page.getByRole('button', { name: 'Watch Replay player’s replay' });
+  const watch = page.getByRole('button', { name: 'Replay player’s replay is unavailable' });
   await expect(watch).toBeDisabled();
-  await expect(page.getByRole('dialog')).toContainText(
-    'Replays unlock after daily close at Central midnight',
-  );
+  await expect(watch.locator('circle')).toHaveCount(0);
+  await expect(page.getByRole('dialog')).not.toContainText('Replays unlock after daily close');
   board.replayAccess.available = true;
   board.replayAccess.unlocksAt = '2026-10-26T05:00:00Z';
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-  await expect(watch).toBeEnabled();
+  const unlocked = page.getByRole('button', { name: 'Watch Replay player’s replay' });
+  await expect(unlocked).toBeEnabled();
+  await expect(unlocked.locator('circle')).toHaveCount(1);
 });
 
 test('failed replay reads can be retried, and a newer best uses response metrics', async ({
