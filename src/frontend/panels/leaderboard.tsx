@@ -9,8 +9,8 @@ const ReplayPanel = dynamic(() => import('./replay').then((module) => module.Rep
   loading: () => <p role="status">Loading replay viewer…</p>,
 });
 
-function formatStandingsDate(timestamp: string) {
-  const date = new Date(timestamp);
+function formatPuzzleDate(dateString: string) {
+  const date = new Date(`${dateString}T00:00:00Z`);
   const day = date.getUTCDate();
   const suffix =
     day % 100 >= 11 && day % 100 <= 13 ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[day % 10] ?? 'th');
@@ -132,17 +132,28 @@ export function LeaderboardPanel({
       {puzzle.communityMapId ? (
         <p>Community leaderboard — all-time</p>
       ) : (
-        <label>
-          Board
-          <select
-            aria-label="Leaderboard scope"
-            value={scope}
-            onChange={(e) => setScope(e.target.value as Scope)}
-          >
-            <option value="daily">Original daily leaderboard</option>
-            <option value="archive">All-time archive leaderboard</option>
-          </select>
-        </label>
+        <fieldset className="leaderboard-scope">
+          <legend>Board</legend>
+          <div>
+            {(
+              [
+                ['daily', 'Original daily'],
+                ['archive', 'All-time'],
+              ] as const
+            ).map(([value, label]) => (
+              <label key={value}>
+                <input
+                  type="radio"
+                  name="leaderboard-scope"
+                  value={value}
+                  checked={scope === value}
+                  onChange={() => setScope(value)}
+                />
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
       )}
       <div className="panel-actions">
         {(['top', 'around-me'] as const).map((v) => (
@@ -154,7 +165,11 @@ export function LeaderboardPanel({
           Refresh standings
         </button>
       </div>
-      {busy && <p role="status">Loading standings…</p>}
+      {busy && (
+        <span className="leaderboard-loading" role="status">
+          Loading standings…
+        </span>
+      )}
       {window?.message && <p role="alert">{window.message}</p>}
       {canceled ? (
         <p role="status">
@@ -163,83 +178,113 @@ export function LeaderboardPanel({
       ) : (
         board && (
           <>
-            <p className="modal-footnote">
-              {puzzle.communityMapId
-                ? 'Open — provisional'
-                : scope === 'archive'
-                  ? 'Archive — open'
-                  : board.final
-                    ? 'Final'
-                    : board.submissionClosed
-                      ? 'Closed — verification pending'
-                      : 'Open — provisional'}
-            </p>
-            <p className="modal-footnote">
-              {puzzle.communityMapId ? (
-                'Verified community solutions are shared automatically. Rankings remain open.'
-              ) : board.replayAccess.available ? (
-                'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.'
-              ) : (
-                <>
-                  Replays unlock after daily close at Central midnight:{' '}
-                  <time dateTime={board.replayAccess.unlocksAt}>
-                    {new Date(board.replayAccess.unlocksAt).toLocaleString('en-US', {
-                      timeZone: 'America/Chicago',
-                      timeZoneName: 'short',
-                    })}
-                  </time>
-                  . Leaderboard solutions are then shared automatically.
-                </>
+            <div className="leaderboard-status">
+              {(puzzle.communityMapId || scope === 'daily') && (
+                <p className="modal-footnote">
+                  {puzzle.communityMapId
+                    ? 'Open — provisional'
+                    : board.final
+                      ? 'Final'
+                      : board.submissionClosed
+                        ? 'Closed — verification pending'
+                        : 'Open — provisional'}
+                </p>
               )}
-            </p>
+              <span className="leaderboard-help">
+                <button
+                  type="button"
+                  aria-label="About leaderboard sharing"
+                  aria-describedby="leaderboard-sharing-help"
+                >
+                  ?
+                </button>
+                <span id="leaderboard-sharing-help" role="tooltip">
+                  {puzzle.communityMapId
+                    ? 'Verified community solutions are shared automatically. Rankings remain open.'
+                    : 'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.'}
+                </span>
+              </span>
+            </div>
+            {!puzzle.communityMapId && !board.replayAccess.available && (
+              <p className="modal-footnote">
+                Replays unlock after daily close at Central midnight:{' '}
+                <time dateTime={board.replayAccess.unlocksAt}>
+                  {new Date(board.replayAccess.unlocksAt).toLocaleString('en-US', {
+                    timeZone: 'America/Chicago',
+                    timeZoneName: 'short',
+                  })}
+                </time>
+                .
+              </p>
+            )}
             {runActive && <p role="status">Finish or stop your current run to watch a replay.</p>}
             <div className="leaderboard-snapshot">
               <p>{board.totalPlayers} ranked players</p>
-              <p className="leaderboard-updated">
-                <span>As of</span>
-                <time dateTime={board.asOf}>{formatStandingsDate(board.asOf)}</time>
-              </p>
+              {puzzle.date && (
+                <p className="leaderboard-updated">
+                  <span>Puzzle date</span>
+                  <time dateTime={puzzle.date}>{formatPuzzleDate(puzzle.date)}</time>
+                </p>
+              )}
             </div>
             {!board.rows.length && <p>No verified results yet.</p>}
-            <ol className="modal-stack ranking-list" aria-label="Verified rankings">
-              {board.rows.map((row) => (
-                <li className="modal-row ranking-row" key={row.player.id}>
-                  <span className="ranking-number">#{row.rank}</span>
-                  <span className="ranking-player">
-                    <strong>{row.player.nickname}</strong>
-                    <small>
-                      {row.metrics.tileCount} tiles · First solve: run #{row.firstSolveAttempts} ·{' '}
-                      {(row.metrics.completionTick / 120).toFixed(2)}s · Path{' '}
-                      {(row.metrics.pathLengthQ / 1024).toFixed(2)}
-                    </small>
-                  </span>
-                  <span className="ranking-score">
-                    {row.metrics.forceCost}
-                    <small>pt</small>
-                  </span>
-                  <button
-                    className="watch-replay"
-                    aria-label={`Watch ${row.player.nickname}’s replay`}
-                    ref={(button) => {
-                      if (button) watchButtons.current.set(row.player.id, button);
-                      else watchButtons.current.delete(row.player.id);
-                    }}
-                    disabled={!board.replayAccess.available || runActive}
-                    onClick={() => {
-                      trigger.current = row.player.id;
-                      setSelection({
-                        target: row.player,
-                        viewerId: player.id,
-                        puzzleId: puzzle.id,
-                        scope,
-                      });
-                    }}
-                  >
-                    Watch replay
-                  </button>
-                </li>
-              ))}
-            </ol>
+            {!!board.rows.length && (
+              <div className="leaderboard-grid-wrap">
+                <table className="leaderboard-grid">
+                  <caption>Verified rankings</caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Rank</th>
+                      <th scope="col">Name</th>
+                      <th scope="col">Force cost</th>
+                      <th scope="col">Tiles</th>
+                      <th scope="col">First solve</th>
+                      <th scope="col">Time</th>
+                      <th scope="col">Path</th>
+                      <th scope="col" aria-label="Replay" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {board.rows.map((row) => (
+                      <tr
+                        className={row.player.id === player.id ? 'your-row' : undefined}
+                        key={row.player.id}
+                      >
+                        <td className="ranking-number">#{row.rank}</td>
+                        <th scope="row">{row.player.nickname}</th>
+                        <td>{row.metrics.forceCost}</td>
+                        <td>{row.metrics.tileCount}</td>
+                        <td>#{row.firstSolveAttempts}</td>
+                        <td>{(row.metrics.completionTick / 120).toFixed(2)}s</td>
+                        <td>{(row.metrics.pathLengthQ / 1024).toFixed(2)}</td>
+                        <td>
+                          <button
+                            className="watch-replay"
+                            aria-label={`Watch ${row.player.nickname}’s replay`}
+                            ref={(button) => {
+                              if (button) watchButtons.current.set(row.player.id, button);
+                              else watchButtons.current.delete(row.player.id);
+                            }}
+                            disabled={!board.replayAccess.available || runActive}
+                            onClick={() => {
+                              trigger.current = row.player.id;
+                              setSelection({
+                                target: row.player,
+                                viewerId: player.id,
+                                puzzleId: puzzle.id,
+                                scope,
+                              });
+                            }}
+                          >
+                            Watch
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
             <div className="leaderboard-personal modal-stack">
               {board.me ? (
                 <p>

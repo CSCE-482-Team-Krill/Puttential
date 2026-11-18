@@ -234,11 +234,19 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   page,
 }) => {
   const p = await fixtures(page);
-  await page.route('**/api/puzzles/*/leaderboard?*', (route) => {
+  let dailyTopLoads = 0;
+  let releaseRefresh!: () => void;
+  const refreshGate = new Promise<void>((resolve) => {
+    releaseRefresh = resolve;
+  });
+  await page.route('**/api/puzzles/*/leaderboard?*', async (route) => {
     const params = new URL(route.request().url()).searchParams;
+    if (params.get('scope') === 'daily' && params.get('view') === 'top' && ++dailyTopLoads === 2)
+      await refreshGate;
     return route.fulfill({
       json: {
         ...boardFixture(p),
+        asOf: '2026-11-17T18:00:00Z',
         view: params.get('view'),
         scope: params.get('scope'),
         totalPlayers: 3,
@@ -253,9 +261,48 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   await page.setViewportSize({ width: 320, height: 760 });
   await page.goto(BASE_URL);
   await page.getByRole('button', { name: 'Leaderboard', exact: true }).click();
+  const daily = page.getByRole('radio', { name: 'Original daily', exact: true });
+  const allTime = page.getByRole('radio', { name: 'All-time', exact: true });
+  await expect(daily).toBeChecked();
+  const [dailyBox, allTimeBox] = await Promise.all([daily.boundingBox(), allTime.boundingBox()]);
+  expect(dailyBox?.y).toBe(allTimeBox?.y);
   await expect(page.getByRole('dialog')).toContainText('Open — provisional');
   await expect(page.locator('.ranking-number')).toHaveText(['#1', '#1']);
   await expect(page.getByRole('dialog')).toContainText('3 ranked players');
+  await expect(page.getByText('Puzzle date').locator('..')).toContainText('October 26th, 2026');
+  await expect(page.getByRole('dialog')).not.toContainText('November 17th, 2026');
+  await expect(page.getByRole('columnheader')).toHaveText([
+    'Rank',
+    'Name',
+    'Force cost',
+    'Tiles',
+    'First solve',
+    'Time',
+    'Path',
+    '',
+  ]);
+  const sharingHelp = page.getByRole('tooltip');
+  await expect(sharingHelp).toBeHidden();
+  await page.getByRole('button', { name: 'About leaderboard sharing' }).focus();
+  await expect(sharingHelp).toBeVisible();
+  await expect(sharingHelp).toHaveText(
+    'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.',
+  );
+  const dialog = page.getByRole('dialog');
+  const heightBeforeRefresh = await dialog.evaluate(
+    (element) => element.getBoundingClientRect().height,
+  );
+  const refresh = page.getByRole('button', { name: 'Refresh standings', exact: true });
+  await refresh.click();
+  await expect(dialog.getByRole('status')).toHaveText('Loading standings…');
+  expect(await dialog.evaluate((element) => element.getBoundingClientRect().height)).toBe(
+    heightBeforeRefresh,
+  );
+  releaseRefresh();
+  await expect(refresh).toBeEnabled();
+  await allTime.click();
+  await expect(allTime).toBeChecked();
+  await expect(page.getByRole('dialog')).not.toContainText('Archive — open');
   await page.getByRole('button', { name: 'Around me', exact: true }).click();
   await expect(page.getByRole('dialog')).toContainText('Solve this course to get a rank');
   expect(await page.getByRole('dialog').evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);

@@ -54,7 +54,7 @@ test('community play saves a rank, persists after refresh and exposes a working 
   await expect(leaderboard.getByText('1 ranked players')).toBeVisible();
   await expect(leaderboard.getByRole('button', { name: /Watch .* replay/ })).toBeEnabled();
   await leaderboard.getByRole('button', { name: 'Around me', exact: true }).click();
-  await expect(leaderboard.getByRole('listitem')).toHaveCount(1);
+  await expect(leaderboard.locator('tbody tr')).toHaveCount(1);
   await mkdir('artifacts/leaderboard-community', { recursive: true });
   await page.screenshot({
     path: 'artifacts/leaderboard-community/standings-desktop.png',

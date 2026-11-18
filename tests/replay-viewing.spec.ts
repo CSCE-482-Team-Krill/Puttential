@@ -181,7 +181,7 @@ for (const width of [1500, 320]) {
     await page.screenshot({ path: `${artifacts}/replay-${width}.png`, fullPage: true });
     await page.getByRole('button', { name: 'Back to standings' }).click();
     await expect(watch).toBeFocused();
-    await expect(page.getByLabel('Leaderboard scope')).toHaveValue('archive');
+    await expect(page.getByRole('radio', { name: 'All-time', exact: true })).toBeChecked();
     await watch.click();
     await expect(play).toBeEnabled();
     await expect(elapsed).toContainText('0.00s /');
