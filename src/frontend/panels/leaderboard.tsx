@@ -56,11 +56,11 @@ const LEADERBOARD_TOOLTIP_TEXT = {
     refresh: 'Refresh standings',
   },
   columns: {
-    rank: 'Overall position after all ranking tie-breakers. Tied scores share a rank.',
+    rank: 'Your rank is determined by cost, tiles, attempts, time, and path in that order.',
     name: 'Player nickname.',
     cost: 'Total force cost. Lower values rank better.',
     tiles: 'Number of enabled force tiles. Fewer tiles rank better.',
-    attempts: "Run number of the player's first verified solve. Fewer attempts rank better.",
+    attempts: "Number of attempts until solve of the player's first verified solve. Fewer attempts rank better.",
     time: 'Simulated completion time in seconds. Faster times rank better.',
     path: 'Distance traveled by the goal ball. Shorter paths rank better.',
     replay: "Watch this player's best verified solution.",
