@@ -73,14 +73,12 @@ test('community play saves a rank, persists after refresh and exposes a working 
   await expect(replay).toBeVisible();
   await expect(page.locator('.modal')).toHaveCount(2);
   await expect(page.locator('.modal-leaderboard')).toHaveAttribute('inert', '');
-  await expect(replay.getByText(/Community best/)).toBeVisible();
+  await expect(replay.getByRole('table')).toContainText(player.nickname);
   await expect(replay.getByRole('alert')).toHaveCount(0);
   await expect(replay.getByRole('button', { name: 'Play replay', exact: true })).toBeEnabled();
   await replay.getByRole('button', { name: 'Play replay', exact: true }).click();
-  await expect(
-    replay.getByText('Replay complete — verified solution.', { exact: true }),
-  ).toBeVisible();
-  await replay.getByRole('button', { name: 'Back to standings', exact: true }).click();
+  await expect(replay.getByRole('button', { name: 'Play replay', exact: true })).toBeDisabled();
+  await replay.getByRole('button', { name: 'Close replay', exact: true }).click();
   await expect(replay).toHaveCount(0);
   await expect(leaderboard).toBeVisible();
   await expect(leaderboard.getByText('Your rank: 1')).toBeVisible();

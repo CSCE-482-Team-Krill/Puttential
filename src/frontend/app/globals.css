@@ -974,7 +974,7 @@ button:disabled {
   width: min(100%, 860px);
 }
 .modal-replay {
-  width: min(100%, 920px);
+  width: min(100%, 1040px);
 }
 .leaderboard-scope-row {
   display: flex;
@@ -1385,12 +1385,73 @@ button:disabled {
   min-height: 36px;
   font-size: 0.8125rem;
 }
-.replay-viewer h3 {
+.replay-date {
   margin: 0;
-  overflow-wrap: anywhere;
+  color: var(--ui-ink);
+  font-size: 1rem;
+  font-weight: 700;
 }
-.replay-back {
-  align-self: flex-start;
+.replay-summary-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-white);
+  overscroll-behavior-inline: contain;
+}
+.replay-summary {
+  width: 100%;
+  min-width: 640px;
+  table-layout: fixed;
+  border-spacing: 0;
+  border-collapse: separate;
+  color: var(--ui-ink);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.replay-summary caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.replay-summary th,
+.replay-summary td {
+  height: 36px;
+  padding: 3px 8px;
+  border-right: 1px solid var(--ui-line);
+  text-align: right;
+}
+.replay-summary tr > :last-child {
+  border-right: 0;
+}
+.replay-summary thead th {
+  height: 36px;
+  border-bottom: 1px solid var(--ui-line);
+  background: var(--ui-turf-soft);
+  color: var(--ui-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.replay-summary th:nth-child(2) {
+  width: 28%;
+  text-align: left;
+}
+.replay-summary tbody th {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+.replay-playback-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 .replay-player:fullscreen {
   width: 100%;
@@ -1399,8 +1460,12 @@ button:disabled {
   overflow-y: auto;
   background: var(--ui-paper);
 }
+.replay-player:fullscreen .replay-playback-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+}
 .replay-player:fullscreen .replay-course {
-  flex: 1 0 160px;
+  flex: 1 1 160px;
   height: auto;
   min-height: 160px;
   aspect-ratio: auto;
@@ -1408,24 +1473,166 @@ button:disabled {
 .replay-course {
   position: relative;
   width: 100%;
-  height: clamp(220px, 42vh, 420px);
-  min-height: 220px;
+  height: clamp(240px, 48vh, 460px);
+  min-height: 240px;
   overflow: hidden;
   border: 1px solid var(--ui-line);
   border-radius: 12px;
 }
-.replay-controls {
-  flex-wrap: wrap;
-  align-items: end;
+.replay-fullscreen,
+.replay-control-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-sm);
+  background: color-mix(in srgb, var(--ui-paper) 92%, transparent);
+  color: var(--ui-green-strong);
 }
-.replay-controls label {
+.replay-fullscreen:hover:enabled,
+.replay-control-button:hover:enabled {
+  background: var(--ui-turf);
+}
+.replay-fullscreen {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  right: 10px;
+  box-shadow: var(--ui-shadow-frame);
+}
+.replay-controls {
   display: flex;
-  gap: 4px;
-  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.replay-control-buttons {
+  display: flex;
+  gap: 6px;
+}
+.replay-speed {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.replay-speed legend {
+  margin-bottom: 4px;
+  color: var(--ui-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.replay-speed > div {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-md);
+  background: var(--ui-turf-soft);
+}
+.replay-speed label {
+  position: relative;
+  min-width: 0;
+}
+.replay-speed input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+.replay-speed span {
+  display: grid;
+  place-items: center;
+  min-height: 32px;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--ui-r-sm);
+  color: var(--ui-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.replay-speed input:checked + span {
+  border-color: var(--ui-green);
+  background: var(--ui-white);
+  color: var(--ui-green-strong);
+  box-shadow: var(--ui-shadow-frame);
+}
+.replay-speed input:focus-visible + span {
+  outline: 3px solid var(--ui-green);
+  outline-offset: 1px;
+}
+.replay-timeline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.replay-timeline progress {
+  flex: 1;
+  min-width: 0;
+  height: 8px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ui-line);
+  accent-color: var(--ui-green);
+}
+.replay-timeline progress::-webkit-progress-bar {
+  background: var(--ui-line);
+}
+.replay-timeline progress::-webkit-progress-value {
+  border-radius: 999px;
+  background: var(--ui-green);
+}
+.replay-timeline progress::-moz-progress-bar {
+  border-radius: 999px;
+  background: var(--ui-green);
 }
 .replay-time {
+  flex-shrink: 0;
   font-variant-numeric: tabular-nums;
-  margin: 0;
+  color: var(--ui-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+@media (min-width: 700px) and (orientation: landscape) {
+  .replay-playback-layout {
+    display: grid;
+    grid-template-areas: 'controls course';
+    grid-template-columns: 136px minmax(0, 1fr);
+    align-items: stretch;
+    gap: 12px;
+  }
+  .replay-course {
+    grid-area: course;
+    height: clamp(360px, 58vh, 600px);
+    min-height: min(480px, 55dvh);
+  }
+  .replay-controls {
+    grid-area: controls;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    padding: 8px;
+    border: 1px solid var(--ui-line);
+    border-radius: var(--ui-r-sm);
+    background: var(--ui-turf-soft);
+  }
+  .replay-control-buttons {
+    justify-content: flex-start;
+  }
+  .replay-speed {
+    flex: 0 0 auto;
+  }
+  .replay-speed > div {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 .archive-row {
   display: grid;

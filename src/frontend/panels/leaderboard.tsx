@@ -15,6 +15,7 @@ import { createPortal } from 'react-dom';
 import type {
   BoardView,
   LeaderboardResponse,
+  LeaderboardRow,
   Player,
   PuzzleResponse,
   Scope,
@@ -248,7 +249,7 @@ export function LeaderboardPanel({
   const [pageSize, setPageSize] = useState(10);
   const [, update] = useState(0);
   const [selection, setSelection] = useState<{
-    target: Player;
+    row: LeaderboardRow;
     viewerId: string;
     puzzleId: string;
     scope: Scope;
@@ -584,7 +585,7 @@ export function LeaderboardPanel({
                               onClick={() => {
                                 trigger.current = row.player.id;
                                 setSelection({
-                                  target: row.player,
+                                  row,
                                   viewerId: player.id,
                                   puzzleId: puzzle.id,
                                   scope,
@@ -699,15 +700,14 @@ export function LeaderboardPanel({
       {replaySelection && (
         <ReplayOverlay close={closeReplay} underlayRef={leaderboardRoot}>
           <ReplayPanel
-            key={`${player.id}/${puzzle.id}/${scope}/${replaySelection.target.id}`}
+            key={`${player.id}/${puzzle.id}/${scope}/${replaySelection.row.player.id}`}
             puzzle={puzzle}
-            target={replaySelection.target}
+            row={replaySelection.row}
             scope={scope}
             viewerId={player.id}
             state={state}
             reconcileGuest={reconcileGuest}
             refresh={() => void load()}
-            back={closeReplay}
           />
         </ReplayOverlay>
       )}

@@ -18,6 +18,9 @@ export type IconName =
   | 'eye-off'
   | 'reset'
   | 'play'
+  | 'pause'
+  | 'fullscreen'
+  | 'fullscreen-exit'
   | 'fire';
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
@@ -107,6 +110,21 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
       </>
     ),
     play: <path d="m8 5 11 7-11 7z" fill="currentColor" stroke="none" />,
+    pause: (
+      <>
+        <path d="M8 5v14M16 5v14" />
+      </>
+    ),
+    fullscreen: (
+      <>
+        <path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5" />
+      </>
+    ),
+    'fullscreen-exit': (
+      <>
+        <path d="M3 8h5V3M21 8h-5V3M3 16h5v5M21 16h-5v5" />
+      </>
+    ),
     fire: (
       <path d="M12 22c4.5 0 7-3 7-7 0-2.5-1.2-4.7-3-6-.2 2.5-1.7 3.7-2.6 4C14 8.5 11.4 5.2 9 3c.4 4-3 6.2-4 9.4C3.3 17.7 6.4 22 12 22z" />
     ),

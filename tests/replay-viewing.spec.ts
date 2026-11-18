@@ -139,13 +139,39 @@ for (const width of [1500, 320]) {
     await expect(leaderboardDialog).toHaveAttribute('aria-hidden', 'true');
     await expect(leaderboardDialog).toHaveAttribute('inert', '');
     await expect(page.getByRole('heading', { name: 'Replay player’s solution' })).toBeFocused();
+    await expect(replayDialog.getByText('October 25, 2026', { exact: true })).toBeVisible();
+    await expect(replayDialog.getByRole('table')).toContainText('Replay player');
+    await expect(replayDialog.getByRole('button', { name: 'Back to standings' })).toHaveCount(0);
+    await expect(replayDialog).not.toContainText('Archive best');
+    await expect(replayDialog).not.toContainText('Read-only replay');
+    const course = page.locator('.replay-course');
+    const controls = page.locator('.replay-controls');
+    const fullscreenButton = page.getByRole('button', { name: 'Fullscreen replay', exact: true });
+    const [courseBox, controlsBox, fullscreenBox] = await Promise.all([
+      course.boundingBox(),
+      controls.boundingBox(),
+      fullscreenButton.boundingBox(),
+    ]);
+    expect(fullscreenBox!.x).toBeGreaterThan(courseBox!.x);
+    expect(fullscreenBox!.x + fullscreenBox!.width).toBeLessThanOrEqual(
+      courseBox!.x + courseBox!.width,
+    );
+    if (width === 1500) {
+      expect(controlsBox!.x + controlsBox!.width).toBeLessThan(courseBox!.x);
+      expect(courseBox!.height).toBeGreaterThanOrEqual(480);
+    } else {
+      expect(controlsBox!.y).toBeGreaterThan(courseBox!.y + courseBox!.height);
+    }
     const play = page.getByRole('button', { name: 'Play replay', exact: true });
     await expect(play).toBeEnabled();
     const elapsed = page.getByLabel('Replay elapsed time');
+    const progress = page.getByRole('progressbar', { name: 'Replay progress' });
     await expect(elapsed).toContainText('0.00s /');
-    await page.getByLabel('Replay speed').selectOption('0.5');
+    await expect(progress).toHaveAttribute('value', '0');
+    await page.getByRole('radio', { name: '0.5×', exact: true }).check();
     await play.click();
     await expect.poll(() => elapsed.textContent()).not.toMatch(/^0\.00s/);
+    await expect.poll(async () => Number(await progress.getAttribute('value'))).toBeGreaterThan(0);
     await page.getByRole('button', { name: 'Pause replay' }).click();
     const paused = await elapsed.textContent();
     await page.waitForTimeout(150);
@@ -155,7 +181,7 @@ for (const width of [1500, 320]) {
     await page.waitForTimeout(150);
     await expect(elapsed).toHaveText(paused!);
     const courseHeight = await page.locator('.replay-course').evaluate((el) => el.clientHeight);
-    await page.getByRole('button', { name: 'Fullscreen replay', exact: true }).click();
+    await fullscreenButton.click();
     await expect
       .poll(() =>
         page.evaluate(() => document.fullscreenElement?.classList.contains('replay-player')),
@@ -164,7 +190,7 @@ for (const width of [1500, 320]) {
     const exitFullscreen = page.getByRole('button', { name: 'Exit fullscreen', exact: true });
     await expect(exitFullscreen).toHaveAttribute('aria-pressed', 'true');
     await expect(elapsed).toHaveText(paused!);
-    await expect(page.getByLabel('Replay speed')).toHaveValue('0.5');
+    await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
     await expect
       .poll(() => page.locator('.replay-course').evaluate((el) => el.clientHeight))
       .toBeGreaterThan(courseHeight);
@@ -192,21 +218,20 @@ for (const width of [1500, 320]) {
     ).toBeVisible();
     await page.getByRole('button', { name: 'Restart replay' }).click();
     await expect(elapsed).toContainText('0.00s /');
-    await expect(page.getByLabel('Replay speed')).toHaveValue('0.5');
-    await page.getByLabel('Replay speed').selectOption('2');
-    await expect(page.getByLabel('Replay speed')).toHaveValue('2');
-    await page.getByLabel('Replay speed').selectOption('4');
+    await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();
+    await page.getByRole('radio', { name: '2×', exact: true }).check();
+    await expect(page.getByRole('radio', { name: '2×', exact: true })).toBeChecked();
+    await page.getByRole('radio', { name: '4×', exact: true }).check();
     await play.click();
-    await expect(
-      page.getByText('Replay complete — verified solution.', { exact: true }),
-    ).toBeVisible({ timeout: 20000 });
+    await expect(play).toBeDisabled({ timeout: 20000 });
+    await expect(replayDialog).not.toContainText('Replay complete');
     expect(
       await page
         .getByRole('dialog')
         .evaluate((element) => element.scrollWidth <= element.clientWidth),
     ).toBe(true);
     await page.screenshot({ path: `${artifacts}/replay-${width}.png`, fullPage: true });
-    await page.getByRole('button', { name: 'Back to standings' }).click();
+    await page.getByRole('button', { name: 'Close replay' }).click();
     await expect(replayDialog).toHaveCount(0);
     await expect(page.getByRole('dialog', { name: 'Leaderboard', exact: true })).toBeVisible();
     await expect(leaderboardDialog).not.toHaveAttribute('inert', '');
@@ -270,10 +295,10 @@ test('failed replay reads can be retried, and a newer best uses response metrics
   await expect(page.getByRole('dialog').getByRole('alert')).toContainText('No verified solution');
   await page.getByRole('button', { name: 'Retry replay' }).click();
   await expect(page.getByRole('button', { name: 'Play replay', exact: true })).toBeEnabled();
-  await expect(page.locator('.replay-viewer')).toContainText(
-    `${replay.result.metrics!.forceCost} pt`,
+  await expect(page.locator('.replay-summary tbody tr > td').nth(1)).toHaveText(
+    String(replay.result.metrics!.forceCost),
   );
-  await expect(page.locator('.replay-viewer')).not.toContainText('99 pt');
+  await expect(page.locator('.replay-summary tbody tr > td').nth(1)).not.toHaveText('99');
   expect(calls).toBe(2);
 });
 
@@ -431,14 +456,14 @@ test('real two-guest replay flows from a verified PostgreSQL run into browser pl
       .getByRole('button', { name: 'Watch Live replay source’s replay', exact: true })
       .click();
     await expect(page.getByRole('button', { name: 'Play replay', exact: true })).toBeEnabled();
-    await page.getByLabel('Replay speed').selectOption('2');
+    await page.getByRole('radio', { name: '2×', exact: true }).check();
     await page.getByRole('button', { name: 'Play replay', exact: true }).click();
-    await expect(
-      page.getByText('Replay complete — verified solution.', { exact: true }),
-    ).toBeVisible({ timeout: 20000 });
+    await expect(page.getByRole('button', { name: 'Play replay', exact: true })).toBeDisabled({
+      timeout: 20000,
+    });
     await mkdir(artifacts, { recursive: true });
     await page.screenshot({ path: `${artifacts}/replay-live-two-guests.png`, fullPage: true });
-    await page.getByRole('button', { name: 'Back to standings' }).click();
+    await page.getByRole('button', { name: 'Close replay' }).click();
     await expect(page.getByRole('dialog')).toContainText('Solve this course to get a rank.');
     expect(writes).toEqual([]);
     expect(errors).toEqual([]);
