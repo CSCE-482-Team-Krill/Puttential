@@ -114,6 +114,21 @@ test('spectator playback seeks forward and backward to exact ticks without retai
     result,
   );
   try {
+    assert.equal(replay.frame.tick, 0);
+    assert.ok(replay.goalIntervals.length > 0);
+    for (const interval of replay.goalIntervals) {
+      assert.ok(interval.startTick > 0);
+      assert.ok(interval.endTick > interval.startTick);
+      assert.ok(interval.endTick <= result.metrics!.completionTick + 1);
+    }
+    for (let tick = 0; tick <= result.metrics!.completionTick; tick++) {
+      replay.seek(tick);
+      const markedInside = replay.goalIntervals.some(
+        (interval) => tick >= interval.startTick && tick < interval.endTick,
+      );
+      assert.equal(replay.goal.inside, markedInside);
+    }
+
     const midpoint = Math.floor(result.metrics!.completionTick / 2);
     replay.seek(midpoint);
     assert.equal(replay.status, 'paused');

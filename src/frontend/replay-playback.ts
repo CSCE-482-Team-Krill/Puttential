@@ -7,6 +7,7 @@ import type { Placement, PuzzleRules, SavedResult } from '../shared/puzzle-contr
 
 export type ReplaySpeed = 0.5 | 1 | 2 | 4;
 export type ReplayStatus = 'paused' | 'playing' | 'ended' | 'error';
+export type GoalInterval = { startTick: number; endTick: number };
 const MAX_STEPS_PER_FRAME = 16;
 
 /** A disposable spectator world; never touches drafts, run sessions, or persistence. */
@@ -16,6 +17,7 @@ export class ReplayPlayback {
   error: string | null = null;
   frame: RenderState;
   goal;
+  goalIntervals: readonly GoalInterval[] = [];
   private evaluator: RunEvaluator;
   private setup: GameSnapshot;
   private accumulator = 0;
@@ -46,7 +48,10 @@ export class ReplayPlayback {
     const game = await createGame(level, { ...simulationOptions(rules), soundEvents: true });
     try {
       game.applySetup(placement.commands);
-      return new ReplayPlayback(game, level, rules, expected);
+      const playback = new ReplayPlayback(game, level, rules, expected);
+      playback.goalIntervals = playback.findGoalIntervals();
+      playback.restart();
+      return playback;
     } catch (error) {
       game.destroy();
       throw error;
@@ -132,6 +137,25 @@ export class ReplayPlayback {
     this.status = 'ended';
     this.accumulator = 0;
     return true;
+  }
+  private findGoalIntervals() {
+    const intervals: GoalInterval[] = [];
+    const completionTick = this.expected.metrics!.completionTick;
+    let goal = initialGoal(this.level.goal);
+    let startTick: number | null = null;
+    for (let tick = 1; tick <= completionTick; tick++) {
+      this.game.step();
+      this.game.soundEvents();
+      const frame = this.game.getRenderState();
+      goal = advanceGoal(goal, frame);
+      if (goal.inside && startTick === null) startTick = frame.tick;
+      else if (!goal.inside && startTick !== null) {
+        intervals.push({ startTick, endTick: frame.tick });
+        startTick = null;
+      }
+    }
+    if (startTick !== null) intervals.push({ startTick, endTick: completionTick + 1 });
+    return intervals;
   }
   destroy() {
     if (this.destroyed) return;

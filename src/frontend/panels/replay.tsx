@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import type { RenderState } from '../../game/types';
 import { FIXED_DT } from '../../game/simulation';
 import { levelBounds } from '../../game/levels/codec';
@@ -28,6 +28,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
   const [fullscreenAvailable, setFullscreenAvailable] = useState(false);
   const [fullscreenError, setFullscreenError] = useState('');
   const [scrubTick, setScrubTick] = useState<number | null>(null);
+  const timelineHelpId = useId();
   const scrubTickRef = useRef<number | null>(null);
   const seekTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const playback = useRef<ReplayPlayback | null>(null);
@@ -116,6 +117,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
 
   const current = playback.current;
   const completionTick = replay.result.metrics?.completionTick ?? 0;
+  const displayTick = scrubTick ?? current?.frame.tick ?? 0;
   function commitSeek(requestedTick = scrubTickRef.current) {
     if (!current || requestedTick === null) return;
     if (seekTimer.current) clearTimeout(seekTimer.current);
@@ -227,29 +229,49 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
       ) : (
         <>
           <div className="replay-timeline">
-            <input
-              className="replay-progress"
-              type="range"
-              aria-label="Replay timeline"
-              aria-valuetext={`${((scrubTick ?? current.frame.tick) * FIXED_DT).toFixed(2)} seconds of ${(completionTick * FIXED_DT).toFixed(2)} seconds`}
-              min={0}
-              max={Math.max(1, completionTick)}
-              step={1}
-              value={Math.min(scrubTick ?? current.frame.tick, completionTick)}
-              style={
-                {
-                  '--replay-progress': `${completionTick ? ((scrubTick ?? current.frame.tick) / completionTick) * 100 : 0}%`,
-                } as CSSProperties
-              }
-              onChange={(event) => previewSeek(Number(event.currentTarget.value))}
-              onPointerUp={(event) => commitSeek(Number(event.currentTarget.value))}
-              onPointerCancel={() => commitSeek()}
-              onKeyUp={() => commitSeek()}
-              onBlur={() => commitSeek()}
-            />
+            <div className="replay-scrubber">
+              <div className="replay-timeline-track" aria-hidden="true">
+                <span
+                  className="replay-timeline-played"
+                  style={{ width: `${completionTick ? (displayTick / completionTick) * 100 : 0}%` }}
+                />
+                {current.goalIntervals.map((interval, index) => {
+                  const start = completionTick ? (interval.startTick / completionTick) * 100 : 0;
+                  const end = completionTick
+                    ? (Math.min(interval.endTick, completionTick) / completionTick) * 100
+                    : 0;
+                  const width = Math.max(0.5, end - start);
+                  return (
+                    <span
+                      className="replay-goal-interval"
+                      key={`${interval.startTick}-${interval.endTick}-${index}`}
+                      style={{ left: `${Math.min(start, 100 - width)}%`, width: `${width}%` }}
+                    />
+                  );
+                })}
+              </div>
+              <input
+                className="replay-progress"
+                type="range"
+                aria-label="Replay timeline"
+                aria-describedby={timelineHelpId}
+                aria-valuetext={`${(displayTick * FIXED_DT).toFixed(2)} seconds of ${(completionTick * FIXED_DT).toFixed(2)} seconds`}
+                min={0}
+                max={Math.max(1, completionTick)}
+                step={1}
+                value={Math.min(displayTick, completionTick)}
+                onChange={(event) => previewSeek(Number(event.currentTarget.value))}
+                onPointerUp={(event) => commitSeek(Number(event.currentTarget.value))}
+                onPointerCancel={() => commitSeek()}
+                onKeyUp={() => commitSeek()}
+                onBlur={() => commitSeek()}
+              />
+              <span className="sr-only" id={timelineHelpId}>
+                Gold segments show when the ball is inside the flag area.
+              </span>
+            </div>
             <span className="replay-time" aria-label="Replay elapsed time">
-              {((scrubTick ?? current.frame.tick) * FIXED_DT).toFixed(2)}s /{' '}
-              {(completionTick * FIXED_DT).toFixed(2)}s
+              {(displayTick * FIXED_DT).toFixed(2)}s / {(completionTick * FIXED_DT).toFixed(2)}s
             </span>
           </div>
           {fullscreenError && <p role="alert">{fullscreenError}</p>}

@@ -176,6 +176,12 @@ for (const width of [1500, 320]) {
     const timeline = page.getByRole('slider', { name: 'Replay timeline' });
     await expect(elapsed).toContainText('0.00s /');
     await expect(timeline).toHaveValue('0');
+    await expect(timeline).toHaveAccessibleDescription(
+      'Gold segments show when the ball is inside the flag area.',
+    );
+    const goalIntervals = page.locator('.replay-goal-interval');
+    await expect(goalIntervals.first()).toBeVisible();
+    const goalIntervalCount = await goalIntervals.count();
     await page.getByRole('radio', { name: '0.5×', exact: true }).check();
     await play.click();
     await expect.poll(() => elapsed.textContent()).not.toMatch(/^0\.00s/);
@@ -234,6 +240,7 @@ for (const width of [1500, 320]) {
     );
     await timeline.fill('0');
     await expect(elapsed).toContainText('0.00s /');
+    await expect(goalIntervals).toHaveCount(goalIntervalCount);
     await page.getByRole('button', { name: 'Restart replay' }).click();
     await expect(elapsed).toContainText('0.00s /');
     await expect(page.getByRole('radio', { name: '0.5×', exact: true })).toBeChecked();

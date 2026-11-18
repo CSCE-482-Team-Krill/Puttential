@@ -1538,11 +1538,15 @@ button:disabled {
   position: relative;
   min-width: 0;
 }
-.replay-speed input {
+.modal-body .replay-speed input {
   position: absolute;
   width: 1px;
   height: 1px;
+  min-height: 0;
   margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
   opacity: 0;
 }
 .replay-speed span {
@@ -1573,25 +1577,57 @@ button:disabled {
   gap: 10px;
   min-width: 0;
 }
-.replay-progress {
-  appearance: none;
+.replay-scrubber {
+  position: relative;
   flex: 1;
   min-width: 0;
   height: 24px;
+}
+.replay-timeline-track {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--ui-line);
+  transform: translateY(-50%);
+}
+.replay-timeline-played,
+.replay-goal-interval {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+.replay-timeline-played {
+  left: 0;
+  background: var(--ui-green);
+}
+.replay-goal-interval {
+  z-index: 1;
+  background: var(--ui-yellow);
+  box-shadow: inset 0 0 0 1px rgba(86, 103, 104, 0.28);
+}
+.modal-body .replay-progress {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  height: 24px;
+  min-height: 0;
   margin: 0;
   padding: 0;
+  appearance: none;
   border: 0;
+  border-radius: 0;
+  color: inherit;
   background: transparent;
   cursor: pointer;
 }
 .replay-progress::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: linear-gradient(
-    to right,
-    var(--ui-green) 0 var(--replay-progress),
-    var(--ui-line) var(--replay-progress) 100%
-  );
+  background: transparent;
 }
 .replay-progress::-webkit-slider-thumb {
   width: 16px;
@@ -1606,12 +1642,11 @@ button:disabled {
 .replay-progress::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: var(--ui-line);
+  background: transparent;
 }
 .replay-progress::-moz-range-progress {
   height: 6px;
-  border-radius: 999px;
-  background: var(--ui-green);
+  background: transparent;
 }
 .replay-progress::-moz-range-thumb {
   width: 14px;
