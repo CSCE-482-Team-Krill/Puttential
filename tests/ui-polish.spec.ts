@@ -79,37 +79,44 @@ async function projection(page: Page, level: Level, position: { x: number; y: nu
   await canvas.scrollIntoViewIfNeeded();
   const box = (await canvas.boundingBox())!;
   const bounds = levelBounds(level);
+  const boundsWidth = bounds.maxX - bounds.minX;
+  const boundsHeight = bounds.maxY - bounds.minY;
+  const boardIsLandscape = boundsWidth >= boundsHeight;
+  const canvasIsLandscape = box.width >= box.height;
+  const quarterTurn = boardIsLandscape !== canvasIsLandscape;
   const scale = Math.min(
-    box.width / (bounds.maxX - bounds.minX + 0.3),
-    box.height / (bounds.maxY - bounds.minY + 0.3),
+    box.width / ((quarterTurn ? boundsHeight : boundsWidth) + 0.3),
+    box.height / ((quarterTurn ? boundsWidth : boundsHeight) + 0.3),
   );
-  const x = box.width / 2 + (position.x - (bounds.minX + bounds.maxX) / 2) * scale;
-  const y = box.height / 2 - (position.y - (bounds.minY + bounds.maxY) / 2) * scale;
-  return { x, y, clientX: box.x + x, clientY: box.y + y, scale, box };
+  const dx = position.x - (bounds.minX + bounds.maxX) / 2;
+  const dy = position.y - (bounds.minY + bounds.maxY) / 2;
+  const x = box.width / 2 + (quarterTurn ? dy : dx) * scale;
+  const y = box.height / 2 + (quarterTurn ? dx : -dy) * scale;
+  return { x, y, clientX: box.x + x, clientY: box.y + y, scale, box, quarterTurn };
 }
 
 // Sample the white or selected gold top outline, excluding its arrows.
 // The 2px outline is allowed a 2px raster tolerance, at deviceScaleFactor 1.
 async function fieldEdge(page: Page, level: Level, position: { x: number; y: number }) {
   const p = await projection(page, level, position);
-  return page.locator('canvas').evaluate((element, { x, y, scale }) => {
+  return page.locator('canvas').evaluate((element, { x, y, scale, quarterTurn }) => {
     const context = element.getContext('2d')!;
-    const width = Math.max(3, Math.floor(scale * 0.4));
+    const length = Math.max(3, Math.floor(scale * 0.4));
     const data = context.getImageData(
-      Math.round(x - width / 2),
-      Math.round(y - scale * 0.6) - 2,
-      width,
-      5,
+      quarterTurn ? Math.round(x + scale * 0.6) - 2 : Math.round(x - length / 2),
+      quarterTurn ? Math.round(y - length / 2) : Math.round(y - scale * 0.6) - 2,
+      quarterTurn ? 5 : length,
+      quarterTurn ? length : 5,
     ).data;
     let best = 0;
-    for (let row = 0; row < 5; row++) {
+    for (let line = 0; line < 5; line++) {
       let white = 0;
-      for (let column = 0; column < width; column++) {
-        const i = (row * width + column) * 4;
+      for (let offset = 0; offset < length; offset++) {
+        const i = (quarterTurn ? offset * 5 + line : line * length + offset) * 4;
         if (data[i]! > 240 && data[i + 1]! >= 200 && data[i + 2]! >= 95 && data[i + 3]! > 220)
           white++;
       }
-      best = Math.max(best, white / width);
+      best = Math.max(best, white / length);
     }
     return best;
   }, p);
@@ -128,9 +135,11 @@ async function dragField(
   const p = await projection(page, level, from);
   await page.mouse.move(p.clientX, p.clientY);
   await page.mouse.down();
+  const dx = (to.x - from.x) * p.scale;
+  const dy = (to.y - from.y) * p.scale;
   await page.mouse.move(
-    p.clientX + (to.x - from.x) * p.scale,
-    p.clientY - (to.y - from.y) * p.scale,
+    p.clientX + (p.quarterTurn ? dy : dx),
+    p.clientY + (p.quarterTurn ? dx : -dy),
     { steps: 8 },
   );
   await page.mouse.up();
@@ -403,7 +412,8 @@ test('all responsive widths retain course framing, direct nav targets and no pag
 }) => {
   await openLevel(page, inventoryLevel(1));
   for (const width of [320, 390, 700, 760, 850, 959, 960, 961, 1050, 1440, 1920]) {
-    await page.setViewportSize({ width, height: width === 1920 ? 1080 : 900 });
+    const height = width === 1920 ? 1080 : 900;
+    await page.setViewportSize({ width, height });
     await noOverflow(page);
     for (const button of await page.locator('.main-nav button').all()) {
       const box = (await button.boundingBox())!;
@@ -412,8 +422,15 @@ test('all responsive widths retain course framing, direct nav targets and no pag
     }
     const p = await projection(page, inventoryLevel(1), { x: 0, y: 0 });
     const bounds = levelBounds(inventoryLevel(1));
-    expect((bounds.maxX - bounds.minX) * p.scale).toBeLessThan(p.box.width);
-    expect((bounds.maxY - bounds.minY) * p.scale).toBeLessThan(p.box.height);
+    expect(p.box.width >= p.box.height, `course orientation at ${width}×${height}`).toBe(
+      width >= height,
+    );
+    expect(
+      (p.quarterTurn ? bounds.maxY - bounds.minY : bounds.maxX - bounds.minX) * p.scale,
+    ).toBeLessThan(p.box.width);
+    expect(
+      (p.quarterTurn ? bounds.maxX - bounds.minX : bounds.maxY - bounds.minY) * p.scale,
+    ).toBeLessThan(p.box.height);
     if ([1440, 1920, 959, 960].includes(width)) {
       await page.evaluate(() => scrollTo(0, 0));
       await screenshot(
@@ -441,12 +458,20 @@ for (const width of [390, 959, 960, 1050, 1440]) {
     const p = await projection(page, level, { x: -2, y: -0.5 });
     await page.mouse.move(p.clientX, p.clientY);
     await page.mouse.down();
-    await page.mouse.move(p.clientX, p.box.y + p.box.height + 200, { steps: 8 });
+    const outside = p.quarterTurn
+      ? { x: p.box.x - 200, y: p.clientY }
+      : { x: p.clientX, y: p.box.y + p.box.height + 200 };
+    await page.mouse.move(outside.x, outside.y, { steps: 8 });
     await page.mouse.up();
-    const expectedY = -0.5 - (p.box.y + p.box.height + 200 - p.clientY) / p.scale;
-    await expect(
-      page.getByRole('spinbutton', { name: 'Selected tile Y', exact: true }),
-    ).toHaveValue(formatCoordinate(Math.round(expectedY * 1024) / 1024));
+    const expectedY =
+      -0.5 - (p.quarterTurn ? p.clientX - outside.x : outside.y - p.clientY) / p.scale;
+    await expect
+      .poll(async () =>
+        Number(
+          await page.getByRole('spinbutton', { name: 'Selected tile Y', exact: true }).inputValue(),
+        ),
+      )
+      .toBeCloseTo(expectedY, 1);
   });
 }
 
@@ -462,6 +487,8 @@ test('completed moves, fresh hit targets, mounted nodes and keyboard focus survi
   for (const width of [960, 959]) {
     await page.setViewportSize({ width, height: 1000 });
     await sameNodes(page);
+    const course = (await page.locator('.course-canvas').boundingBox())!;
+    expect(course.height, `portrait course height at ${width}×1000`).toBeGreaterThan(course.width);
     await expect(page.locator('.tile-option')).toBeFocused();
     await expectField(page, level, { x: -2, y: -0.5 });
     await expect(page.locator('.course-status')).toHaveText('Planning');
@@ -485,9 +512,11 @@ for (const [from, to] of [
     const p = await projection(page, level, { x: -3, y: 0 });
     await page.mouse.move(p.clientX, p.clientY);
     await page.mouse.down();
-    await page.mouse.move(p.clientX + p.scale * 0.5, p.clientY, { steps: 5 });
+    const held = p.quarterTurn
+      ? { x: p.clientX, y: p.clientY + p.scale * 0.5 }
+      : { x: p.clientX + p.scale * 0.5, y: p.clientY };
+    await page.mouse.move(held.x, held.y, { steps: 5 });
     await expectField(page, level, { x: -2.5, y: 0 });
-    const held = { x: p.clientX + p.scale * 0.5, y: p.clientY };
     await page.setViewportSize({ width: to!, height: 1000 });
     // Continue moving in screen coordinates, as a real held pointer does.
     // The old projection must not move the field after the layout changes.

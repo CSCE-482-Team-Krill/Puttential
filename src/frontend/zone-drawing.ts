@@ -1,6 +1,7 @@
 import type { RenderField } from '../game';
 import { polygonBounds } from '../game';
-import type { View } from './course-canvas';
+import { toCanvas } from './course-view';
+import type { View } from './course-view';
 import waterTexture from './textures/water-tile.png';
 import lavaTexture from './textures/lava-tile.png';
 
@@ -59,15 +60,27 @@ export function drawLiquid(
   const pattern = liquidPattern(ctx, kind);
   // World anchoring keeps the texture density constant when resizing objects or zooming.
   const scale = view.scale / 80;
+  const origin = toCanvas(view, { x: 0, y: 0 });
   pattern?.setTransform(
-    new DOMMatrix([
-      scale,
-      0,
-      0,
-      scale,
-      view.originX + Math.sin(time * 0.24) * 2,
-      view.originY + Math.cos(time * 0.18) * 2,
-    ]),
+    new DOMMatrix(
+      view.quarterTurn
+        ? [
+            0,
+            scale,
+            -scale,
+            0,
+            origin.x + Math.sin(time * 0.24) * 2,
+            origin.y + Math.cos(time * 0.18) * 2,
+          ]
+        : [
+            scale,
+            0,
+            0,
+            scale,
+            origin.x + Math.sin(time * 0.24) * 2,
+            origin.y + Math.cos(time * 0.18) * 2,
+          ],
+    ),
   );
   ctx.save();
   ctx.globalAlpha =
@@ -102,12 +115,11 @@ export function drawZone(
   }
   if (kind !== 'portal') return false;
   const b = polygonBounds(field.worldPolygon);
-  const width = (b.maxX - b.minX) * view.scale,
-    height = (b.maxY - b.minY) * view.scale;
-  const center = {
-    x: view.originX + field.position.x * view.scale,
-    y: view.originY - field.position.y * view.scale,
-  };
+  const worldWidth = (b.maxX - b.minX) * view.scale,
+    worldHeight = (b.maxY - b.minY) * view.scale;
+  const width = view.quarterTurn ? worldHeight : worldWidth,
+    height = view.quarterTurn ? worldWidth : worldHeight;
+  const center = toCanvas(view, field.position);
   ctx.save();
   ctx.globalAlpha = field.enabled ? 1 : 0.45;
   ctx.strokeStyle = color;

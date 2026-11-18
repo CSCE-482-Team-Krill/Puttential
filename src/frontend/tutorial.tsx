@@ -314,7 +314,7 @@ export function Tutorial({ close, reducedMotion }: { close: () => void; reducedM
             </ol>
           )}
           <div className="tutorial-stage">
-            <div className="course tutorial-course">
+            <div className="course tutorial-course viewport-oriented">
               <CourseCanvas
                 level={level}
                 goalRef={puzzle.goalRef}
@@ -327,6 +327,7 @@ export function Tutorial({ close, reducedMotion }: { close: () => void; reducedM
                 onSelectField={puzzle.selectField}
                 selectedField={puzzle.selectedField}
                 editingLocked={!free}
+                orientToViewport
                 overlay={(context, view) => drawOverlay(context, view, level, cursorRef.current)}
               />
             </div>

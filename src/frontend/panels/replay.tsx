@@ -143,7 +143,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
   return (
     <div className="modal-stack replay-player" ref={containerRef}>
       <div className="replay-playback-layout">
-        <div className="course replay-course">
+        <div className="course replay-course viewport-oriented">
           <CourseCanvas
             level={puzzle.configuration}
             frameRef={frameRef}
@@ -152,6 +152,7 @@ function ReplayPlayer({ puzzle, replay }: { puzzle: PuzzleResponse; replay: Repl
             mode="running"
             trail={[]}
             editingLocked
+            orientToViewport
             onMoveField={() => {}}
             ariaLabel={`Read-only replay of ${replay.player.nickname}’s solution`}
           />

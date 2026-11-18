@@ -782,10 +782,11 @@ export default function Home({ initialView = 'game' }: { initialView?: View }) {
                 </span>
               </div>
               <section className="course-stage" aria-labelledby="course-title">
-                <div className="course">
+                <div className="course viewport-oriented">
                   <GameplayCanvas
                     level={level}
                     puzzle={puzzle}
+                    orientToViewport
                     showPreview={preferences.showPreview}
                     locked={locked}
                     {...(courseRules && usesLegacyBounds(courseRules)

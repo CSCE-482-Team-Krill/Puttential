@@ -2102,12 +2102,20 @@ button:disabled {
   }
   .course-stage {
     display: flex;
+    align-items: center;
+    justify-content: center;
+    container-type: size;
     padding: 0 6px 6px;
     margin: 0 8px 0 0;
   }
   .course {
     height: 100%;
     aspect-ratio: auto;
+  }
+  .course-stage > .course.viewport-oriented {
+    width: min(100cqw, calc(100cqh * 1.6));
+    height: auto;
+    aspect-ratio: 1.6;
   }
   .control-column {
     display: flex;
@@ -2336,6 +2344,27 @@ button:disabled {
   }
   .notice-toast-actions {
     gap: 4px;
+  }
+}
+@media (orientation: portrait) {
+  .course.viewport-oriented {
+    aspect-ratio: 0.625;
+  }
+  .replay-course.viewport-oriented,
+  .replay-player:fullscreen .replay-course.viewport-oriented {
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 0.625;
+  }
+}
+@media (max-width: 699px) and (orientation: portrait) {
+  .course.viewport-oriented {
+    aspect-ratio: 0.645;
+  }
+}
+@media (max-width: 480px) and (orientation: portrait) {
+  .course.viewport-oriented {
+    aspect-ratio: 0.714;
   }
 }
 @media (max-width: 380px) {

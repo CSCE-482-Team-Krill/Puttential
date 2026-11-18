@@ -15,6 +15,7 @@ type ViewProps = {
   selectFields?: boolean;
   placementBounds?: ComponentProps<typeof CourseCanvas>['placementBounds'];
   camera?: ComponentProps<typeof CourseCanvas>['camera'];
+  orientToViewport?: boolean;
 };
 /** Presentation only: no guest, API client, storage owner or competitive session imports. */
 export function GameplayCanvas({
@@ -25,6 +26,7 @@ export function GameplayCanvas({
   selectFields = true,
   placementBounds,
   camera,
+  orientToViewport = false,
 }: ViewProps) {
   return (
     <CourseCanvas
@@ -40,6 +42,7 @@ export function GameplayCanvas({
         ? { onSelectField: puzzle.selectField, selectedField: puzzle.selectedField }
         : {})}
       editingLocked={locked}
+      orientToViewport={orientToViewport}
       {...(placementBounds ? { placementBounds } : {})}
       {...(camera ? { camera } : {})}
     />
@@ -105,7 +108,7 @@ export function GameplayView({
   return (
     <div className="gameplay-view">
       {heading}
-      <div className="course">
+      <div className={`course ${props.orientToViewport ? 'viewport-oriented' : ''}`.trim()}>
         <GameplayCanvas {...props} />
       </div>
       {status}

@@ -25,6 +25,11 @@ import type {
 import { initialGoal } from './goal-progress';
 import type { GoalProgress } from './goal-progress';
 import type { Draft, Mode } from './puzzle';
+import { toCanvas, toWorld } from './course-view';
+import type { Bounds, View } from './course-view';
+
+export { toCanvas, toWorld } from './course-view';
+export type { Bounds, View } from './course-view';
 
 export type Props = Readonly<{
   level: Level;
@@ -45,11 +50,11 @@ export type Props = Readonly<{
   selectedField?: string | null;
   placementBounds?: Bounds;
   editingLocked?: boolean;
+  /** Rotate the presentation by a quarter turn when board and canvas orientations differ. */
+  orientToViewport?: boolean;
   ariaLabel?: string;
 }>;
 
-export type View = Readonly<{ scale: number; originX: number; originY: number; bounds: Bounds }>;
-export type Bounds = Readonly<{ minX: number; maxX: number; minY: number; maxY: number }>;
 type Drag = Readonly<{
   id: string;
   pointerId: number;
@@ -70,28 +75,38 @@ function rotate(vector: Vec2, angle: number): Vec2 {
   return { x: vector.x * cos - vector.y * sin, y: vector.x * sin + vector.y * cos };
 }
 
-function computeView(level: Level, width: number, height: number, camera?: Props['camera']): View {
+function computeView(
+  level: Level,
+  width: number,
+  height: number,
+  camera?: Props['camera'],
+  orientToViewport = false,
+): View {
   const bounds = camera?.bounds ?? levelBounds(level);
+  const boundsWidth = bounds.maxX - bounds.minX;
+  const boundsHeight = bounds.maxY - bounds.minY;
+  const boardIsLandscape = boundsWidth >= boundsHeight;
+  const canvasIsLandscape = width >= height;
+  const quarterTurn = orientToViewport && boardIsLandscape !== canvasIsLandscape;
+  const projectedWidth = quarterTurn ? boundsHeight : boundsWidth;
+  const projectedHeight = quarterTurn ? boundsWidth : boundsHeight;
+  const center = camera?.center ?? {
+    x: (bounds.minX + bounds.maxX) / 2,
+    y: (bounds.minY + bounds.maxY) / 2,
+  };
   const scale =
     (camera?.zoom ?? 1) *
     Math.min(
-      width / (bounds.maxX - bounds.minX + 2 * VIEW_MARGIN),
-      height / (bounds.maxY - bounds.minY + 2 * VIEW_MARGIN),
+      width / (projectedWidth + 2 * VIEW_MARGIN),
+      height / (projectedHeight + 2 * VIEW_MARGIN),
     );
   return {
     scale,
-    originX: width / 2 - (camera?.center.x ?? (bounds.minX + bounds.maxX) / 2) * scale,
-    originY: height / 2 + (camera?.center.y ?? (bounds.minY + bounds.maxY) / 2) * scale,
+    originX: width / 2 - (quarterTurn ? center.y : center.x) * scale,
+    originY: height / 2 + (quarterTurn ? -center.x : center.y) * scale,
     bounds,
+    quarterTurn,
   };
-}
-
-export function toCanvas(view: View, point: Vec2): Vec2 {
-  return { x: view.originX + point.x * view.scale, y: view.originY - point.y * view.scale };
-}
-
-export function toWorld(view: View, point: Vec2): Vec2 {
-  return { x: (point.x - view.originX) / view.scale, y: (view.originY - point.y) / view.scale };
 }
 
 export function polygonPath(view: View, polygon: readonly Vec2[]): Path2D {
@@ -231,27 +246,30 @@ function draw(
 
   // Goal: a translucent box that fills as the hold timer runs.
   const goal = props.goalRef?.current ?? initialGoal(props.level.goal);
-  const topLeft = toCanvas(view, { x: goal.area.minX, y: goal.area.maxY });
-  const bottomRight = toCanvas(view, { x: goal.area.maxX, y: goal.area.minY });
-  const goalWidth = bottomRight.x - topLeft.x,
-    goalHeight = bottomRight.y - topLeft.y;
+  const goalCorners = [
+    toCanvas(view, { x: goal.area.minX, y: goal.area.minY }),
+    toCanvas(view, { x: goal.area.minX, y: goal.area.maxY }),
+    toCanvas(view, { x: goal.area.maxX, y: goal.area.minY }),
+    toCanvas(view, { x: goal.area.maxX, y: goal.area.maxY }),
+  ];
+  const goalMinX = Math.min(...goalCorners.map((point) => point.x));
+  const goalMaxX = Math.max(...goalCorners.map((point) => point.x));
+  const goalMinY = Math.min(...goalCorners.map((point) => point.y));
+  const goalMaxY = Math.max(...goalCorners.map((point) => point.y));
+  const goalWidth = goalMaxX - goalMinX,
+    goalHeight = goalMaxY - goalMinY;
   context.fillStyle = '#ffffff55';
-  context.fillRect(topLeft.x, topLeft.y, goalWidth, goalHeight);
+  context.fillRect(goalMinX, goalMinY, goalWidth, goalHeight);
   context.fillStyle = '#2e7d3233';
   const progress = goal.completedTick !== null ? 1 : goal.heldTicks / Math.max(1, goal.holdTicks);
-  context.fillRect(
-    topLeft.x,
-    bottomRight.y - goalHeight * progress,
-    goalWidth,
-    goalHeight * progress,
-  );
+  context.fillRect(goalMinX, goalMaxY - goalHeight * progress, goalWidth, goalHeight * progress);
   context.setLineDash([7, 6]);
   context.strokeStyle = '#2e7d32';
   context.lineWidth = 2;
-  context.strokeRect(topLeft.x, topLeft.y, goalWidth, goalHeight);
+  context.strokeRect(goalMinX, goalMinY, goalWidth, goalHeight);
   context.setLineDash([]);
-  const flagX = topLeft.x + goalWidth / 2,
-    flagY = topLeft.y + goalHeight / 2 + 14;
+  const flagX = goalMinX + goalWidth / 2,
+    flagY = goalMinY + goalHeight / 2 + 14;
   context.fillStyle = '#2d3a3a';
   context.fillRect(flagX - 1.5, flagY - 34, 3, 34);
   context.fillStyle = '#ff6b6b';
@@ -358,17 +376,17 @@ function draw(
       context.stroke(path);
       if (piece.kind === 'circle') {
         const center = toCanvas(view, piece.center),
-          length = piece.radius * view.scale * 0.7;
+          end = toCanvas(view, {
+            x: piece.center.x + Math.cos(body.angle) * piece.radius * 0.7,
+            y: piece.center.y + Math.sin(body.angle) * piece.radius * 0.7,
+          });
         context.save();
         context.shadowColor = 'transparent';
         context.strokeStyle = body.burnt ? '#454545' : '#566768';
         context.lineWidth = 2;
         context.beginPath();
         context.moveTo(center.x, center.y);
-        context.lineTo(
-          center.x + Math.cos(body.angle) * length,
-          center.y - Math.sin(body.angle) * length,
-        );
+        context.lineTo(end.x, end.y);
         context.stroke();
         context.restore();
       }
@@ -420,7 +438,9 @@ export function CourseCanvas(props: Props) {
           width / ratio,
           height / ratio,
           propsRef.current.camera,
+          propsRef.current.orientToViewport,
         );
+        if (viewRef.current?.quarterTurn !== view.quarterTurn) endDrag(canvas);
         viewRef.current = view;
         propsRef.current.onView?.(view);
         context.setTransform(ratio, 0, 0, ratio, 0, 0);
