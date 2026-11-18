@@ -3,6 +3,19 @@
 import type { PuzzleProgress } from '../../shared/puzzle-contracts';
 import type { RecoveryRecord } from '../progress-storage';
 import { CopyResult } from './copy-result';
+import { newestRunRecords } from '../run-order';
+
+function formatRunStart(startedAt: string) {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Chicago',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).format(new Date(startedAt));
+}
 
 export function RunsPanel({
   legacy = false,
@@ -27,9 +40,7 @@ export function RunsPanel({
   cancel: (requestId: string) => void;
   interrupt: (requestId: string) => void;
 }) {
-  const visible = records
-    .filter((r) => r.start.puzzleId === puzzleId || r.phase !== 'terminal')
-    .reverse();
+  const visible = newestRunRecords(records, puzzleId);
   return (
     <div className="runs-content">
       <h2>Runs</h2>
@@ -71,7 +82,13 @@ export function RunsPanel({
                   {r.response ? `Run #${r.response.attemptOrdinal}` : 'Pending start'}
                 </strong>
                 <span className="runs-note">
-                  {r.context.communityMapId ? r.context.title : r.context.date}
+                  {r.response ? (
+                    <time dateTime={r.response.startedAt}>
+                      Started {formatRunStart(r.response.startedAt)}
+                    </time>
+                  ) : (
+                    `Starting for ${r.context.communityMapId ? r.context.title : r.context.date}`
+                  )}
                   {r.start.puzzleId !== puzzleId ? ' · Other course' : ''}
                 </span>
                 <p role="status">{r.message}</p>

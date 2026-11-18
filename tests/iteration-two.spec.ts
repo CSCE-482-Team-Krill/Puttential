@@ -70,11 +70,14 @@ test('published costs, unsupported engine, truthful guest profile and responsive
   await expect(page.locator('.tile-cost')).toHaveText(['1 pt', '4 pt']);
   await page.locator('.tile-option').first().click();
   await page.locator('.tile-option').last().click();
-  await expect(page.locator('.toolkit-note')).toContainText('Force cost 5');
+  await expect(page.locator('.toolkit-note')).toHaveCount(0);
+  await expect(page.locator('.inventory-count')).toHaveCount(0);
   await expect(page.getByLabel('Selected tile angle')).toHaveCount(0);
   await expect(page.getByRole('button', { name: /^Rotate (left|right)$/ })).toHaveCount(0);
   await page.getByLabel('Selected tile X', { exact: true }).fill('2');
   await expect(page.getByLabel('Selected tile X', { exact: true })).toHaveValue('2');
+  await page.getByLabel('Selected tile X', { exact: true }).fill('1.234567');
+  await expect(page.getByLabel('Selected tile X', { exact: true })).toHaveValue('1.234');
   const saved = savedFixture();
   await page.route('**/api/me/progress?*', (route) =>
     route.fulfill({ json: { progress: saved.progress, availability: p.availability } }),
@@ -106,6 +109,75 @@ test('published costs, unsupported engine, truthful guest profile and responsive
   }
   await page.keyboard.press('Escape');
   expect(starts).toBe(0);
+});
+
+test('starting a ranked run keeps the course layout stable', async ({ page }) => {
+  const p = puzzleFixture();
+  p.rules.rulesVersion = 'puttential-daily-v2';
+  p.rules.simulationVersion = 'puttential-rapier-0.20.0-v3';
+  await fixtures(page, p);
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route('**/api/runs', async (route) => {
+    const start = route.request().postDataJSON();
+    await gate;
+    await route.fulfill({ json: acceptedFixture(start, p) });
+  });
+  await page.goto(BASE_URL);
+  await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+  const before = await page.locator('.course-stage').boundingBox();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Starting…', exact: true })).toBeVisible();
+  await expect(page.locator('.api-notice')).toHaveCount(0);
+  expect(await page.locator('.course-stage').boundingBox()).toEqual(before);
+  release();
+  await expect(page.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
+});
+
+test('rapid run-control clicks cannot overlap start and stop transitions', async ({ page }) => {
+  const p = puzzleFixture();
+  p.rules.rulesVersion = 'puttential-daily-v2';
+  p.rules.simulationVersion = 'puttential-rapier-0.20.0-v3';
+  await fixtures(page, p);
+  const accepted = new Map<string, ReturnType<typeof acceptedFixture>>();
+  const errors: string[] = [];
+  let starts = 0;
+  page.on('pageerror', (error) => errors.push(error.message));
+  await page.route('**/api/runs', async (route) => {
+    const start = route.request().postDataJSON();
+    const response = acceptedFixture(start, p);
+    accepted.set(response.runId, response);
+    starts++;
+    await route.fulfill({ json: response });
+  });
+  await page.route('**/api/runs/*/complete', async (route) => {
+    const runId = route.request().url().split('/').at(-2)!;
+    await route.fulfill({
+      json: savedFixture(accepted.get(runId)!, route.request().postDataJSON()),
+    });
+  });
+  await page.goto(BASE_URL);
+  await page.getByRole('button', { name: 'Play', exact: true }).evaluate((button) => {
+    for (let click = 0; click < 20; click++) (button as HTMLButtonElement).click();
+  });
+  await expect.poll(() => starts).toBe(1);
+  const stop = page.getByRole('button', { name: 'Stop', exact: true });
+  await expect(stop).toBeVisible();
+  await stop.evaluate((button) => {
+    for (let click = 0; click < 20; click++) (button as HTMLButtonElement).click();
+  });
+  const playAgain = page.getByRole('button', { name: 'Play', exact: true });
+  await expect(playAgain).toBeVisible();
+  await playAgain.evaluate((button) => {
+    for (let click = 0; click < 20; click++) (button as HTMLButtonElement).click();
+  });
+  await expect.poll(() => starts).toBe(2);
+  await expect(page.getByRole('button', { name: 'Stop', exact: true })).toBeVisible();
+  await page.waitForTimeout(250);
+  expect(errors).toEqual([]);
+  await expect(page.getByText('Resolve the current run before another Play.')).toHaveCount(0);
 });
 test('archive reads summaries, paginates, opens date links and retains canvas on same-content refresh', async ({
   page,
@@ -645,7 +717,7 @@ for (const width of [1440, 320]) {
     });
     await page.route('**/api/runs/*/complete', (route) => route.fulfill({ json: stopped }));
     await page.goto(BASE_URL);
-    await expect(page.locator('.toolkit-note')).toBeVisible();
+    await expect(page.locator('.toolkit-note')).toHaveCount(0);
     await page.evaluate(
       async (record) => {
         await new Promise<void>((resolve, reject) => {
@@ -694,6 +766,7 @@ for (const width of [1440, 320]) {
     await expect(page.getByRole('tab', { name: 'Runs', exact: true })).toBeFocused();
     await expect(page.getByRole('tabpanel', { name: 'Toolkit', exact: true })).toBeHidden();
     await expect(runs).toContainText('Accepted run needs recovery');
+    await expect(runs).toContainText('Started Oct 26, 2026');
     await expect(runs.getByRole('button', { name: 'Recover interrupted run' })).toBeVisible();
     await runs.getByRole('button', { name: 'Retry run status' }).click();
     await expect.poll(() => reads).toBeGreaterThan(1);
