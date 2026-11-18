@@ -44,15 +44,27 @@ function formatCompactPuzzleDate(dateString: string) {
   });
 }
 
-const COLUMN_HELP = {
-  rank: 'Overall position after all ranking tie-breakers. Tied scores share a rank.',
-  name: 'Player nickname.',
-  cost: 'Total force cost. Lower values rank better.',
-  tiles: 'Number of enabled force tiles. Fewer tiles rank better.',
-  attempts: "Run number of the player's first verified solve. Fewer attempts rank better.",
-  time: 'Simulated completion time in seconds. Faster times rank better.',
-  path: 'Distance traveled by the goal ball. Shorter paths rank better.',
-  replay: "Watch this player's best verified solution.",
+const LEADERBOARD_TOOLTIP_TEXT = {
+  sharing: {
+    community: 'Verified community solutions are shared automatically. Rankings remain open.',
+    daily:
+      'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.',
+  },
+  actions: {
+    top: 'Top rankings',
+    aroundMe: 'Rankings around me',
+    refresh: 'Refresh standings',
+  },
+  columns: {
+    rank: 'Overall position after all ranking tie-breakers. Tied scores share a rank.',
+    name: 'Player nickname.',
+    cost: 'Total force cost. Lower values rank better.',
+    tiles: 'Number of enabled force tiles. Fewer tiles rank better.',
+    attempts: "Run number of the player's first verified solve. Fewer attempts rank better.",
+    time: 'Simulated completion time in seconds. Faster times rank better.',
+    path: 'Distance traveled by the goal ball. Shorter paths rank better.',
+    replay: "Watch this player's best verified solution.",
+  },
 } as const;
 
 type TooltipTriggerProps = { 'aria-describedby': string };
@@ -345,8 +357,8 @@ export function LeaderboardPanel({
           className="leaderboard-help"
           content={
             puzzle.communityMapId
-              ? 'Verified community solutions are shared automatically. Rankings remain open.'
-              : 'Leaderboard solutions are shared automatically after daily close. Archive rankings remain open.'
+              ? LEADERBOARD_TOOLTIP_TEXT.sharing.community
+              : LEADERBOARD_TOOLTIP_TEXT.sharing.daily
           }
         >
           {(tooltipProps) => (
@@ -386,7 +398,10 @@ export function LeaderboardPanel({
                 <time dateTime={puzzle.date}>{formatCompactPuzzleDate(puzzle.date)}</time>
               )}
               <div className="leaderboard-view-actions">
-                <LeaderboardTooltip className="leaderboard-action-tooltip" content="Top rankings">
+                <LeaderboardTooltip
+                  className="leaderboard-action-tooltip"
+                  content={LEADERBOARD_TOOLTIP_TEXT.actions.top}
+                >
                   {(tooltipProps) => (
                     <button
                       type="button"
@@ -402,7 +417,7 @@ export function LeaderboardPanel({
                 </LeaderboardTooltip>
                 <LeaderboardTooltip
                   className="leaderboard-action-tooltip"
-                  content="Rankings around me"
+                  content={LEADERBOARD_TOOLTIP_TEXT.actions.aroundMe}
                 >
                   {(tooltipProps) => (
                     <button
@@ -419,7 +434,7 @@ export function LeaderboardPanel({
                 </LeaderboardTooltip>
                 <LeaderboardTooltip
                   className="leaderboard-action-tooltip"
-                  content="Refresh standings"
+                  content={LEADERBOARD_TOOLTIP_TEXT.actions.refresh}
                 >
                   {(tooltipProps) => (
                     <button
@@ -453,28 +468,31 @@ export function LeaderboardPanel({
                   <thead>
                     <tr>
                       <th scope="col">
-                        <ColumnLabel label="Rank" help={COLUMN_HELP.rank} />
+                        <ColumnLabel label="Rank" help={LEADERBOARD_TOOLTIP_TEXT.columns.rank} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Name" help={COLUMN_HELP.name} />
+                        <ColumnLabel label="Name" help={LEADERBOARD_TOOLTIP_TEXT.columns.name} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Cost" help={COLUMN_HELP.cost} />
+                        <ColumnLabel label="Cost" help={LEADERBOARD_TOOLTIP_TEXT.columns.cost} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Tiles" help={COLUMN_HELP.tiles} />
+                        <ColumnLabel label="Tiles" help={LEADERBOARD_TOOLTIP_TEXT.columns.tiles} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Attempts" help={COLUMN_HELP.attempts} />
+                        <ColumnLabel
+                          label="Attempts"
+                          help={LEADERBOARD_TOOLTIP_TEXT.columns.attempts}
+                        />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Time" help={COLUMN_HELP.time} />
+                        <ColumnLabel label="Time" help={LEADERBOARD_TOOLTIP_TEXT.columns.time} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Path" help={COLUMN_HELP.path} />
+                        <ColumnLabel label="Path" help={LEADERBOARD_TOOLTIP_TEXT.columns.path} />
                       </th>
                       <th scope="col">
-                        <ColumnLabel label="Replay" help={COLUMN_HELP.replay}>
+                        <ColumnLabel label="Replay" help={LEADERBOARD_TOOLTIP_TEXT.columns.replay}>
                           <Icon name="eye" size={16} />
                         </ColumnLabel>
                       </th>

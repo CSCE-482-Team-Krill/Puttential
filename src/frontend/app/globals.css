@@ -1254,7 +1254,7 @@ button:disabled {
   display: grid;
   grid-template-columns: 36px 36px max-content 36px 36px;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   width: max-content;
 }
 .leaderboard-page-controls > button {

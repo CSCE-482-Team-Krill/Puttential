@@ -365,8 +365,8 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
     page.locator('.leaderboard-page-input').boundingBox(),
     page.getByRole('button', { name: 'Next page', exact: true }).boundingBox(),
   ]);
-  expect(pageControlBox!.x - (previousBox!.x + previousBox!.width)).toBeLessThanOrEqual(5);
-  expect(nextBox!.x - (pageControlBox!.x + pageControlBox!.width)).toBeLessThanOrEqual(5);
+  expect(pageControlBox!.x - (previousBox!.x + previousBox!.width)).toBeLessThanOrEqual(7);
+  expect(nextBox!.x - (pageControlBox!.x + pageControlBox!.width)).toBeLessThanOrEqual(7);
   await pageInput.scrollIntoViewIfNeeded();
   const pageInputTop = (await pageInput.boundingBox())!.y;
   await pageInput.fill('2');
