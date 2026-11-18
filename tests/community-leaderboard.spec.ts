@@ -69,14 +69,20 @@ test('community play saves a rank, persists after refresh and exposes a working 
   const replayResponse = page.waitForResponse((response) => response.url().includes('/replays/'));
   await leaderboard.getByRole('button', { name: /Watch .* replay/ }).click();
   expect((await replayResponse).status()).toBe(200);
-  await expect(leaderboard.getByText(/Community best/)).toBeVisible();
-  await expect(leaderboard.getByRole('alert')).toHaveCount(0);
-  await expect(leaderboard.getByRole('button', { name: 'Play replay', exact: true })).toBeEnabled();
-  await leaderboard.getByRole('button', { name: 'Play replay', exact: true }).click();
+  const replay = page.getByRole('dialog', { name: 'Replay', exact: true });
+  await expect(replay).toBeVisible();
+  await expect(page.locator('.modal')).toHaveCount(2);
+  await expect(page.locator('.modal-leaderboard')).toHaveAttribute('inert', '');
+  await expect(replay.getByText(/Community best/)).toBeVisible();
+  await expect(replay.getByRole('alert')).toHaveCount(0);
+  await expect(replay.getByRole('button', { name: 'Play replay', exact: true })).toBeEnabled();
+  await replay.getByRole('button', { name: 'Play replay', exact: true }).click();
   await expect(
-    leaderboard.getByText('Replay complete — verified solution.', { exact: true }),
+    replay.getByText('Replay complete — verified solution.', { exact: true }),
   ).toBeVisible();
-  await leaderboard.getByRole('button', { name: 'Back to standings', exact: true }).click();
+  await replay.getByRole('button', { name: 'Back to standings', exact: true }).click();
+  await expect(replay).toHaveCount(0);
+  await expect(leaderboard).toBeVisible();
   await expect(leaderboard.getByText('Your rank: 1')).toBeVisible();
   expect(errors).toEqual([]);
 });

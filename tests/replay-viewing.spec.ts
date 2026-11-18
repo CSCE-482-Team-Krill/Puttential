@@ -106,6 +106,8 @@ for (const width of [1500, 320]) {
       );
     const before = await drafts();
     await page.getByRole('button', { name: 'Leaderboard', exact: true }).click();
+    const leaderboardDialog = page.locator('.modal-leaderboard');
+    await expect(page.getByRole('dialog', { name: 'Leaderboard', exact: true })).toBeVisible();
     const watch = page.getByRole('button', { name: 'Watch Replay player’s replay' });
     await expect(watch).toBeEnabled();
     if (width === 1500) {
@@ -131,6 +133,11 @@ for (const width of [1500, 320]) {
     await mkdir(artifacts, { recursive: true });
     await page.screenshot({ path: `${artifacts}/standings-${width}.png`, fullPage: true });
     await watch.click();
+    const replayDialog = page.getByRole('dialog', { name: 'Replay', exact: true });
+    await expect(replayDialog).toBeVisible();
+    await expect(page.locator('.modal')).toHaveCount(2);
+    await expect(leaderboardDialog).toHaveAttribute('aria-hidden', 'true');
+    await expect(leaderboardDialog).toHaveAttribute('inert', '');
     await expect(page.getByRole('heading', { name: 'Replay player’s solution' })).toBeFocused();
     const play = page.getByRole('button', { name: 'Play replay', exact: true });
     await expect(play).toBeEnabled();
@@ -200,11 +207,18 @@ for (const width of [1500, 320]) {
     ).toBe(true);
     await page.screenshot({ path: `${artifacts}/replay-${width}.png`, fullPage: true });
     await page.getByRole('button', { name: 'Back to standings' }).click();
+    await expect(replayDialog).toHaveCount(0);
+    await expect(page.getByRole('dialog', { name: 'Leaderboard', exact: true })).toBeVisible();
+    await expect(leaderboardDialog).not.toHaveAttribute('inert', '');
     await expect(watch).toBeFocused();
     await expect(page.getByRole('radio', { name: 'All-time', exact: true })).toBeChecked();
     await watch.click();
     await expect(play).toBeEnabled();
     await expect(elapsed).toContainText('0.00s /');
+    await page.keyboard.press('Escape');
+    await expect(replayDialog).toHaveCount(0);
+    await expect(page.getByRole('dialog', { name: 'Leaderboard', exact: true })).toBeVisible();
+    await expect(watch).toBeFocused();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByLabel('Selected tile X', { exact: true })).toHaveValue('-4.25');
@@ -316,11 +330,12 @@ test('closing a loading replay discards its late response', async ({ page }) => 
   await page.goto(origin);
   await page.getByRole('button', { name: 'Leaderboard', exact: true }).click();
   await page.getByRole('button', { name: 'Watch Replay player’s replay' }).click();
+  const replayDialog = page.getByRole('dialog', { name: 'Replay', exact: true });
   await expect(page.getByText('Loading replay…', { exact: true })).toBeVisible();
   await page.keyboard.press('Escape');
   release();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Leaderboard', exact: true }).click();
+  await expect(replayDialog).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Leaderboard', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Watch Replay player’s replay' })).toBeEnabled();
   await expect(page.getByRole('button', { name: 'Play replay', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Watch Replay player’s replay' }).click();

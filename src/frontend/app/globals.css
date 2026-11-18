@@ -803,6 +803,9 @@ button:disabled {
   padding: 24px;
   background: var(--ui-overlay);
 }
+.modal-backdrop-stacked {
+  z-index: 30;
+}
 .modal {
   display: flex;
   flex-direction: column;
@@ -969,6 +972,9 @@ button:disabled {
 }
 .modal-leaderboard {
   width: min(100%, 860px);
+}
+.modal-replay {
+  width: min(100%, 920px);
 }
 .leaderboard-scope-row {
   display: flex;
