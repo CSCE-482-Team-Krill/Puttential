@@ -42,6 +42,15 @@ Use **Node 22.12+** and **PostgreSQL 17** (or Docker Desktop). Run commands from
 
    Open **http://127.0.0.1:3000**. There is no separate backend process: Next.js route handlers call `src/backend` services on the same origin. Check **http://127.0.0.1:3000/api/puzzles/today** for the published dated course and rules. Guest sessions, server-replayed results, progress, archive, leaderboard and sharing use the same-origin API.
 
+   To populate a published daily leaderboard with replayable local test entries, run:
+
+   ```sh
+   npm run leaderboard:seed -- 2026-11-16 12
+   ```
+
+   The command only accepts a local PostgreSQL hostname, is disabled in production, and replaces
+   only its own fixtures when re-run for the same date. Real leaderboard entries are preserved.
+
 5. Optionally start the editor in a second terminal:
 
    ```sh
