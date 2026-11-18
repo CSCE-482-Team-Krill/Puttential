@@ -239,10 +239,21 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   const refreshGate = new Promise<void>((resolve) => {
     releaseRefresh = resolve;
   });
+  let releaseScope!: () => void;
+  const scopeGate = new Promise<void>((resolve) => {
+    releaseScope = resolve;
+  });
+  let archiveTopLoads = 0;
   await page.route('**/api/puzzles/*/leaderboard?*', async (route) => {
     const params = new URL(route.request().url()).searchParams;
     if (params.get('scope') === 'daily' && params.get('view') === 'top' && ++dailyTopLoads === 2)
       await refreshGate;
+    if (
+      params.get('scope') === 'archive' &&
+      params.get('view') === 'top' &&
+      ++archiveTopLoads === 1
+    )
+      await scopeGate;
     return route.fulfill({
       json: {
         ...boardFixture(p),
@@ -269,20 +280,25 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   const [dailyBox, allTimeBox] = await Promise.all([daily.boundingBox(), allTime.boundingBox()]);
   expect(dailyBox?.y).toBe(allTimeBox?.y);
   await expect(page.getByRole('dialog')).toContainText('Open — provisional');
-  await expect(page.locator('.ranking-number')).toHaveText(['#1', '#1']);
-  await expect(page.getByRole('dialog')).toContainText('45 ranked players');
-  await expect(page.getByText('Puzzle date').locator('..')).toContainText('October 26th, 2026');
+  await expect(page.locator('.ranking-number')).toHaveText(['1', '1']);
+  await expect(page.getByRole('dialog')).not.toContainText('ranked players');
+  await expect(page.getByRole('dialog')).not.toContainText('Puzzle date');
+  await expect(page.getByRole('dialog').getByText('Oct 26, 2026')).toBeVisible();
   await expect(page.getByRole('dialog')).not.toContainText('November 17th, 2026');
   await expect(page.getByRole('columnheader')).toHaveText([
     'Rank',
     'Name',
-    'Force cost',
+    'Cost',
     'Tiles',
-    'First solve',
+    'Attempts',
     'Time',
     'Path',
     '',
   ]);
+  await expect(page.getByText('Cost', { exact: true })).toHaveAttribute(
+    'title',
+    'Total force cost. Lower values rank better.',
+  );
   const sharingHelp = page.getByRole('tooltip');
   await expect(sharingHelp).toBeHidden();
   await page.getByRole('button', { name: 'About leaderboard sharing' }).focus();
@@ -302,19 +318,35 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   );
   releaseRefresh();
   await expect(refresh).toBeEnabled();
-  const pageSelect = page.getByLabel('Leaderboard page', { exact: true });
-  await expect(pageSelect).toHaveValue('1');
-  await expect(pageSelect.locator('option')).toHaveText(['1', '2', '3']);
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
-  await expect(pageSelect).toHaveValue('2');
-  await pageSelect.selectOption('3');
-  await expect(pageSelect).toHaveValue('3');
-  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
+  const pageInput = page.getByLabel('Leaderboard page', { exact: true });
+  await expect(pageInput).toHaveValue('1');
+  await expect(page.getByRole('button', { name: 'First page', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Previous page', exact: true })).toBeDisabled();
+  await pageInput.fill('2');
+  await pageInput.press('Enter');
+  await expect(pageInput).toHaveValue('2');
+  await page.getByRole('button', { name: 'Last page', exact: true }).click();
+  await expect(pageInput).toHaveValue('3');
+  await expect(page.getByRole('button', { name: 'Next page', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Last page', exact: true })).toBeDisabled();
+  const heightBeforeScopeChange = await dialog.evaluate(
+    (element) => element.getBoundingClientRect().height,
+  );
   await allTime.click();
   await expect(allTime).toBeChecked();
+  await expect(dialog.getByRole('status')).toHaveText('Loading standings…');
+  expect(await dialog.evaluate((element) => element.getBoundingClientRect().height)).toBe(
+    heightBeforeScopeChange,
+  );
+  releaseScope();
+  await expect(dialog.getByRole('status')).toHaveCount(0);
   await expect(page.getByRole('dialog')).not.toContainText('Archive — open');
+  await daily.click();
+  await expect(daily).toBeChecked();
   await page.getByRole('button', { name: 'Around me', exact: true }).click();
-  await expect(page.getByRole('dialog')).toContainText('Solve this course to get a rank');
+  await expect(page.getByRole('dialog')).toContainText(
+    'You did not play this course on October 26th, 2026.',
+  );
   expect(await page.getByRole('dialog').evaluate((e) => e.scrollWidth <= e.clientWidth)).toBe(true);
   await page.screenshot({ path: `${artifacts}/leaderboard-mobile-after.png`, fullPage: true });
 });

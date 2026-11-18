@@ -50,8 +50,8 @@ test('community play saves a rank, persists after refresh and exposes a working 
   await page.reload();
   await expect(page.locator('#course-title')).toHaveText(map.title);
   await page.getByRole('button', { name: 'Leaderboard', exact: true }).click();
-  await expect(leaderboard.getByText('Your rank: #1')).toBeVisible();
-  await expect(leaderboard.getByText('1 ranked players')).toBeVisible();
+  await expect(leaderboard.getByText('Your rank: 1')).toBeVisible();
+  await expect(leaderboard).not.toContainText('ranked players');
   await expect(leaderboard.getByRole('button', { name: /Watch .* replay/ })).toBeEnabled();
   await leaderboard.getByRole('button', { name: 'Around me', exact: true }).click();
   await expect(leaderboard.locator('tbody tr')).toHaveCount(1);
@@ -77,6 +77,6 @@ test('community play saves a rank, persists after refresh and exposes a working 
     leaderboard.getByText('Replay complete — verified solution.', { exact: true }),
   ).toBeVisible();
   await leaderboard.getByRole('button', { name: 'Back to standings', exact: true }).click();
-  await expect(leaderboard.getByText('Your rank: #1')).toBeVisible();
+  await expect(leaderboard.getByText('Your rank: 1')).toBeVisible();
   expect(errors).toEqual([]);
 });

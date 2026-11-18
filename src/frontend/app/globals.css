@@ -1025,6 +1025,9 @@ button:disabled {
   outline: 3px solid var(--ui-green);
   outline-offset: 2px;
 }
+.leaderboard-scope input:disabled + span {
+  cursor: default;
+}
 .leaderboard-status {
   display: flex;
   align-items: center;
@@ -1093,34 +1096,47 @@ button:disabled {
   transform: translateY(0);
   visibility: visible;
 }
-.leaderboard-snapshot,
-.leaderboard-updated {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.leaderboard-snapshot {
-  gap: 12px;
-}
-.leaderboard-snapshot p {
-  margin: 0;
-}
-.leaderboard-updated > span {
-  color: var(--ui-muted);
-  font-size: 0.875rem;
-}
-.leaderboard-updated time {
-  color: var(--ui-ink);
-  font-size: 1.125rem;
-  font-weight: 600;
-}
 .leaderboard-personal {
-  gap: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--ui-line);
+  min-height: 24px;
 }
 .leaderboard-personal p {
   margin: 0;
+}
+.leaderboard-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 36px;
+}
+.leaderboard-toolbar > time {
+  color: var(--ui-ink);
+  font-size: 1rem;
+  font-weight: 700;
+}
+.leaderboard-view-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+.leaderboard-view-actions > button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-white);
+  color: var(--ui-green-strong);
+}
+.leaderboard-view-actions > button:hover:enabled {
+  background: var(--ui-turf-soft);
+}
+.leaderboard-view-actions > button[aria-pressed='true'] {
+  border-color: var(--ui-green);
+  background: var(--ui-turf);
 }
 .leaderboard-grid-wrap {
   max-width: 100%;
@@ -1133,7 +1149,8 @@ button:disabled {
 }
 .leaderboard-grid {
   width: 100%;
-  min-width: 740px;
+  min-width: 640px;
+  table-layout: fixed;
   border-spacing: 0;
   border-collapse: separate;
   color: var(--ui-ink);
@@ -1155,7 +1172,7 @@ button:disabled {
 .leaderboard-grid th,
 .leaderboard-grid td {
   height: 48px;
-  padding: 8px 10px;
+  padding: 6px 8px;
   border-right: 1px solid var(--ui-line);
   border-bottom: 1px solid var(--ui-line);
   text-align: right;
@@ -1175,52 +1192,63 @@ button:disabled {
 }
 .leaderboard-grid th:nth-child(2),
 .leaderboard-grid tbody th {
-  min-width: 150px;
   text-align: left;
 }
 .leaderboard-grid tbody th {
-  max-width: 220px;
   overflow: hidden;
   font-weight: 600;
   text-overflow: ellipsis;
+}
+.leaderboard-col-rank {
+  width: 54px;
+}
+.leaderboard-col-cost {
+  width: 64px;
+}
+.leaderboard-col-tiles {
+  width: 52px;
+}
+.leaderboard-col-attempts {
+  width: 76px;
+}
+.leaderboard-col-time,
+.leaderboard-col-path {
+  width: 68px;
+}
+.leaderboard-col-replay {
+  width: 48px;
+}
+.leaderboard-column-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: help;
+}
+.leaderboard-grid thead th:last-child,
+.leaderboard-grid tbody td:last-child {
+  text-align: center;
 }
 .leaderboard-grid tbody tr.your-row > * {
   background: var(--ui-turf);
   font-weight: 700;
 }
 .leaderboard-grid .watch-replay {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
   min-height: 32px;
-  padding: 5px 9px;
+  padding: 0;
   border: 1px solid #acc2a6;
   border-radius: var(--ui-r-sm);
   background: var(--ui-paper);
   color: var(--ui-green-strong);
-  font-size: 0.75rem;
-  font-weight: 700;
 }
 .leaderboard-grid .watch-replay:hover:enabled {
   background: var(--ui-turf-soft);
 }
 .leaderboard-pagination {
-  display: grid;
-  grid-template-columns: minmax(88px, 1fr) auto minmax(88px, 1fr);
-  align-items: center;
-  gap: 8px;
   margin-top: 8px;
 }
-.leaderboard-pagination > button {
-  min-height: 40px;
-  padding: 8px 12px;
-  border: 1px solid #acc2a6;
-  border-radius: var(--ui-r-sm);
-  background: var(--ui-paper);
-  color: var(--ui-green-strong);
-  font-weight: 600;
-}
-.leaderboard-pagination > button:hover:enabled {
-  background: var(--ui-turf-soft);
-}
-.modal-body .leaderboard-pagination label {
+.modal-body .leaderboard-page-input label {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -1229,21 +1257,12 @@ button:disabled {
   font-size: 0.8125rem;
   white-space: nowrap;
 }
-.modal-body .leaderboard-pagination select {
-  width: auto;
-  min-width: 56px;
-  padding-inline: 8px;
+.modal-body .leaderboard-page-input input {
+  width: 52px;
+  min-height: 36px;
+  padding: 4px 6px;
   font-weight: 700;
-}
-@media (max-width: 400px) {
-  .leaderboard-pagination {
-    grid-template-columns: 1fr 1fr;
-  }
-  .leaderboard-pagination label {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    justify-content: center;
-  }
+  text-align: center;
 }
 .ranking-row {
   display: grid;

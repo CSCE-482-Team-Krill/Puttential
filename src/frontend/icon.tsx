@@ -12,6 +12,9 @@ export type IconName =
   | 'help'
   | 'close'
   | 'arrow'
+  | 'up'
+  | 'refresh'
+  | 'eye'
   | 'reset'
   | 'play'
   | 'fire';
@@ -83,6 +86,19 @@ export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
     ),
     close: <path d="M5 5 19 19M19 5 5 19" />,
     arrow: <path d="M5 12h14m-6-6 6 6-6 6" />,
+    up: <path d="M12 19V5m-6 6 6-6 6 6" />,
+    refresh: (
+      <>
+        <path d="M20 7v5h-5M4 17v-5h5" />
+        <path d="M6.1 8a7 7 0 0 1 11.7-1L20 12M4 12l2.2 5a7 7 0 0 0 11.7-1" />
+      </>
+    ),
+    eye: (
+      <>
+        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+        <circle cx="12" cy="12" r="2.5" />
+      </>
+    ),
     reset: (
       <>
         <path d="M3 11a9 9 0 1 1 2.6 6.4M3 4v7h7" />

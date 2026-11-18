@@ -45,5 +45,5 @@ test('leaderboard waits for the selected archive course instead of being closed 
   await button.click();
   await expect(page.getByRole('dialog', { name: 'Leaderboard', exact: true })).toBeVisible();
   await expect(page.getByRole('radio', { name: 'All-time', exact: true })).toBeChecked();
-  await expect(page.getByRole('dialog')).toContainText('ranked players');
+  await expect(page.getByRole('table', { name: 'Verified rankings' })).toBeVisible();
 });
