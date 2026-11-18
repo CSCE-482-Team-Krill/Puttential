@@ -53,10 +53,10 @@ export function LeaderboardPanel({
         : null,
     [puzzle?.id, player?.id, scope, view, reconcileGuest],
   );
-  async function load(more = false) {
+  async function load(page = window?.board?.page) {
     if (!window) return;
     setBusy(true);
-    await window.load(more);
+    await window.load(page);
     if (window.board) {
       try {
         state.applyAvailability(window.board.availability);
@@ -294,10 +294,39 @@ export function LeaderboardPanel({
                 <p>Solve this course to get a rank.</p>
               )}
             </div>
-            {board.nextCursor && (
-              <button disabled={busy} onClick={() => void load(true)}>
-                Load more standings
-              </button>
+            {board.totalPages > 1 && (
+              <nav className="leaderboard-pagination" aria-label="Leaderboard pages">
+                <button
+                  disabled={busy || board.page === 1}
+                  onClick={() => void load(board.page - 1)}
+                >
+                  Previous
+                </button>
+                <label>
+                  <span>Page</span>
+                  <select
+                    aria-label="Leaderboard page"
+                    value={board.page}
+                    disabled={busy}
+                    onChange={(event) => void load(Number(event.target.value))}
+                  >
+                    {Array.from({ length: board.totalPages }, (_, index) => index + 1).map(
+                      (page) => (
+                        <option value={page} key={page}>
+                          {page}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                  <span>of {board.totalPages}</span>
+                </label>
+                <button
+                  disabled={busy || board.page === board.totalPages}
+                  onClick={() => void load(board.page + 1)}
+                >
+                  Next
+                </button>
+              </nav>
             )}
           </>
         )

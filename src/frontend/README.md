@@ -6,6 +6,6 @@
 
 `../shared/puzzle-contracts.ts` and `../shared/response-validation.ts` define revision 3.1 for both ends. The frontend validator module reexports the shared implementation. All competitive HTTP operations use one bounded scheduler; completion receipts have priority.
 
-Archive, profile, leaderboard and sharing consume persisted server values. Board pagination binds viewer, puzzle, scope, view and revision; copy text uses rank only for the exact saved best run. Date rollover retains the canvas and draft when content is unchanged.
+Archive, profile, leaderboard and sharing consume persisted server values. Leaderboards expose direct numbered pages while retaining signed, viewer-bound cursors for compatibility; copy text uses rank only for the exact saved best run. Date rollover retains the canvas and draft when content is unchanged.
 
 See [release instructions](../../docs/iteration-two-release.md). Historical integrated and frontend-only evidence remains in Git history; tests recreate fresh review output under `artifacts/`.

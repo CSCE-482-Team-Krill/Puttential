@@ -249,7 +249,9 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
         asOf: '2026-11-17T18:00:00Z',
         view: params.get('view'),
         scope: params.get('scope'),
-        totalPlayers: 3,
+        page: Number(params.get('page') ?? 1),
+        totalPlayers: 45,
+        totalPages: 3,
         rows: [
           boardFixture(p).rows[0],
           { ...boardFixture(p).rows[0], player: { id: 'other', nickname: 'Tied guest' } },
@@ -268,7 +270,7 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   expect(dailyBox?.y).toBe(allTimeBox?.y);
   await expect(page.getByRole('dialog')).toContainText('Open — provisional');
   await expect(page.locator('.ranking-number')).toHaveText(['#1', '#1']);
-  await expect(page.getByRole('dialog')).toContainText('3 ranked players');
+  await expect(page.getByRole('dialog')).toContainText('45 ranked players');
   await expect(page.getByText('Puzzle date').locator('..')).toContainText('October 26th, 2026');
   await expect(page.getByRole('dialog')).not.toContainText('November 17th, 2026');
   await expect(page.getByRole('columnheader')).toHaveText([
@@ -300,6 +302,14 @@ test('leaderboard uses server ranks/ties/population and around-me unsolved state
   );
   releaseRefresh();
   await expect(refresh).toBeEnabled();
+  const pageSelect = page.getByLabel('Leaderboard page', { exact: true });
+  await expect(pageSelect).toHaveValue('1');
+  await expect(pageSelect.locator('option')).toHaveText(['1', '2', '3']);
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await expect(pageSelect).toHaveValue('2');
+  await pageSelect.selectOption('3');
+  await expect(pageSelect).toHaveValue('3');
+  await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeDisabled();
   await allTime.click();
   await expect(allTime).toBeChecked();
   await expect(page.getByRole('dialog')).not.toContainText('Archive — open');

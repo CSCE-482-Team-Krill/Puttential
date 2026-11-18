@@ -158,6 +158,9 @@ export type LeaderboardResponse = {
   rows: LeaderboardRow[];
   me: (LeaderboardRow & { bestRunId: string }) | null;
   totalPlayers: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
   nextCursor: string | null;
   asOf: string;
   replayAccess: ReplayAccess;

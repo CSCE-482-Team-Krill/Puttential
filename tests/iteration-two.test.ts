@@ -84,6 +84,11 @@ test('strict rules/limits/cost maps and metadata are separate from canonical Lev
   assert.equal(validNickname('x'.repeat(24)), true);
   assert.equal(validNickname('x'.repeat(25)), false);
   assert.equal(validNickname('ab\u200bc'), false);
+  const board = boardFixture();
+  assert.equal(decodeBoard(board).page, 1);
+  assert.throws(() => decodeBoard({ ...board, page: 0 }));
+  assert.throws(() => decodeBoard({ ...board, totalPages: 2 }));
+  assert.throws(() => decodeBoard({ ...board, page: 2 }));
   const draft = Object.fromEntries(
     p.configuration.fields.map((f) => [f.id, { enabled: true, position: f.position }]),
   );
@@ -413,7 +418,7 @@ test('infrastructure-blocked verification retains intent/eligibility; saved canc
   assert.equal(record.response?.state, 'saved');
   queue.dispose();
 });
-test('viewer-bound pages discard A data under B, including unsolved me null and old cursors', async () => {
+test('viewer-bound pages discard A data under B, including an unsolved me response', async () => {
   const a = deferred<Response>();
   let changed = 0;
   const api = apiFixture(() => a.promise);
@@ -460,13 +465,22 @@ test('obsolete board generations cannot overwrite latest even if transport retur
   await old;
   assert.equal(window.board?.boardRevision, '2');
 });
-test('pagination restarts at most once per action and never appends mixed revisions', async () => {
-  let calls = 0;
-  const api = apiFixture(() => {
-    calls++;
-    return calls === 1
-      ? json({ ...boardFixture(), nextCursor: 'viewer-a-rev1' })
-      : json({ error: 'Changed', code: 'BOARD_REVISION_CHANGED', retryable: false }, 409);
+test('leaderboard page loads replace rows and request the selected page directly', async () => {
+  const pages: string[] = [];
+  const api = apiFixture((url) => {
+    const page = new URL(url, 'https://example.test').searchParams.get('page') ?? '';
+    pages.push(page);
+    const fixture = boardFixture();
+    return json({
+      ...fixture,
+      page: Number(page || 1),
+      totalPages: 2,
+      totalPlayers: 21,
+      rows:
+        page === '2'
+          ? [{ ...fixture.rows[0]!, player: { id: 'page-two', nickname: 'Page two' } }]
+          : fixture.rows,
+    });
   });
   const window = new LeaderboardWindow(
     api,
@@ -477,10 +491,13 @@ test('pagination restarts at most once per action and never appends mixed revisi
     () => {},
   );
   await window.load();
-  await window.load(true);
-  assert.equal(calls, 3);
-  assert.equal(window.board, null);
-  assert.match(window.message, /Standings are changing/);
+  await window.load(2);
+  assert.deepEqual(pages, ['', '2']);
+  assert.equal(window.board?.page, 2);
+  assert.deepEqual(
+    window.board?.rows.map((row) => row.player.id),
+    ['page-two'],
+  );
 });
 test('sharing attributes rank to exact run/viewer/scope; worse/equal and archive best cannot borrow it', () => {
   const p = puzzleFixture(),
@@ -649,16 +666,16 @@ test('Retry-After pauses before dispatch, never creates another run and keeps in
   assert.equal(record.phase, 'terminal');
   queue.dispose();
 });
-test('leaderboard viewer-change error discards its cursor rather than retrying it under another guest', async () => {
+test('leaderboard viewer-change error discards its selected page under another guest', async () => {
   let calls = 0,
     reconciled = 0;
-  const cursors: string[] = [];
+  const pages: string[] = [];
   const api = apiFixture((url) => {
     if (url === '/api/me') return json({ player: { ...playerFixture, id: 'guest-b' } });
-    cursors.push(new URL(url, 'https://example.test').searchParams.get('cursor') ?? '');
+    pages.push(new URL(url, 'https://example.test').searchParams.get('page') ?? '');
     calls++;
     return calls === 1
-      ? json({ ...boardFixture(), nextCursor: 'a-only-cursor' })
+      ? json({ ...boardFixture(), totalPlayers: 21, totalPages: 2 })
       : json(
           { error: 'Viewer changed', code: 'LEADERBOARD_VIEWER_CHANGED', retryable: false },
           409,
@@ -675,11 +692,11 @@ test('leaderboard viewer-change error discards its cursor rather than retrying i
     },
   );
   await window.load();
-  await window.load(true);
+  await window.load(2);
   assert.equal(window.board, null);
   assert.equal(reconciled, 1);
   assert.equal(calls, 2);
-  assert.deepEqual(cursors, ['', 'a-only-cursor']);
+  assert.deepEqual(pages, ['', '2']);
 });
 test('a contradictory viewer response with an unchanged confirmed cookie stops for manual refresh', async () => {
   let reconciliations = 0,

@@ -1201,6 +1201,50 @@ button:disabled {
 .leaderboard-grid .watch-replay:hover:enabled {
   background: var(--ui-turf-soft);
 }
+.leaderboard-pagination {
+  display: grid;
+  grid-template-columns: minmax(88px, 1fr) auto minmax(88px, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.leaderboard-pagination > button {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #acc2a6;
+  border-radius: var(--ui-r-sm);
+  background: var(--ui-paper);
+  color: var(--ui-green-strong);
+  font-weight: 600;
+}
+.leaderboard-pagination > button:hover:enabled {
+  background: var(--ui-turf-soft);
+}
+.modal-body .leaderboard-pagination label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  color: var(--ui-muted);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+.modal-body .leaderboard-pagination select {
+  width: auto;
+  min-width: 56px;
+  padding-inline: 8px;
+  font-weight: 700;
+}
+@media (max-width: 400px) {
+  .leaderboard-pagination {
+    grid-template-columns: 1fr 1fr;
+  }
+  .leaderboard-pagination label {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-content: center;
+  }
+}
 .ranking-row {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr) auto;
