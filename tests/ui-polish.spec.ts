@@ -6,6 +6,7 @@ import { dailyFixture, inventoryLevel, successLevel } from './ui-polish-fixtures
 const URL = 'http://127.0.0.1:3000/';
 const artifacts =
   process.env.PUTTENTIAL_REVIEW_ARTIFACTS ?? 'artifacts/iteration-two/ui-regression';
+const formatCoordinate = (value: number) => Number(value.toFixed(3)).toString();
 test.use({
   deviceScaleFactor: 1,
   reducedMotion: 'reduce',
@@ -248,9 +249,9 @@ test('desktop regions fit the viewport with empty, three, twelve or long invento
   );
 });
 
-test('real inventory, initial ON state, live counts and disabled cards agree', async ({ page }) => {
+test('real inventory, initial ON state and disabled cards agree', async ({ page }) => {
   await openLevel(page, inventoryLevel(2, { enabled: true }));
-  await expect(page.locator('.inventory-count')).toHaveText('2');
+  await expect(page.locator('.inventory-count')).toHaveCount(0);
   await expect(page.locator('.tile-option.selected')).toHaveCount(1);
   const cards = page.locator('.tile-option');
   await expect(cards.first()).toHaveAttribute('aria-pressed', 'true');
@@ -363,9 +364,30 @@ for (const [width, height] of [
     await expect(page.locator('h1')).toHaveCount(1);
     await expect(page.locator('.course-canvas')).toHaveCount(1);
     await expect(page.locator('.play-button')).toHaveCount(1);
-    await expect(
-      page.getByRole('navigation', { name: 'Main navigation' }).getByRole('button'),
-    ).toHaveText(['Calendar', 'Leaderboard', 'Community', 'Editor', 'Settings', 'Profile', 'Help']);
+    expect(
+      await page
+        .getByRole('navigation', { name: 'Main navigation' })
+        .getByRole('button')
+        .evaluateAll((buttons) =>
+          buttons.map((button) => ({
+            label: button.getAttribute('aria-label'),
+            text: button.textContent?.trim(),
+          })),
+        ),
+    ).toEqual(
+      ['Calendar', 'Leaderboard', 'Settings', 'Profile', 'Help', 'Community', 'Editor'].map(
+        (label) => ({ label, text: '' }),
+      ),
+    );
+    expect(
+      await page.getByRole('button', { name: 'Community', exact: true }).evaluate((button) => {
+        const separator = getComputedStyle(button.closest('.nav-view-group')!);
+        return {
+          border: separator.borderLeftWidth,
+          padding: separator.paddingLeft,
+        };
+      }),
+    ).toEqual({ border: '1px', padding: '12px' });
     await screenshot(page, `after-mobile-${width}x${height}`);
     await page.locator('.tile-option').click();
     await expectField(page, level, { x: -3, y: 0 });
@@ -424,7 +446,7 @@ for (const width of [390, 959, 960, 1050, 1440]) {
     const expectedY = -0.5 - (p.box.y + p.box.height + 200 - p.clientY) / p.scale;
     await expect(
       page.getByRole('spinbutton', { name: 'Selected tile Y', exact: true }),
-    ).toHaveValue(String(Math.round(expectedY * 1024) / 1024));
+    ).toHaveValue(formatCoordinate(Math.round(expectedY * 1024) / 1024));
   });
 }
 
@@ -516,7 +538,7 @@ test('unranked execution keeps mounted nodes across responsive changes and makes
   await screenshot(page, 'result-success');
   await page.getByRole('button', { name: 'Close panel' }).click();
   await expect(page.locator('canvas')).not.toHaveClass(/editable/);
-  await page.getByRole('button', { name: 'Try again', exact: true }).click();
+  await page.locator('canvas').click({ position: { x: 5, y: 5 } });
   await expect(page.locator('canvas')).toHaveClass(/editable/);
   expect(posts).toBe(0);
 });
@@ -537,14 +559,17 @@ test('practice failure stays unranked and explains close versus retry', async ({
   const dialog = page.getByRole('dialog', { name: 'So close' });
   await expect(dialog).toBeVisible();
   await expect(dialog).toContainText(
-    'Close this panel, then choose Try again to adjust your fields.',
+    'Close this panel, then click the course, choose a force block, or choose Try again to adjust your fields.',
   );
   await expect(dialog).toContainText('Practice — unranked');
   await screenshot(page, 'result-failure');
   await dialog.getByRole('button', { name: 'Close panel' }).click();
-  await expect(page.locator('.tile-option')).toBeDisabled();
-  await page.getByRole('button', { name: 'Try again', exact: true }).click();
-  await expect(page.locator('.tile-option')).toBeEnabled();
+  const forceBlock = page.locator('.tile-option');
+  await expect(forceBlock).toBeEnabled();
+  await expect(forceBlock).toHaveAttribute('aria-pressed', 'false');
+  await forceBlock.click();
+  await expect(page.locator('canvas')).toHaveClass(/editable/);
+  await expect(forceBlock).toHaveAttribute('aria-pressed', 'true');
   expect(attempts).toBe(0);
   expect(solutions).toBe(0);
 });
@@ -794,7 +819,6 @@ test('rendered text and essential control colors retain contrast in each UI stat
   }
   await measure('Body instruction', '.control-heading p');
   await measure('Course label', '.challenge-label');
-  await measure('Toolkit note', '.toolkit-note');
   await measure('Nav default', '.nav-button');
   await measure('Play default', '.play-button');
   await page.locator('.play-button').hover();

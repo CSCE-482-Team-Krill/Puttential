@@ -7,6 +7,7 @@ import { Icon } from '../../icon';
 import { BrandLogo } from '../../brand-logo';
 import type { IconName } from '../../icon';
 import { EXAMPLE_COURSES, PreviewPanel } from './preview-panels';
+import { LeaderboardTooltip } from '../../leaderboard-tooltip';
 
 const panels: {
   panel: Exclude<Panel, 'result' | null>;
@@ -33,17 +34,19 @@ export default function ModalPreview() {
         </span>
         <nav className="main-nav" aria-label="Modal preview">
           {panels.map((item) => (
-            <button
-              className={`nav-button ${panel === item.panel ? 'active' : ''}`}
-              key={item.panel}
-              onClick={() => setPanel(item.panel)}
-              aria-expanded={panel === item.panel}
-              aria-label={item.label}
-              title={item.label}
-            >
-              <Icon name={item.icon} size={23} />
-              <span>{item.label}</span>
-            </button>
+            <LeaderboardTooltip content={item.label} className="nav-tooltip" key={item.panel}>
+              {(tooltipProps) => (
+                <button
+                  className={`nav-button ${panel === item.panel ? 'active' : ''}`}
+                  onClick={() => setPanel(item.panel)}
+                  aria-expanded={panel === item.panel}
+                  aria-label={item.label}
+                  {...tooltipProps}
+                >
+                  <Icon name={item.icon} size={23} />
+                </button>
+              )}
+            </LeaderboardTooltip>
           ))}
         </nav>
       </header>

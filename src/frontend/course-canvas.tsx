@@ -40,6 +40,7 @@ export type Props = Readonly<{
   onView?: (view: View) => void;
   overlay?: (context: CanvasRenderingContext2D, view: View) => void;
   onMoveField: (id: string, position: Vec2) => void;
+  onRetry?: () => void;
   onSelectField?: (id: string) => void;
   selectedField?: string | null;
   placementBounds?: Bounds;
@@ -469,6 +470,10 @@ export function CourseCanvas(props: Props) {
         props.ariaLabel ?? 'Puzzle course. Drag force fields to move them before pressing Play.'
       }
       onPointerDown={(event) => {
+        if (propsRef.current.mode === 'done') {
+          propsRef.current.onRetry?.();
+          return;
+        }
         if (
           propsRef.current.editingLocked ||
           propsRef.current.mode !== 'setup' ||

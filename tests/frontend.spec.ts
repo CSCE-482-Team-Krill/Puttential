@@ -75,6 +75,9 @@ test('migrated Figma modals retain focus, keyboard controls and preferences', as
     );
     await expect(page.getByRole('button', { name: 'Calendar', exact: true })).toBeVisible();
   }
+  const calendar = page.getByRole('button', { name: 'Calendar', exact: true });
+  await calendar.hover();
+  await expect(page.getByRole('tooltip', { name: 'Calendar' })).toBeVisible();
 });
 
 test('legacy daily data is rejected and legacy courses never use legacy writes', async ({

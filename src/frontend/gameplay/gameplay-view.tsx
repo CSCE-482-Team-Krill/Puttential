@@ -35,6 +35,7 @@ export function GameplayCanvas({
       mode={puzzle.mode}
       trail={showPreview ? puzzle.trail : []}
       onMoveField={puzzle.moveField}
+      onRetry={puzzle.rewind}
       {...(selectFields
         ? { onSelectField: puzzle.selectField, selectedField: puzzle.selectedField }
         : {})}
