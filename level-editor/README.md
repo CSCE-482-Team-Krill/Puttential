@@ -37,6 +37,8 @@ The **Repository library** lists authored levels. **Legacy courses** loads cours
 
 ## Author a course
 
+The first visit opens a six-step, hands-on walkthrough covering the ball and goal, obstacle placement, resizing and rotation, force tiles, playtesting, and saving. Use **Tutorial** in either editor's header to replay it. The walkthrough uses a separate practice course; it never changes your current course, saved files, or recovery draft. Back, Skip step, Skip tutorial, and Escape let you move at your own pace.
+
 - Start a new course, open a legacy course, import JSON, or open a saved repository level.
 - Drag a preset from the palette, or select it and click on the course. Use the object list to select overlapping objects, the goal, or disabled fields.
 - Ctrl/Cmd-click objects on the canvas or in the object list to toggle multiple selections. Right-drag a rectangle to select fully enclosed objects; Ctrl/Cmd-right-drag adds a region. Managed walls are excluded. Drag a selected object to move the whole group.
