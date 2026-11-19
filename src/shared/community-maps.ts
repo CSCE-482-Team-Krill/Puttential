@@ -1,5 +1,5 @@
 import type { Level, LevelDocument } from '../game';
-import type { Placement, PuzzleRules } from './puzzle-contracts';
+import type { Placement, PuzzleRules, PuzzleResponse } from './puzzle-contracts';
 
 export type CommunityMapSummary = {
   id: string;
@@ -11,8 +11,21 @@ export type CommunityMapSummary = {
 export type CommunityMapDetail = CommunityMapSummary & {
   configuration: Level;
   rules: PuzzleRules;
+  competition: PuzzleResponse;
 };
 export type CommunityMapList = { items: CommunityMapSummary[]; nextCursor: string | null };
+export type CommunityMapFilters = {
+  query: string;
+  creator: string;
+  published: 'all' | 'week' | 'month';
+  sort: 'newest' | 'oldest' | 'title';
+};
+export const defaultCommunityMapFilters: CommunityMapFilters = {
+  query: '',
+  creator: '',
+  published: 'all',
+  sort: 'newest',
+};
 export type PublishCommunityMap = {
   requestId: string;
   expectedGuestId: string;

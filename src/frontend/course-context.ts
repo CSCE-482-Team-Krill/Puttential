@@ -2,10 +2,10 @@ import type { Level } from '../game';
 import type { PuzzleResponse } from '../shared/puzzle-contracts';
 import type { CommunityMapDetail } from '../shared/community-maps';
 export type CourseContext = (
-  | { key: string; source: 'daily' | 'archive'; level: Level; puzzle: PuzzleResponse }
+  | { key: string; source: 'daily' | 'archive' | 'community'; level: Level; puzzle: PuzzleResponse }
   | {
       key: string;
-      source: 'legacy' | 'practice' | 'local' | 'bonus' | 'community';
+      source: 'legacy' | 'practice' | 'local' | 'bonus';
       level: Level;
       puzzle?: never;
     }
@@ -18,13 +18,13 @@ export const publishedContext = (p: PuzzleResponse): CourseContext => ({
     p.rules.rulesVersion,
     p.rules.simulationVersion,
   ]),
-  source: p.date === p.todayDate ? 'daily' : 'archive',
+  source: p.communityMapId ? 'community' : p.date === p.todayDate ? 'daily' : 'archive',
   level: p.configuration,
   puzzle: p,
 });
 export const localContext = (
   level: Level,
-  source: 'legacy' | 'practice' | 'local' | 'bonus' | 'community' = 'practice',
+  source: 'legacy' | 'practice' | 'local' | 'bonus' = 'practice',
 ): CourseContext => ({
   key: JSON.stringify(['local-v1', source, level]),
   source,

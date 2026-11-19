@@ -28,6 +28,8 @@ import type {
   GameCommand,
   GameSnapshot,
   GameFailure,
+  GameOptions,
+  SoundEvent,
   Prediction,
   PredictionOptions,
   PredictionSample,
@@ -39,8 +41,11 @@ import type {
 } from './types';
 
 export const FIXED_DT = 1 / 120;
+/** Slower new contacts (settling, sliding onto a neighbouring wall piece) are not impacts. */
+export const IMPACT_MIN_SPEED = 0.05;
 
 type BodyPose = Readonly<{ position: Vec2; centerOfMass: Vec2 }>;
+type BodyMotion = Readonly<{ velocity: Vec2; angularVelocity: number; centerOfMass: Vec2 }>;
 
 type DynamicBody = Readonly<{ id: string; pieces: readonly ResolvedPiece[]; radius: number }>;
 type Field = Readonly<{
@@ -79,6 +84,14 @@ function sample(state: RenderState): PredictionSample {
   };
 }
 
+/** Velocity of a body's material point at `point` (circles and polygons alike). */
+function pointVelocity(motion: BodyMotion, point: Vec2): Vec2 {
+  return {
+    x: motion.velocity.x - motion.angularVelocity * (point.y - motion.centerOfMass.y),
+    y: motion.velocity.y + motion.angularVelocity * (point.x - motion.centerOfMass.x),
+  };
+}
+
 class Simulation implements Game {
   private readonly level: Level;
   private readonly bounds: ReturnType<typeof levelBounds>;
@@ -107,10 +120,17 @@ class Simulation implements Game {
   private renderFields: readonly RenderField[] | undefined;
   private renderState!: RenderState;
 
+  // Audio events: observation only, never part of snapshots or physics.
+  private stepSoundEvents: SoundEvent[] = [];
+  /** Collider handle pairs touching after the last step, to detect new contacts. */
+  private touchingPairs = new Set<string>();
+  private bodiesInWater = new Set<string>();
+
   constructor(
     data: Level,
     snapshot?: GameSnapshot,
     private readonly boundsFailure: 'any-body' | 'goal-body' = 'goal-body',
+    private readonly recordEvents = false,
   ) {
     const level = parseLevel(data);
     this.level = level;
@@ -144,6 +164,7 @@ class Simulation implements Game {
       this.fields.map(({ definition }) => [definition.id, copyFieldState(definition)]),
     );
     this.renderState = this.buildRenderState();
+    this.observeEvents();
   }
 
   queueCommand(command: GameCommand): void {
@@ -171,6 +192,9 @@ class Simulation implements Game {
   hasPendingTeleports() {
     return Object.keys(this.pendingTeleports).length > 0;
   }
+  soundEvents(): readonly SoundEvent[] {
+    return this.stepSoundEvents;
+  }
 
   applySetup(commands: readonly GameCommand[]): void {
     if (this.tick !== 0 || this.queuedCommands.length)
@@ -181,6 +205,7 @@ class Simulation implements Game {
   }
 
   step(): void {
+    if (this.stepSoundEvents.length) this.stepSoundEvents = [];
     if (this.failure) return;
     this.applyQueuedCommands();
     if (this.boundsFailure === 'any-body') this.checkBounds();
@@ -211,6 +236,7 @@ class Simulation implements Game {
     const movementStart = new Map(
       this.dynamicBodies.map((body) => [body.id, { ...this.rigidBody(body.id).translation() }]),
     );
+    const motion = this.recordEvents ? this.bodyMotion() : undefined;
     this.world.step();
     this.lastMovement = Object.fromEntries(
       this.dynamicBodies.map((body) => {
@@ -224,6 +250,7 @@ class Simulation implements Game {
     if (this.releasePortals()) this.applyZones();
     this.checkBounds();
     this.renderState = this.buildRenderState();
+    this.observeEvents(motion);
   }
 
   getRenderState(): RenderState {
@@ -276,6 +303,9 @@ class Simulation implements Game {
       }
     this.invalidateFields();
     this.renderState = this.buildRenderState();
+    // Resting contacts and submerged bodies in the restored state are not new events.
+    this.stepSoundEvents = [];
+    this.observeEvents();
   }
 
   /** Runs commands on a copy until settlement, failure or the tick limit. */
@@ -566,6 +596,7 @@ class Simulation implements Game {
             Math.abs(rigid.angvel()) <= force.sinkSpeed
           ) {
             this.destroyBody(body.id, 'water');
+            this.emit({ kind: 'water-sink', bodyId: body.id, point: { ...position } });
             break;
           }
         } else if (force.kind === 'lava' || force.kind === 'portal') {
@@ -583,8 +614,17 @@ class Simulation implements Game {
                   };
             rigid.setTranslation(impact, true);
           }
-          if (force.kind === 'lava') this.burnBody(body.id);
-          else {
+          const point = { ...rigid.translation() };
+          if (force.kind === 'lava') {
+            this.burnBody(body.id);
+            this.emit({ kind: 'lava-burn', bodyId: body.id, point });
+          } else {
+            this.emit({
+              kind: 'portal-enter',
+              bodyId: body.id,
+              portalId: zone.definition.id,
+              point,
+            });
             const exit = this.portalPartners.get(zone.definition.id)!;
             this.pendingTeleports[body.id] = {
               entryId: zone.definition.id,
@@ -634,6 +674,12 @@ class Simulation implements Game {
       this.portalLocks[body.id] = pending.pairId;
       this.portalCooldowns[body.id] = this.tick + pending.cooldownTicks;
       delete this.pendingTeleports[body.id];
+      this.emit({
+        kind: 'portal-exit',
+        bodyId: body.id,
+        portalId: pending.exitId,
+        point: { ...exit.state.position },
+      });
       released = true;
     }
     return released;
@@ -666,6 +712,121 @@ class Simulation implements Game {
   private destroyBody(id: string, cause: 'water' | 'lava'): void {
     this.destroyedBodies[id] = cause;
     this.rigidBody(id).setEnabled(false);
+  }
+
+  private emit(event: SoundEvent): void {
+    if (this.recordEvents) this.stepSoundEvents.push(event);
+  }
+
+  private isLive(id: string): boolean {
+    return !this.destroyedBodies[id] && !this.burntBodies.has(id) && !this.pendingTeleports[id];
+  }
+
+  /** Motion before a step: an impact's closing speed is measured before the solver resolves it. */
+  private bodyMotion(): Map<string, BodyMotion> {
+    const motion = new Map<string, BodyMotion>();
+    for (const body of this.dynamicBodies) {
+      if (!this.isLive(body.id)) continue;
+      const rigid = this.rigidBody(body.id);
+      motion.set(body.id, {
+        velocity: { ...rigid.linvel() },
+        angularVelocity: rigid.angvel(),
+        centerOfMass: { ...rigid.worldCom() },
+      });
+    }
+    return motion;
+  }
+
+  /**
+   * Derives impacts and water crossings from the settled state; read-only, so physics
+   * is identical with events on or off. Without `motion` it only records the current
+   * contacts and submerged bodies (after creation or restore) without emitting.
+   */
+  private observeEvents(motion?: ReadonlyMap<string, BodyMotion>): void {
+    if (!this.recordEvents) return;
+    this.observeContacts(motion);
+    this.observeWater(!!motion);
+  }
+
+  private observeContacts(motion?: ReadonlyMap<string, BodyMotion>): void {
+    const idsByHandle = new Map(
+      Object.entries(this.bodyHandles).map(([id, handle]) => [handle, id] as const),
+    );
+    const touching = new Set<string>();
+    for (const body of this.dynamicBodies) {
+      if (!this.isLive(body.id)) continue;
+      const rigid = this.rigidBody(body.id);
+      for (let i = 0; i < rigid.numColliders(); i++) {
+        const collider = rigid.collider(i);
+        const others: RAPIER.Collider[] = [];
+        this.world.contactPairsWith(collider, (other) => others.push(other));
+        for (const other of others) {
+          const parent = other.parent();
+          const otherId = parent ? idsByHandle.get(parent.handle) : undefined;
+          const otherLive = otherId !== undefined && this.isLive(otherId);
+          // A pair of live bodies is examined once, from the lower ID.
+          if (otherId === body.id || (otherLive && otherId! < body.id)) continue;
+          let point: Vec2 | undefined, normal: Vec2 | undefined;
+          this.world.contactPair(collider, other, (manifold) => {
+            if (point || manifold.numSolverContacts() === 0) return;
+            const contact = manifold.solverContactPoint(0);
+            if (!contact) return;
+            const n = manifold.normal();
+            point = { x: contact.x, y: contact.y };
+            normal = { x: n.x, y: n.y };
+          });
+          if (!point || !normal) continue;
+          const key = `${collider.handle}:${other.handle}`;
+          touching.add(key);
+          const own = motion?.get(body.id);
+          if (!own || this.touchingPairs.has(key)) continue;
+          const theirs = otherLive ? motion!.get(otherId!) : undefined;
+          const a = pointVelocity(own, point),
+            b = theirs ? pointVelocity(theirs, point) : { x: 0, y: 0 };
+          // Orient the normal away from this body so a closing speed is positive.
+          const outward =
+            (point.x - own.centerOfMass.x) * normal.x + (point.y - own.centerOfMass.y) * normal.y;
+          const speed = (outward < 0 ? -1 : 1) * ((a.x - b.x) * normal.x + (a.y - b.y) * normal.y);
+          if (speed >= IMPACT_MIN_SPEED)
+            this.emit({
+              kind: 'impact',
+              bodyId: body.id,
+              otherId: otherLive ? otherId! : null,
+              speed,
+              point,
+            });
+        }
+      }
+    }
+    this.touchingPairs = touching;
+  }
+
+  private observeWater(emit: boolean): void {
+    const waters = this.zoneGeometry().filter((z) => z.definition.force.kind === 'water');
+    const inside = new Set<string>();
+    if (waters.length)
+      for (const body of this.dynamicBodies) {
+        if (!this.isLive(body.id)) continue;
+        const center = this.rigidBody(body.id).worldCom();
+        if (waters.some((zone) => pointInPolygon(center, zone.polygon))) inside.add(body.id);
+      }
+    if (emit) {
+      const crossing = (kind: 'water-enter' | 'water-exit', id: string) => {
+        const rigid = this.rigidBody(id),
+          velocity = rigid.linvel();
+        this.emit({
+          kind,
+          bodyId: id,
+          speed: Math.hypot(velocity.x, velocity.y),
+          point: { ...rigid.translation() },
+        });
+      };
+      for (const id of inside) if (!this.bodiesInWater.has(id)) crossing('water-enter', id);
+      // Sinking, burning and portal capture have their own events.
+      for (const id of this.bodiesInWater)
+        if (!inside.has(id) && this.isLive(id)) crossing('water-exit', id);
+    }
+    this.bodiesInWater = inside;
   }
 
   private buildRenderState(): RenderState {
@@ -736,11 +897,8 @@ class Simulation implements Game {
 
 let rapierInitialization: Promise<void> | undefined;
 
-export async function createGame(
-  level: Level,
-  options: { boundsFailure?: 'any-body' | 'goal-body' } = {},
-): Promise<Game> {
+export async function createGame(level: Level, options: GameOptions = {}): Promise<Game> {
   rapierInitialization ??= RAPIER.init();
   await rapierInitialization;
-  return new Simulation(level, undefined, options.boundsFailure);
+  return new Simulation(level, undefined, options.boundsFailure, options.soundEvents ?? false);
 }

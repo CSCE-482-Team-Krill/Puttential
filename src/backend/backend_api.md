@@ -2,22 +2,22 @@
 
 Next.js serves all routes on the game origin with private, no-store responses. The runtime contract and validators live in `src/shared/puzzle-contracts.ts` and `src/shared/response-validation.ts`. Author solutions are never exposed. Player placements are exposed only through the replay endpoint after daily close; ordinary puzzle, leaderboard and run lifecycle responses omit them.
 
-| Method      | Path                                                   | Behavior                                                                                          |
-| ----------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| GET         | /api/puzzles/today                                     | Published Central-date course, immutable rules, availability and next midnight                    |
-| GET         | /api/puzzles/by-date/YYYY-MM-DD                        | Published historical/current course; future dates are hidden                                      |
-| POST        | /api/guest                                             | Reuse or create an opaque HttpOnly guest session                                                  |
-| GET / PATCH | /api/me                                                | Read guest / update nickname with expectedGuestId                                                 |
-| GET         | /api/me/progress?puzzleId=...                          | Persisted starts, frozen first solve, best daily/archive and revisions                            |
-| POST        | /api/runs                                              | Idempotent counted start with expected guest, UUID request ID and canonical Placement             |
-| GET         | /api/runs/by-request/requestId                         | Recover the current guest's ambiguous start                                                       |
-| GET         | /api/runs/runId                                        | Read owned lifecycle and current availability; recover expired verification leases                |
-| POST        | /api/runs/runId/complete                               | Persist one immutable completion receipt, then perform server replay                              |
-| GET         | /api/puzzles?month=YYYY-MM&limit=20&cursor=...         | Nonfuture archive summaries with current guest progress                                           |
-| GET         | /api/puzzles/puzzleId/leaderboard?scope=daily&view=top | Verified standings, ties, percentile, me and finality                                             |
-| GET         | /api/puzzles/puzzleId/replays/playerId?scope=daily     | Current best verified successful solution for the selected daily/archive board, after daily close |
+| Method      | Path                                                          | Behavior                                                                                          |
+| ----------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| GET         | /api/puzzles/today                                            | Published Central-date course, immutable rules, availability and next midnight                    |
+| GET         | /api/puzzles/by-date/YYYY-MM-DD                               | Published historical/current course; future dates are hidden                                      |
+| POST        | /api/guest                                                    | Reuse or create an opaque HttpOnly guest session                                                  |
+| GET / PATCH | /api/me                                                       | Read guest / update nickname with expectedGuestId                                                 |
+| GET         | /api/me/progress?puzzleId=...                                 | Persisted starts, frozen first solve, best daily/archive and revisions                            |
+| POST        | /api/runs                                                     | Idempotent counted start with expected guest, UUID request ID and canonical Placement             |
+| GET         | /api/runs/by-request/requestId                                | Recover the current guest's ambiguous start                                                       |
+| GET         | /api/runs/runId                                               | Read owned lifecycle and current availability; recover expired verification leases                |
+| POST        | /api/runs/runId/complete                                      | Persist one immutable completion receipt, then perform server replay                              |
+| GET         | /api/puzzles?month=YYYY-MM&limit=20&cursor=...                | Nonfuture archive summaries with current guest progress                                           |
+| GET         | /api/puzzles/puzzleId/leaderboard?scope=daily&view=top&page=1 | Verified standings, numbered pages, ties, percentile, me and finality                             |
+| GET         | /api/puzzles/puzzleId/replays/playerId?scope=daily            | Current best verified successful solution for the selected daily/archive board, after daily close |
 
-Leaderboard scope is `daily` or `archive`; view is `top` or `around-me`. Pagination accepts 1?50 rows and signed cursors bound to guest, puzzle, scope, view and board revision. An invalidated board returns 409 BOARD_REVISION_CHANGED; a different viewer returns 409 LEADERBOARD_VIEWER_CHANGED.
+Leaderboard scope is `daily` or `archive`; view is `top` or `around-me`. Pagination accepts 1–50 rows and either a 1-based `page` or a signed cursor bound to guest, puzzle, scope, view and board revision. Responses include `page`, `pageSize`, and `totalPages`; an initial `around-me` read selects the page containing the viewer. Cursor pagination remains backward-compatible. An invalidated cursor returns 409 BOARD_REVISION_CHANGED; a different cursor viewer returns 409 LEADERBOARD_VIEWER_CHANGED.
 
 Leaderboard responses include `replayAccess: { available, unlocksAt }` for both scopes. All leaderboard best solutions, including existing saved solutions, are shared automatically once the original daily window closes at America/Chicago midnight, even while eligible verification is pending. Archive rankings remain open. Replay reads require a guest cookie and select the current best in one database snapshot; a player who improved since the standings loaded may return a newer best. Responses contain `viewerGuestId`, `puzzleId`, `scope`, `player`, `placement`, `result`, and `availability`, without guest secrets or run recovery data. Replay reads never start, complete or verify runs. Before unlock return 403 REPLAY_LOCKED; canceled courses return 410 PUZZLE_CANCELED; unavailable solutions return 404 NOT_FOUND. Playback requires matching level, rule and simulation versions; obsolete engines are not bundled for historical playback.
 
@@ -31,6 +31,17 @@ The compatibility `POST /api/attempts` and `POST /api/solutions` routes retain t
 
 See [release and publishing](../../docs/iteration-two-release.md) for database setup, supported versions, capacity, worker recovery, cancellation and acceptance.
 
+# Player statistics
+
+`GET /api/me/stats` returns the current guest's profile statistics and up to 366 days of history (newest first). Shape: `PlayerStatsResponse` in `src/shared/puzzle-contracts.ts`.
+
+- `stats`: games played and solved, daily solves, current and best streak, average daily percentile, best daily finish, top 10% / top 1% finishes, average first-solve attempts and average tiles.
+- `days`: one entry per published course with status, first-solve attempts, best verified metrics, and daily rank, player count and percentile.
+- `archiveRank` / `archivePlayers` / `archivePercentile` are the all-time standing (archive board), which includes late plays. Late plays never count toward streaks or the daily averages.
+- Ranks and percentiles use the same score order and tie rule as the leaderboard. Percentile is the share of players ranked strictly below, so a one-player board is 0.
+- A streak day is a verified success inside the course's original Central day. An unsolved today does not break the current streak until the day ends. Canceled courses are skipped; a date with no published course breaks the streak.
+- `GET /api/puzzles?month=YYYY-MM` archive items carry the same six standing fields for each course, computed the same way.
+
 # Community maps
 
 `GET /api/community` lists published summaries with optional `cursor` pagination.
@@ -38,3 +49,15 @@ See [release and publishing](../../docs/iteration-two-release.md) for database s
 `POST /api/community` verifies a solved editor document and publishes an immutable
 map using the existing guest cookie, origin checks and a retryable request ID.
 See [community publishing](../../docs/community-publishing.md) for the request and deployment details.
+
+Community map details include a `competition` course with a null `date` and a
+`communityMapId`. Its ID uses the same `/api/runs`, `/api/me/progress`, leaderboard,
+and replay endpoints as daily courses. Community standings use `scope=archive`
+(also the default when omitted for a community course) and stay open indefinitely.
+Daily scope is rejected for community courses. Verified solves use the same force
+cost, tile count, first-solve attempts, completion tick and path-length ranking,
+ties, percentiles, viewer-bound pagination and best-run selection as daily play.
+Community replays are available immediately after publication. Publishing an
+author proof does not submit a ranked player run. The community leaderboard
+migration backfills existing maps without changing their public URLs or adding
+them to the daily calendar.

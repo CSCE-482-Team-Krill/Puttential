@@ -170,6 +170,19 @@ export class PuzzleApi {
       decodeBoard,
       o,
     );
+  boardPage = (
+    id: string,
+    scope: Scope,
+    view: BoardView,
+    page: number | null = null,
+    limit = 10,
+    o?: RequestOptions,
+  ) =>
+    this.request(
+      `/api/puzzles/${encodeURIComponent(id)}/leaderboard?${new URLSearchParams({ scope, view, limit: String(limit), ...(page === null ? {} : { page: String(page) }) })}`,
+      decodeBoard,
+      o,
+    );
   replay = (id: string, playerId: string, scope: Scope, o?: RequestOptions) =>
     this.request(
       `/api/puzzles/${encodeURIComponent(id)}/replays/${encodeURIComponent(playerId)}?${new URLSearchParams({ scope })}`,

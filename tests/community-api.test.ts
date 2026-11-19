@@ -1,8 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { communityApi, CommunityApiError } from '../src/frontend/community-api';
-import { communityPublishingFixture } from './community-publishing-fixtures';
-import { defaultRules } from '../src/game/run-evaluation';
+import {
+  communityPublishingFixture,
+  communityDetailFixture,
+} from './community-publishing-fixtures';
 
 const summary = {
   id: '00000000-0000-4000-8000-000000000001',
@@ -11,12 +13,31 @@ const summary = {
   creatorName: 'Test author',
   createdAt: '2026-11-10T00:00:00.000Z',
 };
-const detail = () => {
-  const { document } = communityPublishingFixture();
-  return { ...summary, configuration: document.level, rules: defaultRules(document.level) };
-};
+const detail = () => communityDetailFixture(summary);
 const invalidData = (error: unknown) =>
   error instanceof CommunityApiError && error.code === 'INVALID_DATA' && error.retryable;
+
+test('community searches encode filters and retain them when requesting another page', async (t) => {
+  const paths: string[] = [];
+  t.mock.method(globalThis, 'fetch', async (path: string) => {
+    paths.push(path);
+    return Response.json({ items: [], nextCursor: null });
+  });
+  await communityApi.list(summary.id, undefined, {
+    query: '  hills & valleys?  ',
+    creator: '  A+B  ',
+    published: 'week',
+    sort: 'title',
+  });
+  const params = new URL(paths[0]!, 'http://localhost').searchParams;
+  assert.equal(params.get('cursor'), summary.id);
+  assert.equal(params.get('q'), 'hills & valleys?');
+  assert.equal(params.get('creator'), 'A+B');
+  assert.equal(params.get('published'), 'week');
+  assert.equal(params.get('sort'), 'title');
+  await communityApi.list();
+  assert.equal(paths[1], '/api/community');
+});
 
 test('community reads honor both their deadline and caller cancellation', async (t) => {
   let deadline = new AbortController();
@@ -108,6 +129,17 @@ test('map reads validate identity, configuration, rules and exact tile costs', a
     { configuration: { ...detail().configuration, formatVersion: 999 } },
     { rules: null },
     { rules: {} },
+    { competition: undefined },
+    { competition: { ...detail().competition, date: '2026-11-10' } },
+    { competition: { ...detail().competition, communityMapId: summary.id.replace(/1$/, '2') } },
+    { competition: { ...detail().competition, title: 'Another course' } },
+    {
+      competition: {
+        ...detail().competition,
+        configuration: { ...detail().configuration, id: 'another-course' },
+      },
+    },
+    { competition: { ...detail().competition, rules: { ...detail().rules, maxTicks: 100 } } },
     ...[
       { simulationVersion: '' },
       { rulesVersion: 3 },

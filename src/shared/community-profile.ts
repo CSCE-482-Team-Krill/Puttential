@@ -1,5 +1,6 @@
 import type { LevelDocument } from '../game/levels/codec';
 import type { PieceShape } from '../game/levels/types';
+import { isLevelColorScheme } from '../game/levels/color-schemes';
 import { validateDocument } from '../game/levels/document';
 import { shapePolygon } from '../game/geometry/shapes';
 import { signedPolygonArea, triangulateSimplePolygon } from '../game/geometry/polygon';
@@ -115,6 +116,7 @@ export function validateCommunityStructure(input: unknown): LevelDocument {
   if (root) literal(root.version, 2, 'document.version');
   const level = object(engineOnly ? value : root?.level, 'level', [
     'formatVersion',
+    'colorScheme',
     'id',
     'version',
     'gravity',
@@ -126,6 +128,8 @@ export function validateCommunityStructure(input: unknown): LevelDocument {
     'prediction',
   ]);
   literal(level.formatVersion, 1, 'level.formatVersion');
+  if (level.colorScheme !== undefined && !isLevelColorScheme(level.colorScheme))
+    add('VALUE', 'level.colorScheme', 'a supported preset or custom primary/secondary hex colors');
   id(level.id, 'level.id');
   range(level.version, 1, Number.MAX_SAFE_INTEGER, 'level.version', true);
   vector(level.gravity, 'level.gravity', 20, 20);

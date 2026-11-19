@@ -11,20 +11,32 @@ import {
 import { communityInventory } from '../scripts/check-community-profile';
 import { createGame } from '../src/game/simulation';
 
-test('production profile reproduces all 33 source/sidecar checksums and reviewed outcomes', async () => {
+test('production profile reproduces authored source/sidecar checksums and reviewed admission outcomes', async () => {
   const actual = await communityInventory();
   const baseline = JSON.parse(
     await readFile('tests/fixtures/community-profile/compatibility-baseline.json', 'utf8'),
   );
   assert.deepEqual(actual, baseline);
-  assert.equal(actual.rows.length, 33);
-  assert.equal(actual.rows.filter((row) => row.original.accepted).length, 21);
-  assert.equal(actual.rows.filter((row) => row.adjusted.accepted).length, 33);
-  for (const row of actual.rows.filter((row) => !row.original.accepted))
+  assert.equal(actual.rows.length, 41);
+  assert.equal(actual.rows.filter((row) => row.original.accepted).length, 27);
+  assert.equal(actual.rows.filter((row) => row.adjusted.accepted).length, 39);
+  for (const row of actual.rows.filter((row) => !row.original.accepted && row.adjusted.accepted))
     assert.deepEqual(
       row.original.issues.map((issue) => issue.path),
       ['level.prediction.maxTicks'],
     );
+  assert.deepEqual(
+    actual.rows
+      .filter((row) => !row.adjusted.accepted)
+      .map((row) => ({
+        name: row.name,
+        paths: row.adjusted.issues.map((issue) => issue.path),
+      })),
+    [
+      { name: 'big-boom.json', paths: ['level.dynamicBodies.length', 'level.totalPieces'] },
+      { name: 'konami.json', paths: ['level.dynamicBodies.length'] },
+    ],
+  );
 });
 test('public profile rejects hostile physics and unsupported document structures', () => {
   const mutations: [string, (document: any) => void][] = [

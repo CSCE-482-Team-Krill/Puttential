@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { CourseCanvas, toCanvas, toWorld, polygonPath } from '../../frontend/course-canvas';
 import type { View } from '../../frontend/course-canvas';
 import { portalPairColors } from '../../frontend/portal-colors';
@@ -62,7 +62,9 @@ export function EditorCanvas(props: Props) {
   const view = useRef<View | null>(null),
     drag = useRef<Drag | null>(null),
     lastPreview = useRef<LevelDocument | null>(null);
-  useEffect(() => {
+  // Invalidate gestures during the document commit, before another pointer event
+  // can use the old preview after Undo, Redo, or a document replacement.
+  useLayoutEffect(() => {
     drag.current = null;
     lastPreview.current = null;
     setPreview(null);

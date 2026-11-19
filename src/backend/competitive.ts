@@ -172,7 +172,8 @@ export function puzzleResponse(p: Puzzle, now = new Date()): PuzzleResponse {
     return fail(503, 'COURSE_NOT_PUBLISHED', 'This course has not passed publishing validation.');
   return decodePuzzle({
     id: p.id,
-    date: p.date.toISOString().slice(0, 10),
+    date: p.date?.toISOString().slice(0, 10) ?? null,
+    ...(p.communityMapId ? { communityMapId: p.communityMapId } : {}),
     title: p.title,
     seed: p.seed,
     difficulty: p.difficulty,
@@ -186,7 +187,7 @@ export function puzzleResponse(p: Puzzle, now = new Date()): PuzzleResponse {
 }
 async function published(tx: Tx, id: string) {
   const p = await tx.puzzle.findUnique({ where: { id } });
-  if (!p || p.date.toISOString().slice(0, 10) > centralDateString())
+  if (!p || (p.date && p.date.toISOString().slice(0, 10) > centralDateString()))
     return fail(404, 'NOT_FOUND', 'Course not found.');
   return p;
 }
@@ -273,7 +274,10 @@ async function lockPuzzle(tx: Tx, id: string) {
   return published(tx, id);
 }
 async function databaseNow(tx: Tx) {
-  const [row] = await tx.$queryRaw<{ now: Date }[]>`SELECT clock_timestamp() AS now`;
+  // Match Prisma's UTC timestamp decoding even when PostgreSQL uses a local timezone.
+  const [row] = await tx.$queryRaw<
+    { now: Date }[]
+  >`SELECT clock_timestamp() AT TIME ZONE 'UTC' AS now`;
   return row!.now;
 }
 /** Operator-only service; no public mutation route exposes publishing authority. */
@@ -408,7 +412,7 @@ export async function completeRun(guest: Guest, id: string, intent: CompleteRunR
     }
     // Receipt and qualification are committed before replay; retries never move this timestamp.
     const now = await databaseNow(tx);
-    const date = p.date.toISOString().slice(0, 10);
+    const date = p.date?.toISOString().slice(0, 10);
     const eligible =
       intent.kind === 'terminal' &&
       centralDateString(run.startedAt) === date &&
@@ -426,7 +430,7 @@ export async function completeRun(guest: Guest, id: string, intent: CompleteRunR
   await verifyRun(id);
   return readRun(guest, id);
 }
-function score(result: SavedResult, first: number) {
+export function score(result: SavedResult, first: number) {
   const m = result.metrics!;
   return [m.forceCost, m.tileCount, first, m.completionTick, m.pathLengthQ];
 }
@@ -597,16 +601,34 @@ export async function leaderboard(
   params: URLSearchParams,
 ): Promise<LeaderboardResponse> {
   const secret = await cursorSecret();
-  const scope = params.get('scope') ?? 'daily',
+  const requestedScope = params.get('scope'),
     view = params.get('view') ?? 'top',
     limit = pageSize(params),
-    cursor = decodeCursor(params.get('cursor'), secret);
-  if (!['daily', 'archive'].includes(scope) || !['top', 'around-me'].includes(view))
+    cursorParam = params.get('cursor'),
+    pageParam = params.get('page'),
+    cursor = decodeCursor(cursorParam, secret),
+    requestedPage = pageParam === null ? null : Number(pageParam);
+  if (
+    (requestedScope !== null && !['daily', 'archive'].includes(requestedScope)) ||
+    !['top', 'around-me'].includes(view)
+  )
     return fail(400, 'INVALID_BOARD', 'Invalid leaderboard view.');
+  if (cursorParam !== null && pageParam !== null)
+    return fail(400, 'INVALID_PAGE', 'Use either a page or a cursor, not both.');
+  if (
+    requestedPage !== null &&
+    (!Number.isSafeInteger(requestedPage) ||
+      requestedPage < 1 ||
+      requestedPage > Math.floor(Number.MAX_SAFE_INTEGER / limit))
+  )
+    return fail(400, 'INVALID_PAGE', 'Use a positive leaderboard page number.');
   return prisma.$transaction(
     async (tx) => {
       const p = await published(tx, puzzleId),
         revision = String(p.boardRevision);
+      const scope = requestedScope ?? (p.communityMapId ? 'archive' : 'daily');
+      if (p.communityMapId && scope !== 'archive')
+        return fail(400, 'INVALID_BOARD', 'Community courses have an all-time leaderboard.');
       if (cursor && cursor.guest !== guest.id)
         return fail(409, 'LEADERBOARD_VIEWER_CHANGED', 'The page belongs to a different guest.');
       if (cursor && (cursor.puzzle !== p.id || cursor.scope !== scope || cursor.view !== view))
@@ -663,11 +685,16 @@ export async function leaderboard(
       }
       const meIndex = ranked.findIndex((r) => r.player.id === guest.id),
         me = ranked[meIndex] ?? null;
-      const offset =
-        cursor?.offset ??
-        (view === 'around-me' && meIndex >= 0 ? Math.max(0, meIndex - Math.floor(limit / 2)) : 0);
+      const totalPages = Math.max(1, Math.ceil(ranked.length / limit));
+      const defaultPage =
+        view === 'around-me' && meIndex >= 0 ? Math.floor(meIndex / limit) + 1 : 1;
+      const page = cursor
+        ? Math.min(totalPages, Math.floor(cursor.offset / limit) + 1)
+        : Math.min(requestedPage ?? defaultPage, totalPages);
+      const offset = cursor?.offset ?? (page - 1) * limit;
       const now = await databaseNow(tx),
-        closed = now >= centralMidnight(shiftDate(p.date.toISOString().slice(0, 10), 1));
+        closed =
+          !!p.date && now >= centralMidnight(shiftDate(p.date.toISOString().slice(0, 10), 1));
       const pending =
         p.canceledAt || scope !== 'daily'
           ? 0
@@ -684,6 +711,9 @@ export async function leaderboard(
         rows: ranked.slice(offset, offset + limit).map(({ bestRunId, ...row }) => row),
         me,
         totalPlayers: ranked.length,
+        page,
+        pageSize: limit,
+        totalPages,
         nextCursor:
           offset + limit < ranked.length
             ? encodeCursor(
@@ -692,7 +722,12 @@ export async function leaderboard(
               )
             : null,
         asOf: now.toISOString(),
-        replayAccess: replayAccess(p.date.toISOString().slice(0, 10), now, !!p.canceledAt),
+        replayAccess: replayAccess(
+          p.date?.toISOString().slice(0, 10) ?? null,
+          now,
+          !!p.canceledAt,
+          p.createdAt,
+        ),
         submissionClosed: scope === 'daily' && closed,
         pendingEligibleCount: pending,
         final: !p.canceledAt && scope === 'daily' && closed && pending === 0,
@@ -709,16 +744,21 @@ export async function readReplay(
   playerId: string,
   params: URLSearchParams,
 ): Promise<ReplayResponse> {
-  const scope = params.get('scope') ?? 'daily';
-  if (scope !== 'daily' && scope !== 'archive')
+  const requestedScope = params.get('scope');
+  if (requestedScope !== null && requestedScope !== 'daily' && requestedScope !== 'archive')
     return fail(400, 'INVALID_BOARD', 'Invalid leaderboard scope.');
   return prisma.$transaction(
     async (tx) => {
       const p = await published(tx, puzzleId);
+      const scope = requestedScope ?? (p.communityMapId ? 'archive' : 'daily');
+      if (p.communityMapId && scope !== 'archive')
+        return fail(400, 'INVALID_BOARD', 'Community courses have an all-time leaderboard.');
       if (!p.rules) return fail(404, 'NOT_FOUND', 'Course not found.');
       if (p.canceledAt) return fail(410, 'PUZZLE_CANCELED', 'This course was canceled.');
       const now = await databaseNow(tx);
-      if (!replayAccess(p.date.toISOString().slice(0, 10), now).available)
+      if (
+        !replayAccess(p.date?.toISOString().slice(0, 10) ?? null, now, false, p.createdAt).available
+      )
         return fail(
           403,
           'REPLAY_LOCKED',
@@ -783,6 +823,7 @@ export async function archive(guest: Guest, params: URLSearchParams) {
     : undefined;
   const puzzles = await prisma.puzzle.findMany({
     where: {
+      communityMapId: null,
       date: {
         lte: new Date(`${centralDateString()}T00:00:00Z`),
         ...(start ? { gte: start } : {}),
@@ -795,15 +836,24 @@ export async function archive(guest: Guest, params: URLSearchParams) {
     take: limit + 1,
     include: { guestProgress: { where: { guestId: guest.id } } },
   });
-  const items = puzzles.slice(0, limit).map((p) => {
+  const page = puzzles.slice(0, limit);
+  // Dynamic import: standings.ts imports score/compareScore from this file.
+  const { loadStandings, NO_STANDINGS } = await import('./standings');
+  const standings = await loadStandings(
+    page
+      .filter((p) => !p.canceledAt)
+      .map((p) => ({ puzzleId: p.id, progress: p.guestProgress[0] })),
+  );
+  const items = page.map((p) => {
     const g = p.guestProgress[0];
     return {
       id: p.id,
-      date: p.date.toISOString().slice(0, 10),
+      date: p.date!.toISOString().slice(0, 10),
       title: p.title,
       difficulty: p.difficulty,
       status: g?.bestArchive ? 'solved' : g?.attemptsStarted ? 'attempted' : 'unplayed',
       progressRevision: String(g?.revision ?? 0),
+      ...(standings.get(p.id) ?? NO_STANDINGS),
       availability: availability(p),
     };
   });

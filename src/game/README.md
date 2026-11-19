@@ -44,6 +44,7 @@ A level is plain JSON with no code in it, so it can come from a file, the `Puzzl
 | `id`, `version` | Identify the level's content. Snapshots and saved solutions record both; raise `version` whenever a change would alter a replay. |
 | `gravity` | World gravity vector. |
 | `bounds` | Optional playable `{ minX, maxX, minY, maxY }`, independent of physical walls. Older levels infer bounds from their initial geometry. |
+| `colorScheme` | Optional cosmetic background/wall preset: `classic`, `lagoon`, `sandstone`, `rose`, `lavender`, `slate`, `black`, or `yellow`. Custom colors use `{ "kind": "custom", "primary": "#243045", "secondary": "#ffd966" }`: primary sets the background, secondary sets walls. Both must be six-digit hex colors. Omitted means Classic green. Other objects, physics and scoring are unchanged. |
 | `dynamicBodies`, `staticBodies` | Bodies made of `pieces`, each with a convex `shape`. `material.restitution` is the bounce, from 0 to 1. |
 | `fields` | Force zones; see below. |
 | `goal` | `{ bodyId, minX, maxX, minY, maxY, holdSeconds }`: solved once the body's position stays inside the bounds for `holdSeconds`. The shared run evaluator checks it on every tick. |
@@ -132,6 +133,10 @@ Both levels use a restitution of 0.8 on every body. Two colliding surfaces bounc
 `getRenderState()` returns plain data with no Rapier handles. Each piece is either `{ kind: 'polygon', worldPolygon }` or `{ kind: 'circle', center, radius }`; a circle's spin is the body's `angle`. `snapshot()` captures the Rapier world plus field positions and queued commands; `restore()` requires a snapshot from the same level ID and version.
 
 `predict(commands, options?)` runs the commands on a copy of the game until every body sleeps or the tick limit is reached, and never changes the live game. `options` can override the level's `{ maxTicks, sampleEveryTicks }`.
+
+## Sound events
+
+`createGame(level, { soundEvents: true })` makes `soundEvents()` return what became audible during the latest `step()`: `impact` (a new contact, with the closing speed along the contact normal and `otherId` for another live body, else `null`), `portal-enter`/`portal-exit`, `water-enter`/`water-exit` (the center of mass crossing a water zone, with the body's speed), `water-sink` and `lava-burn`. Impacts slower than `IMPACT_MIN_SPEED` are dropped. Recording only reads the settled world, so snapshots and results are identical with events on or off; contacts and submerged bodies present at creation or `restore()` are not reported again. Events stay off by default, so verification, `replayRun` and `predict` copies pay nothing. The browser plays them through `src/frontend/physics-audio.ts`; clips live in `src/frontend/sounds/` and are regenerated with `scripts/generate-placeholder-sounds.ts`.
 
 Ordinary motion and collisions are frictionless: colliders use zero contact friction and dynamic bodies use zero linear and angular damping. Drag should come from a field whose force opposes `sample.velocity`, so it exists only inside that field.
 

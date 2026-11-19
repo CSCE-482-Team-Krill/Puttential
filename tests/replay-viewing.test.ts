@@ -24,6 +24,21 @@ test('replays unlock at the exact Central midnight, including short and long DST
   }
 });
 
+test('community replays unlock at publication and stay available across daily boundaries', () => {
+  const published = new Date('2026-11-12T16:30:00.000Z');
+  // Publication is already committed; community access does not depend on clock offsets.
+  for (const now of [
+    new Date(+published - 3600_000),
+    published,
+    new Date('2026-11-20T06:00:00.000Z'),
+  ])
+    assert.deepEqual(replayAccess(null, now, false, published), {
+      available: true,
+      unlocksAt: published.toISOString(),
+    });
+  assert.equal(replayAccess(null, published, true, published).available, false);
+});
+
 async function verifiedResult() {
   const course = openingCourse(0);
   const evaluation = await replayRun(course.level, course.solutions[0]!, course.rules);
@@ -88,6 +103,61 @@ test('spectator playback matches verification at each speed, pauses and restarts
     assert.equal(replay.frame.tick, tick);
   }
   assert.deepEqual(placement, before);
+});
+
+test('spectator playback seeks forward and backward to exact ticks without retaining audio', async () => {
+  const { course, result } = await verifiedResult();
+  const replay = await ReplayPlayback.create(
+    course.level,
+    course.rules,
+    course.solutions[0]!,
+    result,
+  );
+  try {
+    assert.equal(replay.frame.tick, 0);
+    assert.ok(replay.goalIntervals.length > 0);
+    for (const interval of replay.goalIntervals) {
+      assert.ok(interval.startTick > 0);
+      assert.ok(interval.endTick > interval.startTick);
+      assert.ok(interval.endTick <= result.metrics!.completionTick + 1);
+    }
+    for (let tick = 0; tick <= result.metrics!.completionTick; tick++) {
+      replay.seek(tick);
+      const markedInside = replay.goalIntervals.some(
+        (interval) => tick >= interval.startTick && tick < interval.endTick,
+      );
+      assert.equal(replay.goal.inside, markedInside);
+    }
+
+    const midpoint = Math.floor(result.metrics!.completionTick / 2);
+    replay.seek(midpoint);
+    assert.equal(replay.status, 'paused');
+    assert.equal(replay.frame.tick, midpoint);
+    assert.deepEqual(replay.takeSoundEvents(), []);
+    const midpointFrame = structuredClone(replay.frame);
+    const midpointGoal = structuredClone(replay.goal);
+
+    replay.seek(midpoint + 20);
+    assert.equal(replay.frame.tick, midpoint + 20);
+    replay.seek(midpoint);
+    assert.equal(replay.status, 'paused');
+    assert.deepEqual(replay.frame, midpointFrame);
+    assert.deepEqual(replay.goal, midpointGoal);
+
+    replay.seek(Number.POSITIVE_INFINITY);
+    assert.equal(replay.frame.tick, midpoint);
+    replay.seek(result.metrics!.completionTick + 1000);
+    assert.equal(replay.status, 'ended');
+    assert.equal(replay.frame.tick, result.metrics!.completionTick);
+    assert.deepEqual(replay.takeSoundEvents(), []);
+
+    replay.seek(-100);
+    assert.equal(replay.status, 'paused');
+    assert.equal(replay.frame.tick, 0);
+    assert.equal(replay.goal.completedTick, null);
+  } finally {
+    replay.destroy();
+  }
 });
 
 test('spectator playback rejects unsupported setup and detects a changed saved result', async () => {

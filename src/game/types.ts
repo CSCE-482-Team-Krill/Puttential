@@ -124,9 +124,41 @@ export type PredictionOptions = Readonly<{
   sampleEveryTicks?: number;
 }>;
 
+/**
+ * Something audible that happened during one tick, recorded only to drive sound
+ * effects. Events only describe the simulation; recording them never changes it.
+ * `point` is in world space.
+ */
+export type SoundEvent =
+  | Readonly<{
+      kind: 'impact';
+      bodyId: string;
+      /** The other dynamic body, or null for course walls and burnt remains. */
+      otherId: string | null;
+      /** Closing speed along the contact normal just before the hit. */
+      speed: number;
+      point: Vec2;
+    }>
+  | Readonly<{
+      kind: 'portal-enter' | 'portal-exit';
+      bodyId: string;
+      portalId: string;
+      point: Vec2;
+    }>
+  | Readonly<{ kind: 'water-enter' | 'water-exit'; bodyId: string; speed: number; point: Vec2 }>
+  | Readonly<{ kind: 'water-sink' | 'lava-burn'; bodyId: string; point: Vec2 }>;
+
+export type GameOptions = Readonly<{
+  boundsFailure?: 'any-body' | 'goal-body';
+  /** Record `SoundEvent`s for audio. Off for verification and predictions. */
+  soundEvents?: boolean;
+}>;
+
 export type Game = {
   applySetup(commands: readonly GameCommand[]): void;
   movement(): Readonly<Record<string, number>>;
+  /** Events from the most recent `step()`; always empty unless enabled at creation. */
+  soundEvents(): readonly SoundEvent[];
   hasPendingTeleports(): boolean;
   queueCommand(command: GameCommand): void;
   step(): void;

@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction, ReactNode, RefObject } from 'react';
 import { Icon } from './icon';
+import { useSoundEffects } from './physics-audio';
 
-export type Panel =
-  'archive' | 'stats' | 'leaderboard' | 'community' | 'settings' | 'help' | 'result' | null;
+export type Panel = 'archive' | 'stats' | 'leaderboard' | 'settings' | 'help' | 'result' | null;
 
 type Preferences = {
   reducedMotion: boolean;
@@ -120,18 +120,34 @@ function SettingSwitch({
   );
 }
 
+function SoundSetting() {
+  const [enabled, setEnabled] = useSoundEffects();
+  return (
+    <SettingSwitch label="Sound effects" checked={enabled} change={() => setEnabled(!enabled)} />
+  );
+}
+
+const dialogStack: HTMLElement[] = [];
+let bodyOverflowBeforeDialogs: string | null = null;
+
 /** Focus, Escape and Tab containment shared by every modal dialog. */
 export function useDialog(dialogRef: RefObject<HTMLElement | null>, close: () => void) {
   const closeRef = useRef(close);
   closeRef.current = close;
   useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (!dialogStack.length) {
+      bodyOverflowBeforeDialogs = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+    }
+    dialogStack.push(dialog);
     const previousFocus =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
     dialogRef.current?.focus();
 
     const onKey = (event: KeyboardEvent) => {
+      if (dialogStack.at(-1) !== dialog) return;
       const focusRoot =
         document.fullscreenElement && dialogRef.current?.contains(document.fullscreenElement)
           ? document.fullscreenElement
@@ -168,7 +184,12 @@ export function useDialog(dialogRef: RefObject<HTMLElement | null>, close: () =>
     window.addEventListener('keydown', onKey);
     return () => {
       window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previousOverflow;
+      const index = dialogStack.lastIndexOf(dialog);
+      if (index >= 0) dialogStack.splice(index, 1);
+      if (!dialogStack.length) {
+        document.body.style.overflow = bodyOverflowBeforeDialogs ?? '';
+        bodyOverflowBeforeDialogs = null;
+      }
       previousFocus?.focus();
     };
   }, [dialogRef]);
@@ -190,7 +211,6 @@ export function Modal({
     archive: 'Calendar',
     stats: 'Profile',
     leaderboard: 'Leaderboard',
-    community: 'Community',
     settings: 'Settings',
     help: 'Help',
     result: resultSolved ? 'Nice work!' : 'So close',
@@ -250,19 +270,6 @@ export function Modal({
           </div>
         )}
 
-        {panel === 'community' && !body && (
-          <div className="modal-body community-empty">
-            <span className="community-empty-icon">
-              <Icon name="community" size={32} />
-            </span>
-            <h3>Community maps</h3>
-            <p>Discover and play courses created by other players.</p>
-            <p>
-              Open the Editor tab to create a course. Playtest and solve it to publish it to
-              Community. Drafts are saved on this device.
-            </p>
-          </div>
-        )}
         {body && <div className="modal-body modal-stack">{body}</div>}
         {panel === 'settings' && (
           <div className="modal-body modal-stack">
@@ -280,6 +287,12 @@ export function Modal({
                 checked={preferences.showPreview}
                 change={() => togglePreference('showPreview')}
               />
+            </section>
+            <section className="settings-section" aria-labelledby="sound-settings">
+              <h3 className="modal-section-heading" id="sound-settings">
+                Sound
+              </h3>
+              <SoundSetting />
             </section>
             {courseImport && (
               <section className="settings-section" aria-labelledby="local-course-settings">

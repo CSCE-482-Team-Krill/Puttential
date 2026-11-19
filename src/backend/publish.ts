@@ -4,11 +4,11 @@ import { parseLevel } from '../game';
 import { defaultRules } from '../game/run-evaluation';
 import { cancelPuzzle } from './competitive';
 import {
+  backfillSchedule,
   checkAuthoredCourses,
   checkSchedule,
   clearUnplayedFrom,
   publishCourse,
-  publishSchedule,
   recoverRuns,
 } from './course-publishing';
 
@@ -16,7 +16,7 @@ import {
 async function main() {
   const [command = 'schedule', file, dateArg] = process.argv.slice(2);
   if (command === 'schedule') {
-    for (const line of await publishSchedule()) console.log(line);
+    for (const line of await backfillSchedule()) console.log(line);
   } else if (command === 'course') {
     if (!file || !dateArg)
       throw new Error('Usage: npm run courses:publish -- course reviewed-course.json YYYY-MM-DD');

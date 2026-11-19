@@ -81,6 +81,8 @@ export async function competitiveHandler(request: Request): Promise<Response> {
       result = await api.renameGuest(request, input);
     else if (path.join('/') === 'me/progress' && request.method === 'GET')
       result = await api.readProgress(guest, url.searchParams.get('puzzleId') ?? '');
+    else if (path.join('/') === 'me/stats' && request.method === 'GET')
+      result = await (await import('./player-stats')).readPlayerStats(guest);
     else if (path.join('/') === 'runs' && request.method === 'POST') {
       if (typeof input.requestId !== 'string' || !/^[0-9a-f-]{36}$/i.test(input.requestId))
         throw new api.CompetitiveError(400, 'INVALID_SETUP', 'A valid request ID is required.');
@@ -122,7 +124,14 @@ export async function competitiveHandler(request: Request): Promise<Response> {
   } catch (error: any) {
     const known = Number.isInteger(error?.status) && error.status >= 400 && error.status < 500;
     if (!known)
-      console.error('Competitive API unavailable', { type: error?.name ?? 'UnknownError' });
+      console.error('Competitive API unavailable', {
+        type: error?.name ?? 'UnknownError',
+        // Prisma codes distinguish missing migrations from connectivity failures.
+        // Omit messages and query metadata, which can contain private data.
+        ...(typeof error?.code === 'string' && /^P\d{4}$/.test(error.code)
+          ? { code: error.code }
+          : {}),
+      });
     const status = known ? error.status : 503;
     return Response.json(
       {

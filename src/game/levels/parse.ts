@@ -1,5 +1,6 @@
 import { assertValidConvexPolygon, assertValidSimplePolygon } from '../geometry/polygon';
 import type { Bounds } from '../geometry/polygon';
+import { isLevelColorScheme } from './color-schemes';
 import { shapePolygon } from '../geometry/shapes';
 import { forceValidationError } from '../objects/forces';
 import type { Vec2 } from '../types';
@@ -316,6 +317,7 @@ export function parseLevel(data: unknown): Level {
   const object = readObject(data, 'level', [
     'formatVersion',
     'bounds',
+    'colorScheme',
     'id',
     'version',
     'gravity',
@@ -328,6 +330,10 @@ export function parseLevel(data: unknown): Level {
   if (object.formatVersion !== LEVEL_FORMAT_VERSION) {
     throw new Error(`level.formatVersion must be ${LEVEL_FORMAT_VERSION}`);
   }
+  if (object.colorScheme !== undefined && !isLevelColorScheme(object.colorScheme))
+    throw new Error(
+      'level.colorScheme must name a supported preset or custom primary/secondary hex colors',
+    );
   const dynamicBodies = readArray(object.dynamicBodies, 'level.dynamicBodies', readDynamicBody);
   const staticBodies = readArray(object.staticBodies, 'level.staticBodies', readStaticBody);
   const fields = readArray(object.fields, 'level.fields', readField);
@@ -350,6 +356,7 @@ export function parseLevel(data: unknown): Level {
     version: readPositiveInteger(object.version, 'level.version'),
     gravity: readVec2(object.gravity, 'level.gravity'),
     ...(object.bounds !== undefined && { bounds: parseLevelBounds(object.bounds) }),
+    ...(isLevelColorScheme(object.colorScheme) && { colorScheme: object.colorScheme }),
     dynamicBodies,
     staticBodies,
     fields,

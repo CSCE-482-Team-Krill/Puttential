@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import type { CommunityMap, Guest, Prisma } from '../../generated/prisma/client';
 import { prisma } from './prisma';
-import { CompetitiveError } from './competitive';
+import { CompetitiveError, puzzleResponse } from './competitive';
 import { convertCommunityImport, validateCommunityDocument } from '../shared/community-profile';
 import { canonicalJson } from '../shared/community-canonical-json';
 import { normalizePublicationMetadata } from '../shared/community-candidate';
@@ -35,8 +35,39 @@ function summary(map: Pick<CommunityMap, keyof typeof summarySelect>): Community
 
 export async function listCommunityMaps(params: URLSearchParams): Promise<CommunityMapList> {
   const cursor = params.get('cursor');
+  const query = (params.get('q') ?? '').trim();
+  const creator = (params.get('creator') ?? '').trim();
+  const published = params.get('published') ?? 'all';
+  const sort = params.get('sort') ?? 'newest';
+  if (
+    query.length > 100 ||
+    creator.length > 40 ||
+    !['all', 'week', 'month'].includes(published) ||
+    !['newest', 'oldest', 'title'].includes(sort)
+  )
+    throw new CompetitiveError(400, 'INVALID_FILTER', 'Invalid community search or filters.');
   if (cursor && !UUID.test(cursor))
     throw new CompetitiveError(400, 'INVALID_CURSOR', 'Invalid community page.');
+  // Treat search text literally, including SQL LIKE wildcard characters.
+  const contains = (value: string) => ({
+    contains: value.replace(/[\\%_]/g, '\\$&'),
+    mode: 'insensitive' as const,
+  });
+  const where: Prisma.CommunityMapWhereInput = {
+    ...(query
+      ? {
+          OR: [
+            { title: contains(query) },
+            { description: contains(query) },
+            { creatorName: contains(query) },
+          ],
+        }
+      : {}),
+    ...(creator ? { creatorName: contains(creator) } : {}),
+    ...(published !== 'all'
+      ? { createdAt: { gte: new Date(Date.now() - (published === 'week' ? 7 : 30) * 86400_000) } }
+      : {}),
+  };
   // A deleted/unknown cursor should return an empty page instead of a database error.
   if (
     cursor &&
@@ -45,7 +76,14 @@ export async function listCommunityMaps(params: URLSearchParams): Promise<Commun
     return { items: [], nextCursor: null };
   const maps = await prisma.communityMap.findMany({
     select: summarySelect,
-    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    where,
+    orderBy:
+      sort === 'title'
+        ? [{ title: 'asc' }, { id: 'asc' }]
+        : [
+            { createdAt: sort === 'oldest' ? 'asc' : 'desc' },
+            { id: sort === 'oldest' ? 'asc' : 'desc' },
+          ],
     take: 21,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
@@ -56,12 +94,21 @@ export async function listCommunityMaps(params: URLSearchParams): Promise<Commun
 }
 
 export async function readCommunityMap(id: string): Promise<CommunityMapDetail> {
-  const map = UUID.test(id) ? await prisma.communityMap.findUnique({ where: { id } }) : null;
+  const map = UUID.test(id)
+    ? await prisma.communityMap.findUnique({ where: { id }, include: { competition: true } })
+    : null;
   if (!map) throw new CompetitiveError(404, 'NOT_FOUND', 'This community map could not be found.');
+  if (!map.competition)
+    throw new CompetitiveError(
+      503,
+      'SERVICE_UNAVAILABLE',
+      'Community standings are not ready. Please retry.',
+    );
   return {
     ...summary(map),
     configuration: map.configuration as unknown as CommunityMapDetail['configuration'],
     rules: map.rules as unknown as CommunityMapDetail['rules'],
+    competition: puzzleResponse(map.competition),
   };
 }
 
@@ -176,6 +223,18 @@ export async function publishCommunityMap(guest: Guest, input: Record<string, un
         configuration: json(level),
         rules: json(rules),
         authorSolution: json(placement),
+      },
+    });
+    await tx.puzzle.create({
+      data: {
+        id: map.id,
+        communityMapId: map.id,
+        title: map.title,
+        seed: '',
+        difficulty: 0,
+        configuration: json(map.configuration),
+        rules: json(map.rules),
+        authorSolution: json(map.authorSolution),
       },
     });
     return acknowledged(map);
