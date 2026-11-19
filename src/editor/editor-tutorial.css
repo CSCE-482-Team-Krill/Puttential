@@ -1,0 +1,680 @@
+/* Shared by the website editor and the local repository editor. */
+@scope (.editor-wrap) {
+  .editor-tutorial-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: #2d3a3a8a;
+  }
+  .editor-tutorial {
+    display: flex;
+    flex-direction: column;
+    width: min(1120px, 100%);
+    height: min(760px, calc(100dvh - 32px));
+    overflow: hidden;
+    border: 1px solid #cdd8cc;
+    border-radius: 14px;
+    background: #f8f9f4;
+    color: var(--ink);
+    box-shadow: 0 16px 48px #2d3a3a33;
+    font-size: 14px;
+  }
+  .editor-tutorial-header,
+  .editor-tutorial-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-shrink: 0;
+    padding: 12px 20px;
+    background: #eef2eb;
+  }
+  .editor-tutorial-header {
+    border-bottom: 1px solid #cdd8cc;
+  }
+  .editor-tutorial-header h2 {
+    margin: 5px 0 0;
+    font-size: 22px;
+    line-height: 1.25;
+  }
+  .editor-tutorial-header > button {
+    display: grid;
+    place-items: center;
+  }
+  .editor-tutorial-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    gap: 12px;
+    padding: 14px 20px;
+  }
+  .editor-tutorial-steps {
+    display: flex;
+    flex-shrink: 0;
+    gap: 8px;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
+  .editor-tutorial-steps li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 10px 4px 4px;
+    border: 1px solid #cdd8cc;
+    border-radius: 999px;
+    background: white;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .editor-tutorial-steps li > span:first-child {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #eef2eb;
+  }
+  .editor-tutorial-steps li.active {
+    border-color: #2e7d32;
+    background: #dff3d9;
+    color: var(--ink);
+  }
+  .editor-tutorial-steps li.active > span:first-child,
+  .editor-tutorial-steps li.complete > span:first-child {
+    background: #2e7d32;
+    color: white;
+  }
+  .editor-tutorial-instruction {
+    flex-shrink: 0;
+  }
+  .editor-tutorial-instruction h3 {
+    margin: 4px 0 6px;
+    font-size: 20px;
+    line-height: 1.3;
+  }
+  .editor-tutorial-instruction > p {
+    max-width: 880px;
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+  .editor-tutorial-workspace {
+    display: grid;
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr) 230px;
+    gap: 12px;
+  }
+  .editor-tutorial-board {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+  .editor-tutorial .canvas-panel {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    padding: 10px;
+  }
+  .editor-tutorial .canvas-tools,
+  .editor-tutorial .canvas-caption {
+    flex-shrink: 0;
+  }
+  .editor-tutorial .canvas-tools > span,
+  .editor-tutorial .canvas-caption {
+    display: none;
+  }
+  .editor-tutorial-tools {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .editor-tutorial-practice {
+    margin-right: auto;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .editor-tutorial .editor-course {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+  }
+  .editor-tutorial-properties {
+    min-height: 0;
+    padding: 12px;
+    border: 1px solid #cdd8cc;
+    border-radius: 10px;
+    background: white;
+  }
+  .editor-tutorial-properties > p,
+  .editor-tutorial-tip p {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .editor-tutorial-properties > button {
+    width: 100%;
+    margin: 8px 0 4px;
+  }
+  .editor-tutorial-properties .property {
+    margin: 8px 0;
+  }
+  .editor-tutorial-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #cdd8cc;
+  }
+  .editor-tutorial-tip svg {
+    flex-shrink: 0;
+    color: #2e7d32;
+    margin-top: 3px;
+  }
+  .editor-tutorial-tip p {
+    margin: 0;
+  }
+  .editor-tutorial-task {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 8px 12px;
+    border-left: 3px solid #e4b84e;
+    border-radius: 0 6px 6px 0;
+    background: #fff4d5;
+    font-size: 13px;
+    line-height: 1.4;
+  }
+  .editor-tutorial-task.complete {
+    border-color: #2e7d32;
+    background: #dff3d9;
+  }
+  .editor-tutorial-footer {
+    border-top: 1px solid #cdd8cc;
+  }
+  .editor-tutorial-footer > span {
+    max-width: 280px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .editor-tutorial .text-button {
+    width: auto;
+  }
+  .editor-tutorial .primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: auto;
+    margin: 0;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  .editor-tutorial .playtest-layout {
+    flex: 1;
+    min-height: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    gap: 12px;
+    grid-template-columns: minmax(0, 1fr) 250px;
+  }
+  .editor-tutorial .playtest-course {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+  }
+  .editor-tutorial .playtest-layout .game-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 8px;
+  }
+  .editor-tutorial .playtest-layout .game-card,
+  .editor-tutorial .playtest-layout .control-card {
+    animation: none;
+  }
+  .editor-tutorial .playtest-layout .card-heading {
+    flex-shrink: 0;
+    margin-bottom: 6px;
+    padding: 0;
+  }
+  .editor-tutorial .playtest-layout .card-heading h2,
+  .editor-tutorial .playtest-layout .muted {
+    display: none;
+  }
+  .editor-tutorial .playtest-layout .control-card {
+    min-height: 0;
+    padding: 12px;
+  }
+  .editor-tutorial .playtest-layout .control-card h2 {
+    margin: 0 0 10px;
+    font-size: 16px;
+  }
+  .editor-tutorial-save {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    align-content: center;
+    flex: 1;
+    min-height: 0;
+  }
+  .editor-tutorial-save article {
+    border: 1px solid #cdd8cc;
+    border-radius: 10px;
+    padding: 16px;
+    background: white;
+  }
+  .editor-tutorial-save svg {
+    color: #2e7d32;
+  }
+  .editor-tutorial-save h4 {
+    font-size: 16px;
+    margin: 16px 0 10px;
+  }
+  .editor-tutorial-save p {
+    color: var(--muted);
+    line-height: 1.45;
+    margin: 0;
+  }
+  @media (max-width: 759px) {
+    .editor-tutorial-backdrop {
+      padding: 8px;
+    }
+    .editor-tutorial {
+      height: min(760px, calc(100dvh - 16px));
+      font-size: 13px;
+    }
+    .editor-tutorial-header,
+    .editor-tutorial-footer,
+    .editor-tutorial-body {
+      padding: 10px 12px;
+    }
+    .editor-tutorial-header h2 {
+      font-size: 19px;
+    }
+    .editor-tutorial-body {
+      gap: 8px;
+    }
+    .editor-tutorial-steps {
+      gap: 5px;
+    }
+    .editor-tutorial-steps li {
+      padding: 3px;
+    }
+    .editor-tutorial-steps li.active {
+      padding-right: 8px;
+    }
+    .editor-tutorial-steps li:not(.active) .editor-tutorial-step-label {
+      display: none;
+    }
+    .editor-tutorial-instruction h3 {
+      font-size: 17px;
+      margin: 3px 0 5px;
+    }
+    .editor-tutorial-instruction .section-kicker {
+      display: none;
+    }
+    .editor-tutorial-workspace,
+    .editor-tutorial-save {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .editor-tutorial-workspace {
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 8px;
+    }
+    .editor-tutorial-properties {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: start;
+      gap: 6px;
+      padding: 8px;
+    }
+    .editor-tutorial-properties > .section-kicker,
+    .editor-tutorial-properties > p,
+    .editor-tutorial-tip {
+      grid-column: 1 / -1;
+    }
+    .editor-tutorial-properties > .section-kicker {
+      grid-column: 1;
+      align-self: center;
+    }
+    .editor-tutorial-properties > button {
+      grid-column: 2 / -1;
+      margin: 0;
+    }
+    .editor-tutorial-properties > p {
+      margin: 0;
+    }
+    .editor-tutorial-properties .property {
+      margin: 0;
+    }
+    .editor-tutorial-properties .property span {
+      min-height: 28px;
+    }
+    .editor-tutorial-tip {
+      margin-top: 2px;
+      padding-top: 6px;
+    }
+    .editor-tutorial-tools {
+      margin-bottom: 5px;
+    }
+    .editor-tutorial .canvas-panel {
+      padding: 6px;
+      border-radius: 10px;
+    }
+    .editor-tutorial .canvas-tools {
+      margin-bottom: 5px;
+    }
+    .editor-tutorial-footer {
+      display: grid;
+      gap: 5px;
+    }
+    .editor-tutorial-footer .button-row {
+      width: 100%;
+      justify-content: flex-end;
+      flex-wrap: nowrap;
+      gap: 5px;
+    }
+    .editor-tutorial .primary-button,
+    .editor-tutorial-footer button {
+      padding: 8px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .editor-tutorial .playtest-layout {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 8px;
+    }
+    .editor-tutorial .playtest-layout .control-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 6px;
+      padding: 8px;
+    }
+    .editor-tutorial .playtest-layout .control-card h2 {
+      display: none;
+    }
+    .editor-tutorial .playtest-layout .control-card .tile-list {
+      margin: 0;
+    }
+    .editor-tutorial .playtest-layout .control-card .tile-option {
+      padding: 6px;
+      min-height: 44px;
+      gap: 6px;
+    }
+    .editor-tutorial .playtest-layout .tile-arrows {
+      flex-basis: 28px;
+      width: 28px;
+      min-height: 28px;
+    }
+    .editor-tutorial .playtest-layout .tile-info strong {
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .editor-tutorial .playtest-layout .tile-info small {
+      font-size: 10px;
+      white-space: nowrap;
+    }
+    .editor-tutorial .playtest-layout .tile-cost {
+      display: none;
+    }
+    .editor-tutorial .playtest-layout .play-button {
+      min-width: 0;
+      gap: 4px;
+    }
+    .editor-tutorial .playtest-layout .control-card > .text-button,
+    .editor-tutorial .playtest-layout .control-card > p {
+      grid-column: 1 / -1;
+      margin: 0;
+    }
+    .editor-tutorial .playtest-layout .control-card > .text-button {
+      padding: 0;
+      font-size: 12px;
+      min-height: 24px;
+    }
+    .editor-tutorial-save {
+      gap: 8px;
+    }
+    .editor-tutorial-save article {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      column-gap: 10px;
+      padding: 10px;
+    }
+    .editor-tutorial-save h4 {
+      margin: 0 0 5px;
+      font-size: 14px;
+    }
+    .editor-tutorial-save p {
+      grid-column: 2;
+      font-size: 12px;
+    }
+    .editor-tutorial-board {
+      position: relative;
+    }
+    .editor-tutorial-tools {
+      position: absolute;
+      z-index: 1;
+      top: 6px;
+      right: 6px;
+      margin: 0;
+    }
+    .editor-tutorial-practice {
+      display: none;
+    }
+    .editor-tutorial .canvas-tools {
+      padding-right: 62px;
+    }
+    .editor-tutorial[data-step='4'] .canvas-tools {
+      visibility: hidden;
+    }
+  }
+  @media (max-height: 760px) {
+    .editor-tutorial-tip {
+      display: none;
+    }
+  }
+  @media (max-width: 759px) and (max-height: 700px) {
+    .editor-tutorial-header,
+    .editor-tutorial-footer,
+    .editor-tutorial-body {
+      padding: 8px 10px;
+    }
+    .editor-tutorial-save article {
+      padding: 8px;
+    }
+  }
+  @media (max-width: 759px) and (max-height: 600px) {
+    .editor-tutorial-body {
+      gap: 6px;
+    }
+    .editor-tutorial-footer > span {
+      display: none;
+    }
+    .editor-tutorial-header h2 {
+      font-size: 17px;
+    }
+    .editor-tutorial[data-step='2'] .editor-tutorial-properties > .section-kicker,
+    .editor-tutorial[data-step='2'] .editor-tutorial-properties > button {
+      display: none;
+    }
+    .editor-tutorial-properties .property input {
+      padding: 5px;
+    }
+    .editor-tutorial-properties .property span {
+      min-height: 16px;
+    }
+    .editor-tutorial-save article {
+      display: block;
+      padding: 6px;
+    }
+    .editor-tutorial-save svg {
+      display: none;
+    }
+    .editor-tutorial-save {
+      gap: 6px;
+    }
+    .editor-tutorial-save h4 {
+      margin-bottom: 3px;
+    }
+  }
+  @media (min-width: 760px) and (max-height: 650px) {
+    .editor-tutorial-backdrop {
+      padding: 8px;
+    }
+    .editor-tutorial {
+      height: calc(100dvh - 16px);
+      font-size: 13px;
+    }
+    .editor-tutorial-header,
+    .editor-tutorial-footer {
+      padding: 8px 14px;
+    }
+    .editor-tutorial-header h2 {
+      font-size: 18px;
+      margin: 0;
+    }
+    .editor-tutorial-header .section-kicker,
+    .editor-tutorial-instruction .section-kicker,
+    .editor-tutorial-tip {
+      display: none;
+    }
+    .editor-tutorial-body {
+      padding: 8px 14px;
+      gap: 6px;
+    }
+    .editor-tutorial-steps li > span:first-child {
+      width: 20px;
+      height: 20px;
+    }
+    .editor-tutorial-instruction h3 {
+      font-size: 17px;
+      margin: 0 0 3px;
+    }
+    .editor-tutorial-workspace,
+    .editor-tutorial .playtest-layout {
+      grid-template-columns: minmax(0, 1fr) 250px;
+    }
+    .editor-tutorial-properties {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-content: start;
+      gap: 6px;
+      padding: 8px;
+    }
+    .editor-tutorial-properties > .section-kicker,
+    .editor-tutorial-properties > button,
+    .editor-tutorial-properties > p {
+      grid-column: 1 / -1;
+      margin: 0;
+    }
+    .editor-tutorial-properties .property {
+      margin: 0;
+    }
+    .editor-tutorial-properties .property span {
+      min-height: 28px;
+    }
+    .editor-tutorial .playtest-layout .control-card {
+      padding: 6px;
+    }
+    .editor-tutorial .playtest-layout .control-card h2,
+    .editor-tutorial .playtest-layout .control-card .tile-list {
+      margin: 0 0 5px;
+    }
+    .editor-tutorial .playtest-layout .control-card > .text-button {
+      padding: 4px;
+      margin: 0;
+    }
+    .editor-tutorial .playtest-layout .control-card .tile-option {
+      padding: 6px;
+      min-height: 40px;
+    }
+    .editor-tutorial-task {
+      padding: 6px 10px;
+    }
+    .editor-tutorial-save article {
+      padding: 10px;
+    }
+    .editor-tutorial-save svg {
+      display: none;
+    }
+    .editor-tutorial-save h4 {
+      margin: 0 0 5px;
+    }
+  }
+  @media (min-width: 760px) and (max-height: 500px) {
+    .editor-tutorial[data-step='2'] .editor-tutorial-properties > .section-kicker,
+    .editor-tutorial[data-step='2'] .editor-tutorial-properties > button {
+      display: none;
+    }
+    .editor-tutorial-properties .property span {
+      min-height: 16px;
+    }
+    .editor-tutorial-header {
+      padding-block: 4px;
+    }
+    .editor-tutorial-footer {
+      padding-block: 4px;
+    }
+    .editor-tutorial-body {
+      gap: 4px;
+    }
+    .editor-tutorial-board {
+      position: relative;
+    }
+    .editor-tutorial-tools {
+      position: absolute;
+      z-index: 1;
+      top: 6px;
+      right: 6px;
+      margin: 0;
+    }
+    .editor-tutorial-practice {
+      display: none;
+    }
+    .editor-tutorial .canvas-panel {
+      padding: 6px;
+    }
+    .editor-tutorial .canvas-tools {
+      margin-bottom: 4px;
+      padding-right: 62px;
+    }
+    .editor-tutorial[data-step='4'] .canvas-tools {
+      visibility: hidden;
+    }
+    .editor-tutorial .playtest-layout .control-card {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-content: start;
+      align-items: center;
+      gap: 4px;
+    }
+    .editor-tutorial .playtest-layout .control-card h2 {
+      display: none;
+    }
+    .editor-tutorial .playtest-layout .control-card .tile-list,
+    .editor-tutorial .playtest-layout .control-card > p {
+      grid-column: 1 / -1;
+      margin: 0;
+    }
+    .editor-tutorial .playtest-layout .control-card .play-button {
+      margin: 0;
+    }
+  }
+}

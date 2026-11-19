@@ -37,6 +37,8 @@ The **Repository library** lists authored levels. **Legacy courses** loads cours
 
 ## Author a course
 
+The first visit opens a six-step, hands-on walkthrough covering the ball and goal, obstacle placement, resizing and rotation, force tiles, playtesting, and saving. Use **Tutorial** in either editor's header to replay it. The walkthrough uses a separate practice course; it never changes your current course, saved files, or recovery draft. Back, Skip step, Skip tutorial, and Escape let you move at your own pace.
+
 In **Course properties → Color scheme**, choose Classic green, Lagoon, Sandstone,
 Rose garden, Lavender, Slate, Black or Yellow. The eight presets pair coordinated
 background and wall colors. Choose **Custom** to pick a **Primary** color for the

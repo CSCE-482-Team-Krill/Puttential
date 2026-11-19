@@ -6,6 +6,12 @@ import { Icon } from '../frontend/icon';
 import { EditorCanvas } from './components/editor-canvas';
 import { Inspector, NumberInput } from './components/inspector';
 import { Playtest } from './components/playtest';
+import {
+  EditorTutorial,
+  markEditorTutorialSeen,
+  shouldOpenEditorTutorial,
+} from './components/editor-tutorial';
+import './editor-tutorial.css';
 import type { MapPublisher } from './components/publish-map';
 import type { EditorPersistence } from './persistence';
 import {
@@ -60,6 +66,17 @@ export function Editor({
   const [recoveryRevision, setRecoveryRevision] = useState<string | null>(null);
   const [recoveryError, setRecoveryError] = useState('');
   const [playtest, setPlaytest] = useState<LevelDocument | null>(null);
+  const [tutorial, setTutorial] = useState(false);
+  const tutorialChecked = useRef(false);
+  useEffect(() => {
+    if (!active || tutorialChecked.current) return;
+    tutorialChecked.current = true;
+    if (shouldOpenEditorTutorial()) setTutorial(true);
+  }, [active]);
+  function closeTutorial() {
+    markEditorTutorialSeen();
+    setTutorial(false);
+  }
   const file = useRef<HTMLInputElement | null>(null);
   const clipboard = useRef<CopiedObject[] | null>(null);
   useEffect(() => {
@@ -335,6 +352,9 @@ export function Editor({
         )}
         <span className="editor-badge">Level editor</span>
         <span className="save-state">{dirty ? 'Unsaved changes' : persistence.labels.saved}</span>
+        <button onClick={() => setTutorial(true)} disabled={!!playtest}>
+          <Icon name="help" size={16} /> Tutorial
+        </button>
         <button disabled={busy || !!playtest} onClick={() => replace(freshDocument())}>
           New
         </button>
@@ -352,6 +372,9 @@ export function Editor({
           {busy ? 'Working…' : persistence.labels.save}
         </button>
       </header>
+      {tutorial && active && (
+        <EditorTutorial close={closeTutorial} labels={persistence.labels} canPublish={!!publish} />
+      )}
       <input
         hidden
         ref={file}
