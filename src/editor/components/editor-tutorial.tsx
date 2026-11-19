@@ -33,9 +33,9 @@ export function markEditorTutorialSeen() {
 const STEPS = [
   {
     label: 'Course',
-    title: 'Every course starts with a ball and a goal',
+    title: 'Start with a ball and a goal',
     description:
-      'The ball is on the left; the flag marks the goal on the right. Your puzzle should help the ball reach the goal and stay there for 1 second.',
+      'Guide the ball on the left into the flag area on the right. It must stay there for 1 second.',
     task: 'Try dragging the ball or the goal. This is a practice course, so explore freely.',
     tip: 'The real editor has objects on the left, your course in the middle, and properties on the right.',
   },
@@ -43,7 +43,7 @@ const STEPS = [
     label: 'Build',
     title: 'Place your first obstacle',
     description:
-      'Obstacles shape the route. Choose Rectangle, then click an empty spot on the course. You can also drag the preset onto the course.',
+      'Choose Rectangle, then click the course to place it. You can also drag the preset onto the course.',
     task: 'Add a rectangle above or below the ball’s path.',
     tip: 'In the editor, the Objects panel also has moving bodies, hazards, and portals.',
   },
@@ -51,7 +51,7 @@ const STEPS = [
     label: 'Adjust',
     title: 'Make it fit your idea',
     description:
-      'Select an object to see its properties. Drag it to move it, use the square handle to resize it, or the round handle to rotate it.',
+      'Drag to move. The square handle resizes; the round handle rotates. Use the number fields for precise changes.',
     task: 'Change your rectangle’s width, height, or rotation using the controls on the right.',
     tip: 'Changes apply when you press Enter or leave a number field. Undo lets you experiment.',
   },
@@ -59,24 +59,24 @@ const STEPS = [
     label: 'Forces',
     title: 'Give the player a force tile',
     description:
-      'A repulsor pushes the ball away from its center. Choose Repulsor, then place it just to the left of the ball.',
+      'A repulsor pushes the ball away from its center. Place one just to the left of the ball.',
     task: 'Add a repulsor. In playtest, turn its tile ON and position it to push the ball toward the goal.',
     tip: 'New force tiles start OFF. Players choose which tiles to enable and where to place them.',
   },
   {
     label: 'Test',
-    title: 'Try your course as a player',
+    title: 'Playtest your course',
     description:
-      'Open Playtest, turn the force tile ON, then press Play. Watch the result and choose Return to editor when you’re ready to adjust the course.',
-    task: 'Open Playtest and try a shot. You don’t need to solve this practice course to continue.',
+      'Open Playtest, turn the tile ON, and press Play. Choose Return to editor to keep building.',
+    task: 'Try a shot, then return to the editor. No solve needed.',
     tip: 'Playtest uses the game’s physics. Moving tiles during a test leaves your authored course unchanged.',
   },
   {
     label: 'Save',
-    title: 'You’re ready to build a puzzle',
+    title: 'You’re ready to build',
     description:
-      'Start small: one ball, one goal, a clear route, and a few force tiles. Playtest often and make sure the course can be solved.',
-    task: 'Choose Start building to return to your course. Your work is exactly where you left it.',
+      'Start small: one ball, one goal, a few tiles. Playtest to check it can be solved.',
+    task: 'Start building returns to your course. Replay any time with Tutorial.',
     tip: 'Replay this walkthrough any time using Tutorial in the editor header.',
   },
 ] as const;
@@ -164,6 +164,7 @@ export function EditorTutorial({
       <section
         ref={dialogRef}
         className="editor-tutorial"
+        data-step={step}
         role="dialog"
         aria-modal="true"
         aria-labelledby="editor-tutorial-title"
@@ -172,7 +173,7 @@ export function EditorTutorial({
       >
         <header className="editor-tutorial-header">
           <div>
-            <span className="section-kicker">QUICK EDITOR TUTORIAL · HANDS ON</span>
+            <span className="section-kicker">EDITOR TUTORIAL</span>
             <h2 id="editor-tutorial-title">Build your first course</h2>
           </div>
           <button onClick={close} aria-label="Close editor tutorial">
@@ -188,7 +189,7 @@ export function EditorTutorial({
                 aria-current={index === step ? 'step' : undefined}
               >
                 <span aria-hidden="true">{index < step ? '✓' : index + 1}</span>
-                {item.label}
+                <span className="editor-tutorial-step-label">{item.label}</span>
               </li>
             ))}
           </ol>
@@ -204,13 +205,13 @@ export function EditorTutorial({
               <article>
                 <Icon name="editor" size={24} />
                 <h4>Name your course</h4>
-                <p>Open Course properties. Set a course name and a unique Level ID / filename.</p>
+                <p>Set a course name and a unique Level ID / filename in Course properties.</p>
               </article>
               <article>
                 <Icon name="reset" size={24} />
                 <h4>{labels.save}</h4>
                 <p>
-                  Use {labels.save} in the header. Reopen it later from {labels.library}.
+                  Use {labels.save}. Reopen your course from {labels.library}.
                 </p>
               </article>
               <article>
@@ -218,8 +219,8 @@ export function EditorTutorial({
                 <h4>{canPublish ? 'Share your puzzle' : 'Keep a portable copy'}</h4>
                 <p>
                   {canPublish
-                    ? 'Solve your map in Playtest to unlock publishing to Community. Export JSON also downloads a portable copy.'
-                    : 'Export JSON downloads your course. Import JSON opens it again. Saving to the repository does not publish it.'}
+                    ? 'Solve in Playtest to unlock publishing to Community. Export JSON downloads a copy.'
+                    : 'Export JSON downloads a copy; Import JSON reopens it. Saving to the repository does not publish it.'}
                 </p>
               </article>
             </div>
@@ -325,7 +326,7 @@ export function EditorTutorial({
                       </>
                     )}
                     <NumberInput
-                      label="Rotation (degrees)"
+                      label="Rotation °"
                       value={(obstacle.angle * 180) / Math.PI}
                       step={15}
                       onChange={(angle) =>
@@ -340,11 +341,6 @@ export function EditorTutorial({
                     <span className="section-kicker">
                       {step === 4 ? 'TEST & REFINE' : 'BALL → GOAL'}
                     </span>
-                    <p>
-                      {step === 4
-                        ? 'Playtest switches from building to playing. Return here to keep editing.'
-                        : 'Drag to move. The ball must stay inside the goal until the goal fills.'}
-                    </p>
                     {step === 0 && (
                       <button onClick={() => setSelection({ kind: 'goal', id: 'goal' })}>
                         Select goal
@@ -364,20 +360,22 @@ export function EditorTutorial({
               {error}
             </p>
           )}
-          <p
-            className={`editor-tutorial-task ${complete && step > 0 && !finished ? 'complete' : ''}`}
-            role="status"
-          >
-            {complete && step > 0 && !finished
-              ? '✓ Nice! Continue when you’re ready.'
-              : current.task}
-          </p>
+          {!testing && (
+            <p
+              className={`editor-tutorial-task ${complete && step > 0 && !finished ? 'complete' : ''}`}
+              role="status"
+            >
+              {complete && step > 0 && !finished
+                ? '✓ Nice! Continue when you’re ready.'
+                : current.task}
+            </p>
+          )}
         </div>
         <footer className="editor-tutorial-footer">
-          <span>Your course is safe. Practice changes are never saved.</span>
+          <span>Practice only. Your course is safe.</span>
           <div className="button-row">
-            <button className="text-button" onClick={close}>
-              Skip tutorial
+            <button className="text-button" onClick={close} aria-label="Skip tutorial">
+              Skip
             </button>
             {step > 0 && (
               <button disabled={testing} onClick={() => go(step - 1)}>
