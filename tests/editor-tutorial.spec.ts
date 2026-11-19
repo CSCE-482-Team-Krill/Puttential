@@ -125,3 +125,112 @@ test('first visit opens once; skipping, replay, focus containment and a narrow s
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
 });
+
+for (const app of ['repository', 'website'] as const) {
+  test(`${app}: every tutorial step and playtest fit the viewport without scrolling or clipping`, async ({
+    page,
+  }) => {
+    await page.addInitScript(() => localStorage.setItem('puttential-tutorial-v1', 'seen'));
+    if (app === 'website') {
+      await page.route('**/api/**', (route) =>
+        route.fulfill({ status: 404, json: { error: 'Unavailable fixture' } }),
+      );
+    }
+    await page.goto(`http://127.0.0.1:${app === 'website' ? 3000 : 3001}`);
+    if (app === 'website') await page.getByRole('button', { name: 'Editor', exact: true }).click();
+    await page.getByRole('button', { name: 'Tutorial', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Build your first course' });
+    const next = dialog.getByRole('button', { name: 'Next', exact: true });
+    const sizes = [
+      { width: 1500, height: 1050 },
+      { width: 1366, height: 768 },
+      { width: 1280, height: 720 },
+      { width: 1024, height: 600 },
+      { width: 390, height: 844 },
+      { width: 375, height: 667 },
+      { width: 320, height: 568 },
+      { width: 844, height: 390 },
+    ];
+    async function checkScreen(stage: string) {
+      for (const size of sizes) {
+        await page.setViewportSize(size);
+        const overflow = await dialog.evaluate((root) => {
+          const bounds = root.getBoundingClientRect();
+          const containers = [
+            root,
+            ...root.querySelectorAll<HTMLElement>(
+              '.editor-tutorial-body, .editor-tutorial-workspace, .editor-tutorial-board, .editor-tutorial-properties, .canvas-panel, .editor-course, .playtest-layout, .game-card, .control-card, .editor-tutorial-save',
+            ),
+          ];
+          return {
+            outsideViewport:
+              bounds.top < 0 ||
+              bounds.left < 0 ||
+              bounds.bottom > innerHeight + 1 ||
+              bounds.right > innerWidth + 1,
+            overflowing: containers
+              .filter(
+                (element) =>
+                  element.clientHeight > 0 &&
+                  (element.scrollHeight > element.clientHeight + 1 ||
+                    element.scrollWidth > element.clientWidth + 1 ||
+                    element.scrollTop !== 0),
+              )
+              .map((element) => ({
+                className: element.className,
+                height: element.clientHeight,
+                scrollHeight: element.scrollHeight,
+                width: element.clientWidth,
+                scrollWidth: element.scrollWidth,
+              })),
+            canvasHeight:
+              root.querySelector('.editor-course, .playtest-course')?.clientHeight ?? null,
+          };
+        });
+        expect(overflow.outsideViewport, `${stage} at ${size.width}×${size.height}`).toBe(false);
+        expect(overflow.overflowing, `${stage} at ${size.width}×${size.height}`).toEqual([]);
+        if (overflow.canvasHeight !== null) {
+          expect(
+            overflow.canvasHeight,
+            `${stage} canvas at ${size.width}×${size.height}`,
+          ).toBeGreaterThanOrEqual(80);
+        }
+        if (size.width === 1366 || size.width === 375) {
+          await mkdir('artifacts/editor-tutorial', { recursive: true });
+          await page.screenshot({
+            path: `artifacts/editor-tutorial/${app}-fit-${stage}-${size.width}.png`,
+          });
+        }
+      }
+      await page.setViewportSize({ width: 1366, height: 768 });
+    }
+    await checkScreen('course');
+    await next.click();
+    await checkScreen('build');
+    await dialog.getByRole('button', { name: 'Rectangle', exact: true }).click();
+    const canvas = dialog.locator('.canvas-input');
+    const box = (await canvas.boundingBox())!;
+    await canvas.click({ position: { x: box.width / 2, y: box.height / 4 } });
+    await next.click();
+    await checkScreen('adjust');
+    const width = dialog.getByRole('spinbutton', { name: 'Width', exact: true });
+    await width.fill('3');
+    await width.press('Enter');
+    await next.click();
+    await checkScreen('forces');
+    await dialog.getByRole('button', { name: 'Repulsor', exact: true }).click();
+    await canvas.click({ position: { x: box.width / 3, y: box.height / 2 } });
+    await next.click();
+    await checkScreen('test');
+    await dialog.getByRole('button', { name: 'Open Playtest', exact: true }).click();
+    await expect(dialog.getByRole('button', { name: 'Play', exact: true })).toBeEnabled();
+    await checkScreen('playtest');
+    await dialog.locator('.tile-option').click();
+    await dialog.getByRole('button', { name: 'Play', exact: true }).click();
+    await dialog.getByRole('button', { name: 'Stop', exact: true }).click();
+    await checkScreen('result');
+    await dialog.getByRole('button', { name: 'Return to editor', exact: true }).click();
+    await next.click();
+    await checkScreen('save');
+  });
+}
