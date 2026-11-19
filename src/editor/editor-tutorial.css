@@ -1,0 +1,253 @@
+/* Shared by the website editor and the local repository editor. */
+@scope (.editor-wrap) {
+  .editor-tutorial-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: #2d3a3a8a;
+  }
+  .editor-tutorial {
+    display: flex;
+    flex-direction: column;
+    width: min(1120px, 100%);
+    max-height: calc(100dvh - 40px);
+    overflow: hidden;
+    border: 1px solid #cdd8cc;
+    border-radius: 14px;
+    background: #f8f9f4;
+    color: var(--ink);
+    box-shadow: 0 16px 48px #2d3a3a33;
+    font-size: 14px;
+  }
+  .editor-tutorial-header,
+  .editor-tutorial-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-shrink: 0;
+    padding: 18px 24px;
+    background: #eef2eb;
+  }
+  .editor-tutorial-header {
+    border-bottom: 1px solid #cdd8cc;
+  }
+  .editor-tutorial-header h2 {
+    margin: 5px 0 0;
+    font-size: 24px;
+    line-height: 1.25;
+  }
+  .editor-tutorial-header > button {
+    display: grid;
+    place-items: center;
+  }
+  .editor-tutorial-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  .editor-tutorial-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0;
+    margin: 0 0 22px;
+    list-style: none;
+  }
+  .editor-tutorial-steps li {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 4px 10px 4px 4px;
+    border: 1px solid #cdd8cc;
+    border-radius: 999px;
+    background: white;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .editor-tutorial-steps li > span {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #eef2eb;
+  }
+  .editor-tutorial-steps li.active {
+    border-color: #2e7d32;
+    background: #dff3d9;
+    color: var(--ink);
+  }
+  .editor-tutorial-steps li.active > span,
+  .editor-tutorial-steps li.complete > span {
+    background: #2e7d32;
+    color: white;
+  }
+  .editor-tutorial-instruction h3 {
+    margin: 6px 0 8px;
+    font-size: 21px;
+    line-height: 1.3;
+  }
+  .editor-tutorial-instruction > p {
+    max-width: 880px;
+    margin: 0 0 18px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .editor-tutorial-workspace {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 230px;
+    gap: 16px;
+  }
+  .editor-tutorial-board {
+    min-width: 0;
+  }
+  .editor-tutorial-tools {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .editor-tutorial-practice {
+    margin-right: auto;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+  .editor-tutorial .editor-course {
+    height: clamp(220px, 32vh, 360px);
+    min-height: 0;
+  }
+  .editor-tutorial-properties {
+    padding: 16px;
+    border: 1px solid #cdd8cc;
+    border-radius: 10px;
+    background: white;
+  }
+  .editor-tutorial-properties > p,
+  .editor-tutorial-tip p {
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .editor-tutorial-properties > button {
+    width: 100%;
+    margin: 12px 0 4px;
+  }
+  .editor-tutorial-properties .property {
+    margin-top: 12px;
+  }
+  .editor-tutorial-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid #cdd8cc;
+  }
+  .editor-tutorial-tip svg {
+    flex-shrink: 0;
+    color: #2e7d32;
+    margin-top: 3px;
+  }
+  .editor-tutorial-tip p {
+    margin: 0;
+  }
+  .editor-tutorial-task {
+    margin: 16px 0 0;
+    padding: 12px 16px;
+    border-left: 3px solid #e4b84e;
+    border-radius: 0 6px 6px 0;
+    background: #fff4d5;
+    line-height: 1.5;
+  }
+  .editor-tutorial-task.complete {
+    border-color: #2e7d32;
+    background: #dff3d9;
+  }
+  .editor-tutorial-footer {
+    border-top: 1px solid #cdd8cc;
+  }
+  .editor-tutorial-footer > span {
+    max-width: 280px;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .editor-tutorial .text-button {
+    width: auto;
+  }
+  .editor-tutorial .primary-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: auto;
+    margin: 0;
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+  .editor-tutorial .playtest-layout {
+    padding: 0;
+    gap: 16px;
+    grid-template-columns: minmax(0, 1fr) 250px;
+  }
+  .editor-tutorial .playtest-course {
+    height: 30vh;
+    min-height: 200px;
+  }
+  .editor-tutorial-save {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .editor-tutorial-save article {
+    border: 1px solid #cdd8cc;
+    border-radius: 10px;
+    padding: 24px;
+    background: white;
+  }
+  .editor-tutorial-save svg {
+    color: #2e7d32;
+  }
+  .editor-tutorial-save h4 {
+    font-size: 16px;
+    margin: 16px 0 10px;
+  }
+  .editor-tutorial-save p {
+    color: var(--muted);
+    line-height: 1.6;
+    margin: 0;
+  }
+  @media (max-width: 759px) {
+    .editor-tutorial-backdrop {
+      padding: 8px;
+    }
+    .editor-tutorial {
+      max-height: calc(100dvh - 16px);
+    }
+    .editor-tutorial-header,
+    .editor-tutorial-footer,
+    .editor-tutorial-body {
+      padding: 16px;
+    }
+    .editor-tutorial-workspace,
+    .editor-tutorial .playtest-layout,
+    .editor-tutorial-save {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .editor-tutorial-footer {
+      flex-wrap: wrap;
+    }
+    .editor-tutorial-footer .button-row {
+      width: 100%;
+      justify-content: flex-end;
+    }
+  }
+}
